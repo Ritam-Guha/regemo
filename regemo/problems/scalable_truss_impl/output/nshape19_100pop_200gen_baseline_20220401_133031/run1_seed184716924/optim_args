@@ -1,0 +1,1 @@
+Namespace(crossover='real_sbx', mutation_eta=20, mutation_prob=0.005, ncores=1, ngen=200, nruns=1, nshapevar=19, popsize=100, repair_inequality=False, repair_interval=10, repair_power=False, report_freq=10, save=None, seed=184716924, symmetric=False)

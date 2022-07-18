@@ -1,0 +1,22 @@
+#!/bin/bash --login
+########## SBATCH Lines for Resource Request ##########
+
+#SBATCH --time=168:00:00             # limit of wall clock time - how long the job will run (same as -t)
+#SBATCH --nodes=1                 # number of different nodes - could be an exact number or a range of nodes (same as -N)
+#SBATCH --ntasks=1                # number of tasks - how many tasks (nodes) that you require (same as -n)
+#SBATCH --cpus-per-task=32           # number of CPUs (or cores) per task (same as -c)
+
+#SBATCH --job-name Truss      # you can give your job a name for easier identification (same as -J)
+
+#SBATCH --mail-user=ghoshab1@msu.edu
+#SBATCH --mail-type=ALL   # email me about job status
+
+########## Command Lines to Run ##########
+
+cd $HOME/moea_kdo || exit
+export PATH="/mnt/home/ghoshab1/anaconda3/bin:$PATH"
+conda activate python3
+
+srun python scalable_truss/optimize_truss_python_fea_parallel.py --nshapevar 59 --popsize 200 --ngen 200 --nruns 20 --ncores 32
+
+scontrol show job $SLURM_JOB_ID     ### write job information to output file

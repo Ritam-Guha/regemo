@@ -1,6 +1,8 @@
 from regemo.problems.get_problem import get_problem
 from regemo.utils.algo_utils import fit_curve, verboseprint
 from regemo.algorithm.regularity import Regularity
+import regemo.config as config
+from regemo.algorithm.nsga3 import NSGA3
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
@@ -18,7 +20,7 @@ from sklearn.metrics import mean_squared_error as MSE
 import copy
 import sys
 from tabulate import tabulate
-from nsga3 import NSGA3
+
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import binned_statistic
@@ -234,7 +236,7 @@ class Regularity_Finder():
             plot.show()
 
         if self.save_img:
-            plot.save(self.result_storage + f"/regular_efficient_front_pre_reopt_cluster_{self.pf_cluster_num+ 1}.jpg")
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_pre_reopt_cluster_{self.pf_cluster_num+ 1}.jpg")
 
         # Re-optimization
         if len(self.rand_cluster):
@@ -288,7 +290,7 @@ class Regularity_Finder():
         plot.add(self.X)
 
         if self.save_img:
-            plot.save(f"{self.result_storage}/PCP_final_population.jpg")
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/PCP_final_population.jpg")
 
         if self.verbose:
             plot.show()
@@ -664,7 +666,7 @@ class Regularity_Finder():
         plt.xticks(ticks, range(n_bins))
         plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
         if self.save_img:
-            plt.savefig(f"{self.result_storage}/cluster_{self.pf_cluster_num+1}_variable_{i+1}_histogram.jpg")
+            plt.savefig(f"{config.BASE_PATH}/{self.result_storage}/cluster_{self.pf_cluster_num+1}_variable_{i+1}_histogram.jpg")
         if self.verbose:
             plt.show()
 
@@ -702,7 +704,7 @@ class Regularity_Finder():
             plt.show()
 
         if self.save_img:
-            fig.savefig(self.result_storage + "/variable_spread_pf_cluster_" + str(self.pf_cluster_num+1) + ".jpg")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/variable_spread_pf_cluster_{self.pf_cluster_num+1}.jpg")
 
         # find out the random variables
         for i in range(self.X.shape[1]):

@@ -110,6 +110,12 @@ class Regularity():
         return complexity
 
     def display(self, X_apply=None, lb=None, ub=None, save_file=None):
+        def increment_cluster_indices(clusters):
+            current_clusters = copy.deepcopy(clusters)
+            for cluster in current_clusters:
+                cluster = [(i+1) for i in cluster]
+
+            return current_clusters
 
         self.print = self.mod_print()
 
@@ -131,7 +137,7 @@ class Regularity():
 
         if self.non_rand_cluster:
             self.print("Pattern for non-random variables")
-            self.print(f"Non-random variables: {self.non_rand_cluster}")
+            self.print(f"Non-random variables: {increment_cluster_indices(self.non_rand_cluster)}")
 
             for i, cluster in enumerate(self.non_rand_cluster):
                 self.print(f"Cluster {i + 1}: {cluster}")
@@ -148,9 +154,9 @@ class Regularity():
 
         if self.rand_cluster:
             self.print("Pattern for random variables")
-            self.print(f"Random variables: {self.rand_cluster}")
-            self.print(f"Random independent variables: {self.rand_independent_vars}")
-            self.print(f"Random dependent variables: {self.rand_dependent_vars}")
+            self.print(f"Random variables: {[(i+1) for i in self.rand_cluster]}")
+            self.print(f"Random independent variables: {[(i+1) for i in self.rand_independent_vars]}")
+            self.print(f"Random dependent variables: {[(i+1) for i in self.rand_dependent_vars]}")
             for i, dep_idx in enumerate(self.rand_dependent_vars):
                 self.print(f"X[{dep_idx+1}] = ", end="")
                 for idx, indep_idx in enumerate(self.rand_independent_vars):
@@ -158,7 +164,7 @@ class Regularity():
                         self.print(f"({self.rand_final_reg_coef_list[i][idx]} * X[{indep_idx+1}]) + ", end="")
                 self.print(f"({self.rand_final_reg_coef_list[i][-1]})")
 
-            self.print(f"Complete random variables: {self.rand_complete_vars}")
+            self.print(f"Complete random variables: {[(i+1) for i in self.rand_complete_vars]}")
 
             self.print(f"\nRanges for the random variables")
             if self.rand_independent_vars:

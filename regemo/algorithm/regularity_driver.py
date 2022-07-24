@@ -1,10 +1,13 @@
-from regemo.regularity_search import Regularity_Search
+import regemo.config as config
+from regemo.algorithm.regularity_search import Regularity_Search
+from regemo.problems.get_problem import get_problem, problems
+from regemo.utils.path_utils import create_dir
+
+from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
+from pymoo.util.misc import find_duplicates
 
 import copy
-
 import pandas as pd
-
-
 from matplotlib import pyplot as plt
 import numpy as np
 import pickle
@@ -12,13 +15,11 @@ import os
 from tabulate import tabulate
 import sys
 import glob
-from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
-from pymoo.util.misc import find_duplicates
 import argparse
 import plotly.express as px
 
 
-class Pattern_search_driver():
+class Regularity_search_driver():
     def __init__(self,
                  problem_args,
                  algorithm_args,
@@ -29,7 +30,7 @@ class Pattern_search_driver():
         self.problem_args = problem_args
         self.algorithm_args = algorithm_args
         self.exec_list = exec_list
-        self.root_dir = "Hierarchical Search/"
+        self.root_dir = f"results/hierarchical_search"
         self.problem_name = self.problem_args["problem_name"]
         self.param_comb = None
         self.pf_param_comb = None
@@ -43,35 +44,20 @@ class Pattern_search_driver():
 
     def create_file_structure(self):
         # create the file structure for storing the results
-        if not os.path.exists(self.root_dir):
-            os.mkdir(self.root_dir)
-
-        # if the problem folder exists
-        #           delete all the folders inside it
-        # else
-        #           create a folder
-        problem_path = self.root_dir + self.problem_args["problem_name"] + "/"
-        if not os.path.exists(problem_path):
-            os.mkdir(problem_path)
-        else:
-            for folder in glob.glob(problem_path + "/*"):
-                for file in glob.glob(folder + "/*"):
-                    os.remove(file)
-                if(os.path.isdir(folder)):
-                    os.rmdir(folder)
-                else:
-                    os.remove(folder)
+        create_dir(self.root_dir, delete=False)
+        problem_path = f"{self.root_dir}/{self.problem_args['problem_name']}"
+        create_dir(problem_path, delete=True)
 
         # create a folder for every parameter combination
         for i in range(len(self.param_comb)):
-            final_folder_path = self.root_dir + self.problem_name + "/param_comb_" + str(i+1) + "/"
-            os.mkdir(final_folder_path)
+            final_folder_path = f"{problem_path}/param_comb_{i+1}"
+            create_dir(final_folder_path)
 
     def run(self):
         # the main running part
         self.param_comb = self.find_param_comb()
         self.create_file_structure()
-        self.execute_pattern_search()
+        self.execute_regularity_search()
         self.plot_complexity_vs_efficieny()
         self.perform_trade_off_analysis()
         self.save_pf_plot()
@@ -101,7 +87,7 @@ class Pattern_search_driver():
             del cur_list[list_keys[cur_key_idx]]
 
 
-    def execute_pattern_search(self):
+    def execute_regularity_search(self):
         table_header = ["Id", "Degree", "Coef_factor", "Dependency", "SD_rand", "Precision", "Rand MSE Threshold",
                         "Complexity", "HV_dif_%"]
         table_data = []
@@ -109,23 +95,23 @@ class Pattern_search_driver():
         print("=============================================")
         print(f"              {self.problem_name}           ")
         print("=============================================")
-        # execute the process for every pattern combination
+        # execute the process for every regularity combination
         for i, param in enumerate(self.param_comb):
             print(f"Config ID: {i}, Algorithm Config: {param}")
-            cur_ps = Pattern_Search(problem_args=self.problem_args,
-                                    non_rand_pattern_degree=param["non_rand_pattern_degree"],
-                                    rand_pattern_coef_factor=param["rand_pattern_coef_factor"],
-                                    rand_pattern_dependency=param["rand_pattern_dependency"],
+            cur_ps = Regularity_Search(problem_args=self.problem_args,
+                                    non_rand_regularity_degree=param["non_rand_regularity_degree"],
+                                    rand_regularity_coef_factor=param["rand_regularity_coef_factor"],
+                                    rand_regularity_dependency=param["rand_regularity_dependency"],
                                     rand_factor_sd=param["rand_factor_sd"],
-                                    rand_pattern_MSE_threshold=param["rand_pattern_MSE_threshold"],
-                                    non_rand_pattern_MSE_threshold=param["non_rand_pattern_MSE_threshold"],
+                                    rand_regularity_MSE_threshold=param["rand_regularity_MSE_threshold"],
+                                    non_rand_regularity_MSE_threshold=param["non_rand_regularity_MSE_threshold"],
                                     cluster_pf_required=param["clustering_required"],
                                     num_clusters=param["n_clusters"],
                                     precision=param["precision"],
                                     seed=self.seed,
                                     NSGA_settings=self.algorithm_args["NSGA_settings"],
                                     clustering_config=self.algorithm_args["clustering_config"],
-                                    result_storage=(self.root_dir + self.problem_name + "/param_comb_" + str(i+1)),
+                                    result_storage=(f"{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i+1}"),
                                     verbose=self.verbose)
 
             cur_ps.run()
@@ -135,9 +121,9 @@ class Pattern_search_driver():
             param["complexity"] = cur_ps.final_metrics["complexity"]
             param["hv_dif_%"] = cur_ps.final_metrics["hv_dif_%"]
 
-            table_data.append([param["ID"], param["non_rand_pattern_degree"], param["rand_pattern_coef_factor"],
-                               param["rand_pattern_dependency"], param["rand_factor_sd"], param["precision"],
-                               param["rand_pattern_MSE_threshold"],
+            table_data.append([param["ID"], param["non_rand_regularity_degree"], param["rand_regularity_coef_factor"],
+                               param["rand_regularity_dependency"], param["rand_factor_sd"], param["precision"],
+                               param["rand_regularity_MSE_threshold"],
                                param["complexity"], param["hv_dif_%"]])
 
             # save the param config
@@ -152,12 +138,12 @@ class Pattern_search_driver():
 
     def save_param_config(self, param):
         # store the parameter obj to a pickle file
-        final_folder_path = self.root_dir + self.problem_name + "/param_comb_" + str(param["ID"]) + "/"
-        with open(final_folder_path + "param_comb.pkl", "wb") as pkl_handle:
+        final_folder_path = f"{self.root_dir}/{self.problem_name}/param_comb_{param['ID']}"
+        with open(f"{config.BASE_PATH}/{final_folder_path}/param_comb.pkl", "wb") as pkl_handle:
             pickle.dump(param, pkl_handle)
 
         # store the parameter config in a text file for easier visualization
-        text_file = open(final_folder_path + "parameter_configuration.txt", "w")
+        text_file = open(f"{config.BASE_PATH}/{final_folder_path}/parameter_configuration.txt", "w")
         for key in param.keys():
             print(key + "= " + str(param[key]), file=text_file)
 
@@ -170,7 +156,7 @@ class Pattern_search_driver():
         plt.xlabel("complexity")
         plt.ylabel("hv_dif_%")
         plt.title("HV_dif_% vs Complexity")
-        fig.savefig(self.root_dir + self.problem_name + "/param_comb_trade_off.jpg")
+        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_trade_off.jpg")
 
     def knee_point_estimation(self, pf, w_loss=1, w_gain=1):
         # function to estimate the knee point from a pareto front
@@ -245,7 +231,7 @@ class Pattern_search_driver():
         self.pf_param_comb = [self.pf_param_comb[i] for i in is_unique]
         self.preferred_ID = self.find_preferred_point()
 
-        pf_text = open(self.root_dir + self.problem_name + "/Config_PF.txt", "w")
+        pf_text = open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_PF.txt", "w")
         for param in self.pf_param_comb:
             if param["ID"] == self.knee_point_ID or param["ID"] == self.preferred_ID:
                 if param["ID"] == self.knee_point_ID:
@@ -274,8 +260,8 @@ class Pattern_search_driver():
                     print(key + "= " + str(param[key]), file=pf_text)
                 print("---------------------------------------------", file=pf_text)
 
-    def convert_pf_pattern_to_pd(self, param_comb):
-        # convert the final PF patterns to a pandas dataframe
+    def convert_pf_regularity_to_pd(self, param_comb):
+        # convert the final PF regularitys to a pandas dataframe
         df_dict = {}
         # first create dictionary with keys from the execution lists having empty lists
         for key in param_comb[0].keys():
@@ -297,8 +283,8 @@ class Pattern_search_driver():
         hover_data = list(self.param_comb[0].keys())
 
         # convert the param combinations
-        pf_df = self.convert_pf_pattern_to_pd(self.pf_param_comb)
-        df = self.convert_pf_pattern_to_pd(self.param_comb)
+        pf_df = self.convert_pf_regularity_to_pd(self.pf_param_comb)
+        df = self.convert_pf_regularity_to_pd(self.param_comb)
 
         # save the interactive pf config
         fig = px.scatter(df, x=x_title, y=y_title, hover_data=hover_data, log_x=True, size_max=60)
@@ -309,8 +295,8 @@ class Pattern_search_driver():
                        self.problem_name
         )
         fig.show()
-        fig.write_html(self.root_dir + self.problem_name + "/config_comb.html")
-        fig.write_image(self.root_dir + self.problem_name + "/config_comb.jpg")
+        fig.write_html(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_comb.html")
+        fig.write_image(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_comb.jpg")
 
         # save the interactive pf config
         fig = px.scatter(pf_df, x=x_title, y=y_title, color="Type", hover_data=hover_data, log_x=True, size_max=60)
@@ -320,15 +306,15 @@ class Pattern_search_driver():
             title_text='Final Pareto Front Configuration for ' + self.problem_name
         )
         fig.show()
-        fig.write_html(self.root_dir + self.problem_name + "/config_pf.html")
-        fig.write_image(self.root_dir + self.problem_name + "/config_pf.jpg")
+        fig.write_html(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.html")
+        fig.write_image(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.jpg")
 
         # save the final info to an excel file at the end
         list_cols = list(df.columns)
         list_cols.remove("ID")
         ordered_list_cols = ["ID"] + list_cols
 
-        with pd.ExcelWriter(self.root_dir + self.problem_name + "/Configurations.xlsx") as writer:
+        with pd.ExcelWriter(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/configurations.xlsx") as writer:
             df.to_excel(writer, sheet_name='All Configs', index=False, columns=ordered_list_cols)
             pf_df.to_excel(writer, sheet_name='PF Configs', index=False, columns=ordered_list_cols)
 
@@ -368,50 +354,51 @@ if __name__ == "__main__":
     args = parser.parse_args()
     problem_name = args.problem_name
 
-    algorithm_config_storage_dir = "Algorithm Configurations/"
-    problem_config_storage_dir = "Problem Configurations/"
+    algorithm_config_storage_dir = f"{config.BASE_PATH}/{config.algorithm_config_path}"
+    problem_config_storage_dir = f"{config.BASE_PATH}/{config.problem_config_path}"
     use_existing_config = True
     algorithm_config, problem_config = {}, {}
 
-    if use_existing_config:
-        if not os.path.exists(problem_config_storage_dir + problem_name + "_config.pickle"):
-            print("[Error!] Problem Configuration file not found...")
-            sys.exit(1)
-        if not os.path.exists(algorithm_config_storage_dir + problem_name + "_config.pickle"):
-            print("[Error!] Algorithm Configuration file not found...")
-            sys.exit(1)
-        else:
-            problem_config = pickle.load(open(problem_config_storage_dir + problem_name + "_config.pickle", "rb"))
-            algorithm_config = pickle.load(open(algorithm_config_storage_dir + problem_name + "_config.pickle", "rb"))
+    for problem_name in problems[1:2]:
+        if use_existing_config:
+            if not os.path.exists(f"{problem_config_storage_dir}/{problem_name}.pickle"):
+                print("[Error!] Problem Configuration file not found...")
+                sys.exit(1)
+            if not os.path.exists(f"{algorithm_config_storage_dir}/{problem_name}.pickle"):
+                print("[Error!] Algorithm Configuration file not found...")
+                sys.exit(1)
+            else:
+                problem_config = pickle.load(open(f"{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
+                algorithm_config = pickle.load(open(f"{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
 
-    problem_config["problem_name"] = problem_name
+        problem_config["problem_name"] = problem_name
 
-    exec_args = {"non_rand_pattern_degree": [1, 2, 3],
-                 "rand_pattern_coef_factor": [0.1, 0.5],
-                 "rand_pattern_dependency": [1, 2],
-                 "rand_factor_sd": [0.3, 0.5],
-                 "precision": [2],
-                 "rand_pattern_MSE_threshold": [0.1, 0.3, 0.5],
-                 "non_rand_pattern_MSE_threshold": [0.3],
-                 "clustering_required": [True],
-                 "n_clusters": [1, 2, 3]
-                 }
+        exec_args = {"non_rand_regularity_degree": [1, 2, 3],
+                     "rand_regularity_coef_factor": [0.1, 0.3, 0.5],
+                     "rand_regularity_dependency": [1, 2],
+                     "rand_factor_sd": [0.3, 0.5],
+                     "precision": [2],
+                     "rand_regularity_MSE_threshold": [0.1, 0.3],
+                     "non_rand_regularity_MSE_threshold": [0.3, 0.5],
+                     "clustering_required": [True],
+                     "n_clusters": [1, 2, 3]
+                     }
 
-    # exec_args = {"non_rand_pattern_degree": [1],
-    #                           "rand_pattern_coef_factor": [0.5],
-    #                           "rand_pattern_dependency": [1, 2],
-    #                           "rand_factor_sd": [0.05, 0.1],
-    #                           "precision": [2],
-    #                           "rand_pattern_MSE_threshold": [0.5],
-    #                           "clustering_required": [False]
-    #                           }
+        # exec_args = {"non_rand_regularity_degree": [1],
+        #                           "rand_regularity_coef_factor": [0.5],
+        #                           "rand_regularity_dependency": [1, 2],
+        #                           "rand_factor_sd": [0.05, 0.1],
+        #                           "precision": [2],
+        #                           "rand_regularity_MSE_threshold": [0.5],
+        #                           "clustering_required": [False]
+        #                           }
 
 
-    driver = Pattern_search_driver(problem_args=problem_config,
-                                   algorithm_args=algorithm_config,
-                                   exec_list=exec_args,
-                                   seed=seed,
-                                   verbose=False)
+        driver = Regularity_search_driver(problem_args=problem_config,
+                                       algorithm_args=algorithm_config,
+                                       exec_list=exec_args,
+                                       seed=seed,
+                                       verbose=False)
 
-    param_combination = driver.run()
+        param_combination = driver.run()
 

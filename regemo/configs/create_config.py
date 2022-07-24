@@ -7,6 +7,7 @@ import pickle
 
 problems = ["bnh", "c2dtlz2", "crashworthiness", "dtlz2", "dtlz5", "dtlz7", "mod_zdt", "osy", "scalable_truss", "srn",
             "two_member_truss", "welded_beam_design"]
+# problems = ["bnh"]
 
 def create_config(problem_name):
     non_rand_regularity_degree = 1
@@ -18,6 +19,7 @@ def create_config(problem_name):
     non_rand_regularity_MSE_threshold = 0.3
     cluster_pf_required = True
     pf_cluster_eps = None
+    n_clusters = 1
 
     NSGA_settings = {}
     NSGA_settings["pop_size"] = 200
@@ -48,16 +50,17 @@ def create_config(problem_name):
         else:
             problem_config = pickle.load(open(f"{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
             algorithm_config = pickle.load(open(f"{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
-            algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
-            algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
-            algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
-            algorithm_config["rand_factor_sd"] = rand_factor_sd
-            algorithm_config["precision"] = precision
-            algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
-            algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
-            algorithm_config["cluster_pf_required"] = cluster_pf_required
-            algorithm_config["pf_cluster_eps"] = pf_cluster_eps
-            problem_config["name"] = problem_name
+            # algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
+            # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
+            # algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
+            # algorithm_config["rand_factor_sd"] = rand_factor_sd
+            # algorithm_config["precision"] = precision
+            # algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
+            # algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
+            # algorithm_config["cluster_pf_required"] = cluster_pf_required
+            # algorithm_config["pf_cluster_eps"] = pf_cluster_eps
+            # problem_config["name"] = problem_name
+            algorithm_config["n_clusters"] = n_clusters
             
             # algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
             # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor

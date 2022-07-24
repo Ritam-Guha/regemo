@@ -15,6 +15,9 @@ from pymoo.core.problem import Problem
 import numpy as np
 import copy
 
+problems = ["bnh", "c2dtlz2", "crashworthiness", "dtlz2", "dtlz5", "dtlz7", "mod_zdt", "osy", "srn",
+            "two_member_truss", "welded_beam_design", "scalable_truss"]
+
 evaluation_mapper = {
     "bnh": bnh.evaluate,
     "c2dtlz2": c2dtlz2.evaluate,

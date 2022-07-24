@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="f361b77b-1349-4428-80e7-990c35725d9d" name="hpcc" url="http:///">
+        <fileTransfer rootFolder="/mnt/ufs18/home-195/guharita/Projects/regemo" accessType="SFTP" host="hpcc.msu.edu" port="22" sshConfigId="b4fdcf3d-e4ea-4e8c-90e6-442a771d9e42" sshConfig="guharita@hpcc.msu.edu:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

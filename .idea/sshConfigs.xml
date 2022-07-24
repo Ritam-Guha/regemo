@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="hpcc.msu.edu" id="b4fdcf3d-e4ea-4e8c-90e6-442a771d9e42" port="22" nameFormat="DESCRIPTIVE" username="guharita" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>

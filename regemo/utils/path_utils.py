@@ -1,7 +1,7 @@
-import os
-import shutil
 import regemo.config as config
 
+import os
+import shutil
 
 def create_dir(path,
                delete=False):
@@ -25,6 +25,7 @@ def create_dir(path,
     def _make_dir(dir_path,
                   delete=False):
 
+
         if os.path.isdir(dir_path):
             if delete:
                 shutil.rmtree(dir_path)
@@ -33,7 +34,7 @@ def create_dir(path,
             os.mkdir(dir_path)
 
     path_dirs = _rec_split(path)
-    cur_path = ""
+    cur_path = config.BASE_PATH
 
     for subdir in path_dirs[:-1]:
         # TODO: add a check for files

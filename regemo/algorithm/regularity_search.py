@@ -1,14 +1,14 @@
-from regemo.problems.get_problem import get_problem
+from regemo.problems.get_problem import get_problem, problems
 from regemo.algorithm.regularity_finder import Regularity_Finder
 from regemo.utils.path_utils import create_dir
 import regemo.config as config
+from regemo.algorithm.nsga3 import NSGA3
 
 from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
-from nsga3 import NSGA3
 from pymoo.algorithms.moo.nsga3 import HyperplaneNormalization
 from pymoo.algorithms.moo.nsga3 import associate_to_niches
 from pymoo.visualization.scatter import Scatter
@@ -113,16 +113,16 @@ class Regularity_Search():
         np.random.seed(self.seed)
 
     def save_param_config(self):
-        with open(algorithm_config_storage_dir + problem_name + "_config.pickle", "wb") as pkl_handler:
+        with open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "wb") as pkl_handler:
             pickle.dump(algorithm_config, pkl_handler)
             pkl_handler.close()
 
-        with open(problem_config_storage_dir + problem_name + "_config.pickle", "wb") as pkl_handler:
+        with open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "wb") as pkl_handler:
             pickle.dump(problem_config, pkl_handler)
             pkl_handler.close()
 
     def run(self):
-        initial_pop_storage = os.path.join(os.path.dirname(self.result_storage), f"initial_population_{self.problem_name}.pickle")
+        initial_pop_storage = f"{config.BASE_PATH}/results/hierarchical_search/{self.problem_name}/initial_population_{self.problem_name}.pickle"
 
         if (os.path.exists(initial_pop_storage)):
             res = pickle.load(open(initial_pop_storage, "rb"))
@@ -145,7 +145,7 @@ class Regularity_Search():
         plot.title = "Initial Efficient Front"
 
         if self.save_img:
-            plot.save(self.result_storage + "/initial_efficient_front.jpg")
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.jpg")
 
         # do clustering of the pareto front
         if self.cluster_pf_required:
@@ -206,7 +206,7 @@ class Regularity_Search():
             self.final_metrics["complexity"] += regularity_enforcement.regularity.calc_process_complexity()
 
             # storage file for every PF
-            text_storage = self.result_storage + "/regularity_pf_" + str(i+1) + ".txt"
+            text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i+1}.txt"
 
             # display the regularity for every cluster
             regularity_enforcement.regularity.display(self.orig_X[i], self.problem_args["lb"], self.problem_args["ub"],
@@ -236,7 +236,7 @@ class Regularity_Search():
                 plot.show()
 
             if self.save_img:
-                plot.save(self.result_storage + "/regular_efficient_front_cluster_" + str(i + 1) + ".jpg")
+                plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_cluster_{i + 1}.jpg")
 
             # plot the original and regular front
             plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
@@ -249,7 +249,7 @@ class Regularity_Search():
                 plot.show()
 
             if self.save_img:
-                plot.save(self.result_storage + "/final_efficient_fronts_pre_merge_cluster_" + str(i+1) + ".jpg")
+                plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts_pre_merge_cluster_{i+1}.jpg")
 
         # collect the original and regular F for all cluster members
         all_orig_F = self.orig_F[0]
@@ -294,7 +294,7 @@ class Regularity_Search():
             plot.show()
 
         if self.save_img:
-            plot.save(self.result_storage + "/final_efficient_fronts_post_merge.jpg")
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts_post_merge.jpg")
 
         # plot the figure after nds
         fronts = NonDominatedSorting().do(all_regularity_F)
@@ -304,14 +304,14 @@ class Regularity_Search():
         plot.title = "Final Merged Efficient Fronts (After Dominated Point Removal)"
 
         if self.save_img:
-            plot.save(self.result_storage + "/final_efficient_fronts.jpg")
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg")
 
         self.combined_F = all_regularity_F[fronts[0], :]
         self.combined_X = all_regularity_X[fronts[0], :]
 
         # store the final population
         final_population = {"X": self.combined_X, "F": self.combined_F}
-        with open(self.result_storage + "/final_regular_population.pickle",
+        with open(f"{config.BASE_PATH}/{self.result_storage}/final_regular_population.pickle",
                   "wb") as file_handle:
             pickle.dump(final_population, file_handle)
 
@@ -449,7 +449,7 @@ class Regularity_Search():
             clusters.append({"X": cur_cluster_X, "F": cur_cluster_F})
 
         if self.save_img:
-            fig.savefig(self.result_storage + "/clustering_efficient_front.jpg")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_efficient_front.jpg")
 
         if self.verbose:
             plt.show()
@@ -470,7 +470,7 @@ class Regularity_Search():
         plt.tick_params(axis="y", labelsize=10, labelrotation=20)
 
         if self.save_img:
-            fig.savefig(self.result_storage + "/clustering_pareto_front.jpg")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_pareto_front.jpg")
 
         if self.verbose:
             plt.show()
@@ -558,7 +558,7 @@ class Regularity_Search():
             clusters.append({"X": cur_cluster_X, "F": cur_cluster_F})
 
         if self.save_img:
-            fig.savefig(self.result_storage + "/efficient_front_clustering.jpg")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/efficient_front_clustering.jpg")
 
         if self.verbose:
             plt.show()
@@ -601,44 +601,45 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--problem_name", default="dtlz2", help="Name of the problem")
     args = parser.parse_args()
-
     problem_name = args.problem_name
-    res_storage_dir = f"{config.BASE_PATH}/results/{problem_name}"
-    algorithm_config_storage_dir = config.algorithm_config_path
-    problem_config_storage_dir = config.problem_config_path
-    algorithm_config = {}
 
-    # create the dirs for storing images and config files
-    create_dir(res_storage_dir, delete=True)
+    for problem_name in problems[:-1]:
+        res_storage_dir = f"results/{problem_name}"
+        algorithm_config_storage_dir = config.algorithm_config_path
+        problem_config_storage_dir = config.problem_config_path
+        algorithm_config = {}
 
-    if not os.path.exists(f"{problem_config_storage_dir}/{problem_name}.pickle"):
-        print("[Error!] Problem Configuration file not found...")
-        sys.exit(1)
-    if not os.path.exists(f"{algorithm_config_storage_dir}/{problem_name}.pickle"):
-        print("[Error!] Algorithm Configuration file not found...")
-        sys.exit(1)
-    else:
-        problem_config = pickle.load(open(f"{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
-        algorithm_config = pickle.load(open(f"{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
+        # create the dirs for storing images and config files
+        create_dir(res_storage_dir, delete=True)
 
-    print(problem_config)
-    print(algorithm_config)
+        if not os.path.exists(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle"):
+            print("[Error!] Problem Configuration file not found...")
+            sys.exit(1)
+        if not os.path.exists(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle"):
+            print("[Error!] Algorithm Configuration file not found...")
+            sys.exit(1)
+        else:
+            problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
+            algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
 
-    regularity_search = Regularity_Search(problem_args=problem_config,
-                                            seed=seed,
-                                            NSGA_settings=algorithm_config["NSGA_settings"],
-                                            clustering_config=algorithm_config["clustering_config"],
-                                            non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
-                                            rand_regularity_coef_factor=algorithm_config["rand_regularity_coef_factor"],
-                                            rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
-                                            rand_regularity_MSE_threshold=algorithm_config["rand_regularity_MSE_threshold"],
-                                            non_rand_regularity_MSE_threshold=algorithm_config["non_rand_regularity_MSE_threshold"],
-                                            cluster_pf_required=algorithm_config["cluster_pf_required"],
-                                            precision=algorithm_config["precision"],
-                                            num_clusters=problem_config["n_clusters"],
-                                            save_img=True,
-                                            result_storage=res_storage_dir,
-                                            verbose=False
-                                        )
+        print(problem_config)
+        print(algorithm_config)
 
-    regularity_search.run()
+        regularity_search = Regularity_Search(problem_args=problem_config,
+                                                seed=seed,
+                                                NSGA_settings=algorithm_config["NSGA_settings"],
+                                                clustering_config=algorithm_config["clustering_config"],
+                                                non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
+                                                rand_regularity_coef_factor=algorithm_config["rand_regularity_coef_factor"],
+                                                rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
+                                                rand_regularity_MSE_threshold=algorithm_config["rand_regularity_MSE_threshold"],
+                                                non_rand_regularity_MSE_threshold=algorithm_config["non_rand_regularity_MSE_threshold"],
+                                                cluster_pf_required=algorithm_config["cluster_pf_required"],
+                                                precision=algorithm_config["precision"],
+                                                num_clusters=algorithm_config["n_clusters"],
+                                                save_img=True,
+                                                result_storage=f"{res_storage_dir}",
+                                                verbose=False
+                                            )
+
+        regularity_search.run()

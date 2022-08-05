@@ -14,9 +14,10 @@ import pickle
 import os
 from tabulate import tabulate
 import sys
-import glob
 import argparse
 import plotly.express as px
+
+plt.rcParams.update({'font.size': 15})
 
 
 class Regularity_search_driver():
@@ -34,7 +35,7 @@ class Regularity_search_driver():
         self.problem_name = self.problem_args["problem_name"]
         self.param_comb = None
         self.pf_param_comb = None
-        self.knee_point_ID = -1
+        self.knee_point_ID = -10
         self.seed = seed
         self.verbose = verbose
         self.convexity_front = None
@@ -155,7 +156,7 @@ class Regularity_search_driver():
 
         plt.xlabel("complexity")
         plt.ylabel("hv_dif_%")
-        plt.title("HV_dif_% vs Complexity")
+        # plt.title("HV_dif_% vs Complexity")
         fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_trade_off.jpg")
 
     def knee_point_estimation(self, pf, w_loss=1, w_gain=1):
@@ -206,7 +207,7 @@ class Regularity_search_driver():
         else:
             # in case of convex pareto front
             if pf[knee_point_index, 1] <= 2:
-                # the preferred point is the knee point, if the it is within 0.02 error
+                # the preferred point is the knee point, if it is within 2% error
                 return self.knee_point_ID
             else:
                 # else it is the point with the lowest hv_diff
@@ -359,7 +360,7 @@ if __name__ == "__main__":
     use_existing_config = True
     algorithm_config, problem_config = {}, {}
 
-    for problem_name in problems[1:2]:
+    for problem_name in problems[:-1]:
         if use_existing_config:
             if not os.path.exists(f"{problem_config_storage_dir}/{problem_name}.pickle"):
                 print("[Error!] Problem Configuration file not found...")
@@ -375,11 +376,11 @@ if __name__ == "__main__":
 
         exec_args = {"non_rand_regularity_degree": [1, 2, 3],
                      "rand_regularity_coef_factor": [0.1, 0.3, 0.5],
-                     "rand_regularity_dependency": [1, 2],
-                     "rand_factor_sd": [0.3, 0.5],
+                     "rand_regularity_dependency": [1, 2, 3],
+                     "rand_factor_sd": [0.1, 0.3, 0.5],
                      "precision": [2],
-                     "rand_regularity_MSE_threshold": [0.1, 0.3],
-                     "non_rand_regularity_MSE_threshold": [0.3, 0.5],
+                     "rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
+                     "non_rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
                      "clustering_required": [True],
                      "n_clusters": [1, 2, 3]
                      }

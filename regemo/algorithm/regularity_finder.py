@@ -26,6 +26,8 @@ from matplotlib import pyplot as plt
 from scipy.stats import binned_statistic
 import pandas as pd
 
+plt.rcParams.update({'font.size': 15})
+
 class Regularity_Finder():
     def __init__(self,
                  X,
@@ -230,7 +232,7 @@ class Regularity_Finder():
         plot = plot.add(self.orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
         plot = plot.add(self.F, color="red", marker="*", s=40, label="Regular Efficient Front")
 
-        plot.title = "Regular Efficient Front (Before Re-optimization)"
+        # plot.title = "Regular Efficient Front (Before Re-optimization)"
 
         if self.verbose:
             plot.show()
@@ -281,7 +283,8 @@ class Regularity_Finder():
         self.print()
 
         # get a pcp plot of the final population
-        plot = PCP(title=("Final Regular Population", {'pad': 30}),
+        plot = PCP(
+            # title=("Final Regular Population", {'pad': 30}),
                    labels="X"
                    )
         plot.normalize_each_axis = False
@@ -664,7 +667,7 @@ class Regularity_Finder():
         n, bins, patches = plt.hist(x, range=(lb, ub), bins=n_bins, edgecolor='black', linewidth=1.2)
         ticks = [patch.get_x() + patch.get_width()/2 for patch in patches]
         plt.xticks(ticks, range(n_bins))
-        plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
+        # plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
         if self.save_img:
             plt.savefig(f"{config.BASE_PATH}/{self.result_storage}/cluster_{self.pf_cluster_num+1}_variable_{i+1}_histogram.jpg")
         if self.verbose:
@@ -695,7 +698,7 @@ class Regularity_Finder():
         plt.xticks(np.arange(dim), labels=[f"$X_{i+1} ({str(round(spread, 3))})$" for i, spread in enumerate(
             pop_spread)])
         plt.xlabel("Variables (Corresponding Spread)")
-        plt.title(f"Spread of Variables across Population for {self.problem_args['name']} Problem")
+        # plt.title(f"Spread of Variables across Population for {self.problem_args['name']} Problem")
 
         plt.tick_params(axis="x", labelsize=10, labelrotation=40)
         plt.tick_params(axis="y", labelsize=10, labelrotation=20)

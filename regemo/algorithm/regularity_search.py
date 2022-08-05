@@ -30,6 +30,8 @@ from matplotlib import cm
 import numpy as np
 import pickle
 
+plt.rcParams.update({'font.size': 15})
+
 
 
 def get_default_args(func):
@@ -142,7 +144,7 @@ class Regularity_Search():
         # plot the figure after nds
         plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
         plot = plot.add(res["F"], color="blue", s=15, label="Original Efficient Front")
-        plot.title = "Initial Efficient Front"
+        # plot.title = "Initial Efficient Front"
 
         if self.save_img:
             plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.jpg")
@@ -230,7 +232,7 @@ class Regularity_Search():
             plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
             plot = plot.add(cur_F, color="red", marker="*", s=15, label="Regular Efficient Front")
 
-            plot.title = "Regular Efficient Front"
+            # plot.title = "Regular Efficient Front"
 
             if self.verbose:
                 plot.show()
@@ -243,7 +245,7 @@ class Regularity_Search():
             plot = plot.add(self.orig_F[i], color="blue", marker="o", s=15, label="Original Efficient Front")
             plot = plot.add(cur_F, color="red", marker="*", s=40, label="Regular Efficient Front")
 
-            plot.title = "Final Efficient Fronts (Before Merging the Clusters)"
+            # plot.title = "Final Efficient Fronts (Before Merging the Clusters)"
 
             if self.verbose:
                 plot.show()
@@ -288,7 +290,7 @@ class Regularity_Search():
         plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
         plot = plot.add(all_orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
         plot = plot.add(all_regularity_F, color="red", marker="*", s=40, label="Regular Efficient Front")
-        plot.title = "Merged Efficient Fronts (From Different Clusters)"
+        # plot.title = "Merged Efficient Fronts (From Different Clusters)"
 
         if self.verbose:
             plot.show()
@@ -301,7 +303,7 @@ class Regularity_Search():
         plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
         plot = plot.add(all_orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
         plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=40, label="Regular Efficient Front")
-        plot.title = "Final Merged Efficient Fronts (After Dominated Point Removal)"
+        # plot.title = "Final Merged Efficient Fronts (After Dominated Point Removal)"
 
         if self.save_img:
             plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg")
@@ -435,7 +437,7 @@ class Regularity_Search():
                                    label="Cluster " + str(i + 1))
 
             plt.legend()
-            plt.title(f"Clustering View on F Space")
+            # plt.title(f"Clustering View on F Space")
 
         else:
             print("Does not work for less than 2 objectives")
@@ -464,7 +466,7 @@ class Regularity_Search():
 
         plt.xticks(np.arange(dim), labels=[f"$X_{i + 1}$" for i in range(dim)])
         plt.xlabel("Variables")
-        plt.title(f"Clustering View on X Space")
+        # plt.title(f"Clustering View on X Space")
 
         plt.tick_params(axis="x", labelsize=10, labelrotation=40)
         plt.tick_params(axis="y", labelsize=10, labelrotation=20)
@@ -544,7 +546,7 @@ class Regularity_Search():
                                    label="Cluster " + str(i+1))
 
             plt.legend()
-            plt.title(f"Clustering on {clustering_criterion} space")
+            # plt.title(f"Clustering on {clustering_criterion} space")
 
         else:
             print("Does not work for less than 2 objectives")
@@ -597,49 +599,58 @@ class Regularity_Search():
         return mod_print
 
 if __name__ == "__main__":
-    seed = 0
+    seed = 1
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="dtlz2", help="Name of the problem")
+    parser.add_argument("--problem_name", default="welded_beam_design", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
 
-    for problem_name in problems[:-1]:
-        res_storage_dir = f"results/{problem_name}"
-        algorithm_config_storage_dir = config.algorithm_config_path
-        problem_config_storage_dir = config.problem_config_path
-        algorithm_config = {}
+    res_storage_dir = f"results/{problem_name}"
+    algorithm_config_storage_dir = config.algorithm_config_path
+    problem_config_storage_dir = config.problem_config_path
+    algorithm_config = {}
 
-        # create the dirs for storing images and config files
-        create_dir(res_storage_dir, delete=True)
+    # create the dirs for storing images and config files
+    create_dir(res_storage_dir, delete=True)
 
-        if not os.path.exists(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle"):
-            print("[Error!] Problem Configuration file not found...")
-            sys.exit(1)
-        if not os.path.exists(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle"):
-            print("[Error!] Algorithm Configuration file not found...")
-            sys.exit(1)
-        else:
-            problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
-            algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
+    if not os.path.exists(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle"):
+        print("[Error!] Problem Configuration file not found...")
+        sys.exit(1)
+    if not os.path.exists(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle"):
+        print("[Error!] Algorithm Configuration file not found...")
+        sys.exit(1)
+    else:
+        problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
+        algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
 
-        print(problem_config)
-        print(algorithm_config)
+    print(problem_config)
+    print(algorithm_config)
 
-        regularity_search = Regularity_Search(problem_args=problem_config,
-                                                seed=seed,
-                                                NSGA_settings=algorithm_config["NSGA_settings"],
-                                                clustering_config=algorithm_config["clustering_config"],
-                                                non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
-                                                rand_regularity_coef_factor=algorithm_config["rand_regularity_coef_factor"],
-                                                rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
-                                                rand_regularity_MSE_threshold=algorithm_config["rand_regularity_MSE_threshold"],
-                                                non_rand_regularity_MSE_threshold=algorithm_config["non_rand_regularity_MSE_threshold"],
-                                                cluster_pf_required=algorithm_config["cluster_pf_required"],
-                                                precision=algorithm_config["precision"],
-                                                num_clusters=algorithm_config["n_clusters"],
-                                                save_img=True,
-                                                result_storage=f"{res_storage_dir}",
-                                                verbose=False
-                                            )
+    algorithm_config["non_rand_regularity_degree"] = 1
+    algorithm_config["rand_regularity_coef_factor"] = 0.3
+    algorithm_config["rand_regularity_dependency"] = 1
+    algorithm_config["rand_factor_sd"] = 0.1
+    algorithm_config["precision"] = 2
+    algorithm_config["rand_regularity_MSE_threshold"] = 0.1
+    algorithm_config["non_rand_regularity_MSE_threshold"] = 0.1
+    algorithm_config["cluster_pf_required"] = True
+    algorithm_config["n_clusters"] = 2
 
-        regularity_search.run()
+    regularity_search = Regularity_Search(problem_args=problem_config,
+                                            seed=seed,
+                                            NSGA_settings=algorithm_config["NSGA_settings"],
+                                            clustering_config=algorithm_config["clustering_config"],
+                                            non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
+                                            rand_regularity_coef_factor=algorithm_config["rand_regularity_coef_factor"],
+                                            rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
+                                            rand_regularity_MSE_threshold=algorithm_config["rand_regularity_MSE_threshold"],
+                                            non_rand_regularity_MSE_threshold=algorithm_config["non_rand_regularity_MSE_threshold"],
+                                            cluster_pf_required=algorithm_config["cluster_pf_required"],
+                                            precision=algorithm_config["precision"],
+                                            num_clusters=algorithm_config["n_clusters"],
+                                            save_img=True,
+                                            result_storage=f"{res_storage_dir}",
+                                            verbose=False
+                                        )
+
+    regularity_search.run()

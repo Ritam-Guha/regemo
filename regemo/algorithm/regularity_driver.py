@@ -56,12 +56,12 @@ class Regularity_search_driver():
 
     def run(self):
         # the main running part
-        self.param_comb = self.find_param_comb()
-        self.create_file_structure()
-        self.execute_regularity_search()
-        self.plot_complexity_vs_efficieny()
+        # self.param_comb = self.find_param_comb()
+        # self.create_file_structure()
+        # self.execute_regularity_search()
+        # self.plot_complexity_vs_efficieny()
+        # self.save_config_df()
         self.perform_trade_off_analysis()
-        self.save_pf_plot()
 
     def find_param_comb(self):
         # driver function to recursively find the list of parameters
@@ -165,7 +165,7 @@ class Regularity_search_driver():
         R = np.zeros(num_solutions)
         trade_off_vals = np.zeros(num_solutions)
 
-        pf_norm = (pf - np.min(pf, axis=0))/(np.max(pf, axis=0) - np.min(pf, axis=0))
+        pf_norm = (pf - np.min(pf, axis=0))/(np.max(pf, axis=0) - (np.min(pf, axis=0))+1e-6)
 
         for i in range(num_solutions - 1):
             R[i] = (w_loss * (pf_norm[i + 1, 0] - pf_norm[i, 0])) / (w_gain * (pf_norm[i, 1] - pf_norm[i + 1, 1]))
@@ -214,10 +214,19 @@ class Regularity_search_driver():
                 return self.pf_param_comb[-1]["ID"]
 
     def perform_trade_off_analysis(self):
-        F = np.zeros((len(self.param_comb), 2))
-        for i, comb in enumerate(self.param_comb):
-            F[i, 0] = comb["complexity"]
-            F[i, 1] = comb["hv_dif_%"]
+        pf_df = pd.read_excel(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/configurations.xlsx",
+                              sheet_name="All Configs")
+        self.param_comb = []
+        for index, row in pf_df.iterrows():
+            cur_dict = {}
+            for col in pf_df.columns:
+                cur_dict[col] = row[col]
+
+            self.param_comb.append(cur_dict)
+
+        F = np.zeros((pf_df.shape[0], 2))
+        F[:, 0] = pf_df["complexity"].to_numpy()
+        F[:, 1] = pf_df["hv_dif_%"].to_numpy()
 
         # perform non-dominated sorting
         nds = NonDominatedSorting()
@@ -239,7 +248,7 @@ class Regularity_search_driver():
                     print("---------------------------------------------", file=pf_text)
                     print("                  Knee Point                 ", file=pf_text)
                     print("---------------------------------------------", file=pf_text)
-                    param["Type"] = "Knee"
+                    param["type"] = "knee"
                     for key in param.keys():
                         print(key + "= " + str(param[key]), file=pf_text)
                     print("---------------------------------------------", file=pf_text)
@@ -248,18 +257,55 @@ class Regularity_search_driver():
                     print("---------------------------------------------", file=pf_text)
                     print("                Preferred Point              ", file=pf_text)
                     print("---------------------------------------------", file=pf_text)
-                    param["Type"] = "Preferred"
+                    param["type"] = "preferred"
                     for key in param.keys():
                         print(key + "= " + str(param[key]), file=pf_text)
                     print("---------------------------------------------", file=pf_text)
 
             else:
                 print("---------------------------------------------", file=pf_text)
-                param["Type"] = "Normal"
+                param["type"] = "normal"
 
                 for key in param.keys():
                     print(key + "= " + str(param[key]), file=pf_text)
                 print("---------------------------------------------", file=pf_text)
+
+        # save the final pareto front plot
+        x_title = "complexity"
+        y_title = "hv_dif_%"
+        hover_data = list(self.param_comb[0].keys())
+        pf_df = self.convert_pf_regularity_to_pd(self.pf_param_comb)
+
+        # save the interactive pf config
+        custom_color_mapping = {"preferred": "green", "knee": "red", "normal": "blue"}
+        fig = px.scatter(pf_df, x=x_title, y=y_title, color="type", hover_data=hover_data, log_x=True, size_max=60,
+                         color_discrete_map=custom_color_mapping)
+        fig.update_traces(textposition='top center', marker_size=10)
+        fig.update_layout(
+            height=800,
+            title_text='Final Pareto Front Configuration for ' + self.problem_name
+        )
+        fig.show()
+        fig.write_html(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.html")
+        fig.write_image(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.jpg")
+
+        # matplotlib plots
+        custom_color_mapping = {"preferred": "green", "knee": "red", "normal": "blue"}
+        type_wise_partition = {}
+        for key in list(custom_color_mapping.keys()):
+            type_wise_partition[key] = pf_df[pf_df["type"] == key][["complexity", "hv_dif_%"]].values
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+        for key in list(custom_color_mapping.keys()):
+            ax.scatter(type_wise_partition[key][:, 0], type_wise_partition[key][:, 1], c=custom_color_mapping[key],
+                       label=key, s=80)
+
+        ax.set_xlabel("complexity")
+        ax.set_ylabel("hv difference (in %)")
+        ax.legend(loc="upper right")
+
+        fig.show()
+        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf_plot.jpg")
 
     def convert_pf_regularity_to_pd(self, param_comb):
         # convert the final PF regularitys to a pandas dataframe
@@ -277,38 +323,9 @@ class Regularity_search_driver():
 
         return pf_df
 
-    def save_pf_plot(self):
-        # save the final pareto front plot
-        x_title = "complexity"
-        y_title = "hv_dif_%"
-        hover_data = list(self.param_comb[0].keys())
-
+    def save_config_df(self):
         # convert the param combinations
-        pf_df = self.convert_pf_regularity_to_pd(self.pf_param_comb)
         df = self.convert_pf_regularity_to_pd(self.param_comb)
-
-        # save the interactive pf config
-        fig = px.scatter(df, x=x_title, y=y_title, hover_data=hover_data, log_x=True, size_max=60)
-        fig.update_traces(textposition='top center', marker_size=10)
-        fig.update_layout(
-            height=800,
-            title_text='The Configuration Settings for the Higher Level Search Parameter Combinations for ' +
-                       self.problem_name
-        )
-        fig.show()
-        fig.write_html(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_comb.html")
-        fig.write_image(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_comb.jpg")
-
-        # save the interactive pf config
-        fig = px.scatter(pf_df, x=x_title, y=y_title, color="Type", hover_data=hover_data, log_x=True, size_max=60)
-        fig.update_traces(textposition='top center', marker_size=10)
-        fig.update_layout(
-            height=800,
-            title_text='Final Pareto Front Configuration for ' + self.problem_name
-        )
-        fig.show()
-        fig.write_html(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.html")
-        fig.write_image(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.jpg")
 
         # save the final info to an excel file at the end
         list_cols = list(df.columns)
@@ -317,7 +334,6 @@ class Regularity_search_driver():
 
         with pd.ExcelWriter(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/configurations.xlsx") as writer:
             df.to_excel(writer, sheet_name='All Configs', index=False, columns=ordered_list_cols)
-            pf_df.to_excel(writer, sheet_name='PF Configs', index=False, columns=ordered_list_cols)
 
 
     def is_convex_front(self, F):
@@ -351,16 +367,17 @@ if __name__ == "__main__":
     seed = 1
     # problem_name = "two_member_truss"
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="DTLZ7", help="Name of the problem")
+    parser.add_argument("--problem_name", default="welded_beam_design", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
 
-    algorithm_config_storage_dir = f"{config.BASE_PATH}/{config.algorithm_config_path}"
-    problem_config_storage_dir = f"{config.BASE_PATH}/{config.problem_config_path}"
-    use_existing_config = True
-    algorithm_config, problem_config = {}, {}
+    for problem_name in problems:
+        algorithm_config_storage_dir = f"{config.BASE_PATH}/{config.algorithm_config_path}"
+        problem_config_storage_dir = f"{config.BASE_PATH}/{config.problem_config_path}"
+        use_existing_config = True
+        algorithm_config, problem_config = {}, {}
 
-    for problem_name in problems[:-1]:
+
         if use_existing_config:
             if not os.path.exists(f"{problem_config_storage_dir}/{problem_name}.pickle"):
                 print("[Error!] Problem Configuration file not found...")
@@ -374,15 +391,15 @@ if __name__ == "__main__":
 
         problem_config["problem_name"] = problem_name
 
-        exec_args = {"non_rand_regularity_degree": [1, 2, 3],
-                     "rand_regularity_coef_factor": [0.1, 0.3, 0.5],
-                     "rand_regularity_dependency": [1, 2, 3],
-                     "rand_factor_sd": [0.1, 0.3, 0.5],
+        exec_args = {"non_rand_regularity_degree": [1],
+                     "rand_regularity_coef_factor": [0.1, 0.3],
+                     "rand_regularity_dependency": [1],
+                     "rand_factor_sd": [0.1],
                      "precision": [2],
-                     "rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
-                     "non_rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
+                     "rand_regularity_MSE_threshold": [0.1],
+                     "non_rand_regularity_MSE_threshold": [0.1],
                      "clustering_required": [True],
-                     "n_clusters": [1, 2, 3]
+                     "n_clusters": [1]
                      }
 
         # exec_args = {"non_rand_regularity_degree": [1],

@@ -392,7 +392,7 @@ class Regularity_Search():
         # normalize the embedded pf
         norm_pf = normalize(pf, axis=0, norm="max")
 
-        # get the labels from hdbscan
+        # get the labels from k-means
         labels = KMeans(n_clusters=n_clusters, random_state=0, n_init=30).fit_predict(pf)
         # put all the outliers to a different cluster
         n_clusters = len(set(labels))
@@ -601,7 +601,7 @@ class Regularity_Search():
 if __name__ == "__main__":
     seed = 1
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="welded_beam_design", help="Name of the problem")
+    parser.add_argument("--problem_name", default="srn", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
 
@@ -626,15 +626,15 @@ if __name__ == "__main__":
     print(problem_config)
     print(algorithm_config)
 
-    algorithm_config["non_rand_regularity_degree"] = 1
-    algorithm_config["rand_regularity_coef_factor"] = 0.3
-    algorithm_config["rand_regularity_dependency"] = 1
-    algorithm_config["rand_factor_sd"] = 0.1
-    algorithm_config["precision"] = 2
-    algorithm_config["rand_regularity_MSE_threshold"] = 0.1
-    algorithm_config["non_rand_regularity_MSE_threshold"] = 0.1
-    algorithm_config["cluster_pf_required"] = True
-    algorithm_config["n_clusters"] = 2
+    # algorithm_config["non_rand_regularity_degree"] = 1
+    # algorithm_config["rand_regularity_coef_factor"] = 0.3
+    # algorithm_config["rand_regularity_dependency"] = 1
+    # algorithm_config["rand_factor_sd"] = 0.1
+    # algorithm_config["precision"] = 2
+    # algorithm_config["rand_regularity_MSE_threshold"] = 0.1
+    # algorithm_config["non_rand_regularity_MSE_threshold"] = 0.1
+    # algorithm_config["cluster_pf_required"] = True
+    # algorithm_config["n_clusters"] = 2
 
     regularity_search = Regularity_Search(problem_args=problem_config,
                                             seed=seed,

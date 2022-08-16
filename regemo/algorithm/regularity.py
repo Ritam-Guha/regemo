@@ -112,8 +112,9 @@ class Regularity():
     def display(self, X_apply=None, lb=None, ub=None, save_file=None):
         def increment_cluster_indices(clusters):
             current_clusters = copy.deepcopy(clusters)
-            for cluster in current_clusters:
-                cluster = [(i+1) for i in cluster]
+            for k, cluster in enumerate(current_clusters):
+                if cluster:
+                    current_clusters[k] = [(i+1) for i in cluster]
 
             return current_clusters
 
@@ -140,7 +141,7 @@ class Regularity():
             self.print(f"Non-random variables: {increment_cluster_indices(self.non_rand_cluster)}")
 
             for i, cluster in enumerate(self.non_rand_cluster):
-                self.print(f"Cluster {i + 1}: {cluster}")
+                self.print(f"Cluster {i + 1}: {increment_cluster_indices([cluster])}")
                 for j in cluster:
                     if X is not None:
                         # when there's some X, calculate the regularity mean and insert that
@@ -182,6 +183,123 @@ class Regularity():
         self.complexity = self.calc_process_complexity()
         self.print(f"Final complexity of the regularity: {self.complexity}")
         self.print("\n======================================\n")
+
+        if save_file:
+            f.close()
+            self.print = self.mod_print()
+
+    def display_tex(self, X_apply=None, lb=None, ub=None, save_file=None, front_num=-1, total_fronts=-1):
+        def increment_cluster_indices(clusters):
+            current_clusters = copy.deepcopy(clusters)
+            for k, cluster in enumerate(current_clusters):
+                if cluster:
+                    current_clusters[k] = [(i+1) for i in cluster]
+
+            return current_clusters
+
+        self.print = self.mod_print()
+
+        if save_file:
+            f = open(save_file, "w")
+            self.print = self.mod_print(f)
+
+
+        # if there is some X, apply the regularity
+        X = copy.deepcopy(X_apply)
+
+        if X is not None:
+           X = self.apply(X, lb, ub)
+
+        # display final regularity
+        self.print("\\documentclass{article}\n"
+                   "\\usepackage[T1]{fontenc}\n"
+                   "\\usepackage{algorithm}\n"
+                   "\\usepackage[]{algpseudocode}\n"
+                   "\\usepackage{pseudo}\n"
+                   "\\usepackage{listings}\n"
+                   "\\lstset{escapeinside={(*@}{@*)}}\n"
+                   "\\lstdefinestyle{mystyle}{\n"
+                   "basicstyle=\\ttfamily\\footnotesize,\n"
+                   "}\n"
+                   "\lstset{style=mystyle}\n"
+                   "\\begin{document}\n"
+                   "\\begin{lstlisting}[mathescape, language=python]")
+
+        if total_fronts > 1:
+            self.print(f"Regular Front {front_num+1}")
+
+        if self.non_rand_cluster:
+            const_list_clusters = increment_cluster_indices(self.non_rand_cluster)
+            const_list = sum(const_list_clusters, [])
+
+            if const_list:
+                self.print(f"constant variables: $", end="")
+                for idx in const_list[:-1]:
+                    self.print("x_{" + str(idx) + "}, \ ", end="")
+                self.print("x_{" + str(const_list[-1]) + "}$")
+
+            for i, cluster in enumerate(self.non_rand_cluster):
+                const_list = increment_cluster_indices([cluster])[0]
+                if const_list:
+                    if len(self.non_rand_cluster) > 1:
+                        self.print(f"cluster {i + 1}: $", end="")
+                    else:
+                        self.print(f"$", end="")
+                    for idx in const_list[:-1]:
+                        self.print("x_{" + str(idx) + "}, \ ", end="")
+                    self.print("x_{" + str(const_list[-1]) + "}$")
+
+                for j in cluster:
+                    if X is not None:
+                        # when there's some X, calculate the regularity mean and insert that
+                        self.print("$x_{" + str(j+1) + "}: " + str(X[0, j]) + "$")
+                    else:
+                        # display general regularity
+                        self.print("$x_{" + str(j+1) + "}: mean(X[:, " + str(j) + "])")
+                self.print()
+
+            self.print()
+
+        else:
+            self.print("There is no Non-Random variables in the problem")
+
+        if self.rand_cluster:
+            if self.rand_independent_vars:
+                self.print("random independent variables: $", end="")
+                for idx in self.rand_independent_vars[:-1]:
+                    self.print("x_{" + str(idx+1) + "}, \ ", end="")
+                self.print("x_{" + str(self.rand_independent_vars[-1] + 1) + "}$")
+
+            if self.rand_dependent_vars:
+                self.print("random dependent variables: $", end="")
+                for idx in self.rand_dependent_vars[:-1]:
+                    self.print("x_{" + str(idx + 1) + "}, \ ", end="")
+                self.print("x_{" + str(self.rand_dependent_vars[-1] + 1) + "}$")
+
+            for i, dep_idx in enumerate(self.rand_dependent_vars):
+                self.print("$x_{" + str(dep_idx+1) + "} = ", end="")
+                for idx, indep_idx in enumerate(self.rand_independent_vars):
+                    if self.rand_final_reg_coef_list[i][idx] != 0:
+                        self.print(f"({self.rand_final_reg_coef_list[i][idx]} \\times " + "x_{" + str(indep_idx+1) + "}) + ", end="")
+                self.print(f"{self.rand_final_reg_coef_list[i][-1]}$")
+
+            if self.rand_complete_vars:
+                self.print("complete random variables: $", end="")
+                for idx in self.rand_complete_vars[:-1]:
+                    self.print("x_{" + str(idx + 1) + "}, \ ", end="")
+                self.print("x_{" + str(self.rand_complete_vars[-1] + 1) + "}$")
+
+            # if self.rand_independent_vars:
+            for var in self.rand_independent_vars+self.rand_complete_vars:
+                self.print("$x_{" + str(var+1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]$")
+
+            self.print()
+
+            # if self.rand_complete_vars:
+            #     for var in self.rand_complete_vars:
+            #         self.print("x_{" + str(var+1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]")
+        self.print("\\end{lstlisting}\n"
+                   "\\end{document}")
 
         if save_file:
             f.close()

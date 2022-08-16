@@ -200,18 +200,18 @@ class Regularity_search_driver():
         knee_point_index = self.knee_point_estimation(pf)
         self.knee_point_ID = self.pf_param_comb[knee_point_index]["ID"]
 
-        if not self.convexity_front:
+        # if not self.convexity_front:
             # in case of concave pareto front, the preferred choice is
             # the one on the right extreme having the lowest hv_dif
-            return self.pf_param_comb[-1]["ID"]
+            # return self.pf_param_comb[-1]["ID"]
+        # else:
+        # in case of convex pareto front
+        if pf[knee_point_index, 1] <= 2:
+            # the preferred point is the knee point, if it is within 2% error
+            return self.knee_point_ID
         else:
-            # in case of convex pareto front
-            if pf[knee_point_index, 1] <= 2:
-                # the preferred point is the knee point, if it is within 2% error
-                return self.knee_point_ID
-            else:
-                # else it is the point with the lowest hv_diff
-                return self.pf_param_comb[-1]["ID"]
+            # else it is the point with the lowest hv_diff
+            return self.pf_param_comb[-1]["ID"]
 
     def perform_trade_off_analysis(self):
         pf_df = pd.read_excel(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/configurations.xlsx",

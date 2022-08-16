@@ -419,7 +419,7 @@ class Regularity_Finder():
                 self.rand_dependent_vars = self.rand_cluster[num_independent_vars:]
 
             # get the regressed regularity (for random variables we are using degree of 1)
-            reg_X, regularityed_reg_coef_data = self._rand_regularity_regression(self.rand_dependent_vars, self.rand_independent_vars)
+            reg_X, regularity_reg_coef_data = self._rand_regularity_regression(self.rand_dependent_vars, self.rand_independent_vars)
             reg_X = np.clip(reg_X, self.lb, self.ub)
             reg_F = self.evaluate(reg_X, self.problem_args)
 
@@ -433,7 +433,7 @@ class Regularity_Finder():
 
             if normalized_MSE <= self.rand_regularity_MSE_threshold:
                 # get the regressed population and evaluate them
-                self.rand_final_reg_coef_list = np.array(regularityed_reg_coef_data)[:, 1:-2]
+                self.rand_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:-2]
 
             else:
                 self.print("The metrics exceeded the threshold... Not enforcing the random regularity")
@@ -498,7 +498,7 @@ class Regularity_Finder():
 
         # storing data for tabular visualization
         orig_reg_coef_data = np.zeros((len(rand_dep_vars), 4 + len(rand_indep_vars)))
-        regularityed_reg_coef_data = np.zeros((len(rand_dep_vars), 4 + len(rand_indep_vars)))
+        regularity_reg_coef_data = np.zeros((len(rand_dep_vars), 4 + len(rand_indep_vars)))
         orig_headers = ["Index"] + [str(idx) for idx in rand_indep_vars] + ["Intercept"] + ["HV dif"] + ["MSE"]
         regularityed_headers = ["Index"] + [str(idx) + "'" for idx in rand_indep_vars] + ["Intercept"] + ["HV dif"] + [
             "MSE"]
@@ -545,20 +545,20 @@ class Regularity_Finder():
             temp_X[:, i] = reg.predict(x)[:, 0]
 
             # for table formation
-            regularityed_reg_coef_data[id, 0] = i
-            regularityed_reg_coef_data[id, -3] = reg.intercept_
+            regularity_reg_coef_data[id, 0] = i
+            regularity_reg_coef_data[id, -3] = reg.intercept_
             new_hv = self.hv._do(
                 self._normalize(self.evaluate(temp_X, self.problem_args), self.norm_F_lb, self.norm_F_ub))
-            regularityed_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv)/self.orig_hv) * 100, self.precision)
-            regularityed_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)
-            regularityed_reg_coef_data[id, 1:-3] = reg.coef_.copy()
+            regularity_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv)/self.orig_hv) * 100, self.precision)
+            regularity_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)
+            regularity_reg_coef_data[id, 1:-3] = reg.coef_.copy()
 
             self.print()
             self.print(tabulate(orig_reg_coef_data, headers=orig_headers))
             self.print()
-            self.print(tabulate(regularityed_reg_coef_data, headers=regularityed_headers))
+            self.print(tabulate(regularity_reg_coef_data, headers=regularityed_headers))
 
-        return reg_X, regularityed_reg_coef_data
+        return reg_X, regularity_reg_coef_data
 
     def _compute_regularityed_MSE(self, X, clusters):
         # find the MSE between the mean vector and its regularityed version

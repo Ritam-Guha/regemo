@@ -658,7 +658,7 @@ class Regularity_Finder():
         if spread <= (0.05/self.num_clusters):
             return False
 
-        n_bins = 20
+        n_bins = 5
         bin_counts = binned_statistic(x, x, bins=n_bins, range=(lb, ub), statistic="count")[0]
         bins_filled = np.sum(bin_counts >= 1)
         filled_fraction = bins_filled/n_bins

@@ -56,11 +56,11 @@ class Regularity_search_driver():
 
     def run(self):
         # the main running part
-        # self.param_comb = self.find_param_comb()
-        # self.create_file_structure()
-        # self.execute_regularity_search()
-        # self.plot_complexity_vs_efficieny()
-        # self.save_config_df()
+        self.param_comb = self.find_param_comb()
+        self.create_file_structure()
+        self.execute_regularity_search()
+        self.plot_complexity_vs_efficieny()
+        self.save_config_df()
         self.perform_trade_off_analysis()
 
     def find_param_comb(self):
@@ -367,56 +367,56 @@ if __name__ == "__main__":
     seed = 1
     # problem_name = "two_member_truss"
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="welded_beam_design", help="Name of the problem")
+    parser.add_argument("--problem_name", default="srn", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
 
-    for problem_name in problems:
-        algorithm_config_storage_dir = f"{config.BASE_PATH}/{config.algorithm_config_path}"
-        problem_config_storage_dir = f"{config.BASE_PATH}/{config.problem_config_path}"
-        use_existing_config = True
-        algorithm_config, problem_config = {}, {}
+    # for problem_name in problems:
+    algorithm_config_storage_dir = f"{config.BASE_PATH}/{config.algorithm_config_path}"
+    problem_config_storage_dir = f"{config.BASE_PATH}/{config.problem_config_path}"
+    use_existing_config = True
+    algorithm_config, problem_config = {}, {}
 
 
-        if use_existing_config:
-            if not os.path.exists(f"{problem_config_storage_dir}/{problem_name}.pickle"):
-                print("[Error!] Problem Configuration file not found...")
-                sys.exit(1)
-            if not os.path.exists(f"{algorithm_config_storage_dir}/{problem_name}.pickle"):
-                print("[Error!] Algorithm Configuration file not found...")
-                sys.exit(1)
-            else:
-                problem_config = pickle.load(open(f"{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
-                algorithm_config = pickle.load(open(f"{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
+    if use_existing_config:
+        if not os.path.exists(f"{problem_config_storage_dir}/{problem_name}.pickle"):
+            print("[Error!] Problem Configuration file not found...")
+            sys.exit(1)
+        if not os.path.exists(f"{algorithm_config_storage_dir}/{problem_name}.pickle"):
+            print("[Error!] Algorithm Configuration file not found...")
+            sys.exit(1)
+        else:
+            problem_config = pickle.load(open(f"{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
+            algorithm_config = pickle.load(open(f"{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
 
-        problem_config["problem_name"] = problem_name
+    problem_config["problem_name"] = problem_name
 
-        exec_args = {"non_rand_regularity_degree": [1],
-                     "rand_regularity_coef_factor": [0.1, 0.3],
-                     "rand_regularity_dependency": [1],
-                     "rand_factor_sd": [0.1],
-                     "precision": [2],
-                     "rand_regularity_MSE_threshold": [0.1],
-                     "non_rand_regularity_MSE_threshold": [0.1],
-                     "clustering_required": [True],
-                     "n_clusters": [1]
-                     }
+    exec_args = {"non_rand_regularity_degree": [1, 2, 3],
+                 "rand_regularity_coef_factor": [0.1, 0.3, 0.5],
+                 "rand_regularity_dependency": [1, 2],
+                 "rand_factor_sd": [0.2, 0.5],
+                 "precision": [2],
+                 "rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
+                 "non_rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
+                 "clustering_required": [True],
+                 "n_clusters": [1, 2, 3]
+                 }
 
-        # exec_args = {"non_rand_regularity_degree": [1],
-        #                           "rand_regularity_coef_factor": [0.5],
-        #                           "rand_regularity_dependency": [1, 2],
-        #                           "rand_factor_sd": [0.05, 0.1],
-        #                           "precision": [2],
-        #                           "rand_regularity_MSE_threshold": [0.5],
-        #                           "clustering_required": [False]
-        #                           }
+    # exec_args = {"non_rand_regularity_degree": [1],
+    #                           "rand_regularity_coef_factor": [0.5],
+    #                           "rand_regularity_dependency": [1, 2],
+    #                           "rand_factor_sd": [0.05, 0.1],
+    #                           "precision": [2],
+    #                           "rand_regularity_MSE_threshold": [0.5],
+    #                           "clustering_required": [False]
+    #                           }
 
 
-        driver = Regularity_search_driver(problem_args=problem_config,
-                                       algorithm_args=algorithm_config,
-                                       exec_list=exec_args,
-                                       seed=seed,
-                                       verbose=False)
+    driver = Regularity_search_driver(problem_args=problem_config,
+                                   algorithm_args=algorithm_config,
+                                   exec_list=exec_args,
+                                   seed=seed,
+                                   verbose=False)
 
-        param_combination = driver.run()
+    param_combination = driver.run()
 

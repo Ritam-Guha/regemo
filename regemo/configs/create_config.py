@@ -7,18 +7,18 @@ import pickle
 
 # problems = ["bnh", "c2dtlz2", "crashworthiness", "dtlz2", "dtlz5", "dtlz7", "mod_zdt", "osy", "scalable_truss", "srn",
 #             "two_member_truss", "welded_beam_design"]
-problems = ["osy"]
+problems = ["srn"]
 
 def create_config(problem_name):
-    non_rand_regularity_degree = 3
+    non_rand_regularity_degree = 1
     rand_regularity_coef_factor = 0.1
     rand_regularity_dependency = 1
-    rand_factor_sd = 0.1
+    rand_factor_sd = 0.2
     precision = 2
     rand_regularity_MSE_threshold = 0.1
-    non_rand_regularity_MSE_threshold = 0.3
+    non_rand_regularity_MSE_threshold = 0.1
     cluster_pf_required = True
-    n_clusters = 3
+    n_clusters = 1
 
     # NSGA_settings = {}
     # NSGA_settings["pop_size"] = 200

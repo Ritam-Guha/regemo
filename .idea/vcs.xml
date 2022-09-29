@@ -2,6 +2,10 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/paper/emo/regemo-paper-emo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/paper/ieee/regemo-paper-ieee" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/paper/regemo-paper" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/paper/regemo-paper-IEEE" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/paper/regemo-paper-emo" vcs="Git" />
   </component>
 </project>

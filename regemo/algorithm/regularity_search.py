@@ -33,7 +33,6 @@ import pickle
 plt.rcParams.update({'font.size': 15})
 
 
-
 def get_default_args(func):
     """
     :param func: function definition
@@ -46,7 +45,8 @@ def get_default_args(func):
         if v.default is not inspect.Parameter.empty
     }
 
-class Regularity_Search():
+
+class Regularity_Search:
     # upper level class for regularity enforcement
     def __init__(self,
                  problem_args,
@@ -114,7 +114,8 @@ class Regularity_Search():
 
         np.random.seed(self.seed)
 
-    def save_param_config(self):
+    @staticmethod
+    def save_param_config():
         with open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "wb") as pkl_handler:
             pickle.dump(algorithm_config, pkl_handler)
             pkl_handler.close()
@@ -126,7 +127,7 @@ class Regularity_Search():
     def run(self):
         initial_pop_storage = f"{config.BASE_PATH}/results/hierarchical_search/{self.problem_name}/initial_population_{self.problem_name}.pickle"
 
-        if (os.path.exists(initial_pop_storage)):
+        if os.path.exists(initial_pop_storage):
             res = pickle.load(open(initial_pop_storage, "rb"))
 
         else:
@@ -170,7 +171,6 @@ class Regularity_Search():
             # iterate over the clusters and find a regularity for each of the clusters
             self.print(f"\n\n ================ PF Cluster {i+1} ================")
 
-
             self.orig_X.append(copy.deepcopy(cluster["X"]))
             self.orig_F.append(copy.deepcopy(cluster["F"]))
 
@@ -209,14 +209,26 @@ class Regularity_Search():
 
             # storage file for every PF
             text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i+1}.txt"
-            tex_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}.tex"
+            tex_storage_long = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}_long.tex"
+            tex_storage_short = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}.tex"
 
             # display the regularity for every cluster
-            regularity_enforcement.regularity.display(self.orig_X[i], self.problem_args["lb"], self.problem_args["ub"],
-                                                save_file=text_storage)
-            regularity_enforcement.regularity.display_tex(self.orig_X[i], self.problem_args["lb"], self.problem_args["ub"],
-                                                      save_file=tex_storage, front_num=i, total_fronts=len(self.clusters))
-
+            regularity_enforcement.regularity.display(self.orig_X[i],
+                                                      self.problem_args["lb"],
+                                                      self.problem_args["ub"],
+                                                      save_file=text_storage)
+            regularity_enforcement.regularity.display_tex(self.orig_X[i],
+                                                          self.problem_args["lb"],
+                                                          self.problem_args["ub"],
+                                                          save_file=tex_storage_long,
+                                                          front_num=i, total_fronts=len(self.clusters),
+                                                          long_version=True)
+            regularity_enforcement.regularity.display_tex(self.orig_X[i],
+                                                          self.problem_args["lb"],
+                                                          self.problem_args["ub"],
+                                                          save_file=tex_storage_short, front_num=i,
+                                                          total_fronts=len(self.clusters),
+                                                          long_version=False)
             self.print("Final Metrics")
             self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
             self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
@@ -482,7 +494,6 @@ class Regularity_Search():
 
         return clusters
 
-
     def cluster_pf(self, pf_res, user_hdbscan_args, clustering_criterion="X"):
         # function to cluster the pareto front solutions
 
@@ -570,7 +581,8 @@ class Regularity_Search():
 
         return clusters
 
-    def _normalize(self, x, lb, ub):
+    @staticmethod
+    def _normalize(x, lb, ub):
         # function to normalize x between 0 and 1
         new_x = copy.deepcopy(x)
 
@@ -586,7 +598,6 @@ class Regularity_Search():
 
         return new_x
 
-
     def verboseprint(self):
         if self.verbose:
             def mod_print(*args, end="\n"):
@@ -600,6 +611,7 @@ class Regularity_Search():
                 pass
 
         return mod_print
+
 
 if __name__ == "__main__":
     seed = 1
@@ -630,31 +642,21 @@ if __name__ == "__main__":
     print(problem_config)
     print(algorithm_config)
 
-    # algorithm_config["non_rand_regularity_degree"] = 2
-    # algorithm_config["rand_regularity_coef_factor"] = 0.1
-    # algorithm_config["rand_regularity_dependency"] = 2
-    # algorithm_config["rand_factor_sd"] = 0.1
-    # algorithm_config["precision"] = 2
-    # algorithm_config["rand_regularity_MSE_threshold"] = 0.1
-    # algorithm_config["non_rand_regularity_MSE_threshold"] = 0.1
-    # algorithm_config["cluster_pf_required"] = True
-    # algorithm_config["n_clusters"] = 1
-
     regularity_search = Regularity_Search(problem_args=problem_config,
-                                            seed=seed,
-                                            NSGA_settings=algorithm_config["NSGA_settings"],
-                                            clustering_config=algorithm_config["clustering_config"],
-                                            non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
-                                            rand_regularity_coef_factor=algorithm_config["rand_regularity_coef_factor"],
-                                            rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
-                                            rand_regularity_MSE_threshold=algorithm_config["rand_regularity_MSE_threshold"],
-                                            non_rand_regularity_MSE_threshold=algorithm_config["non_rand_regularity_MSE_threshold"],
-                                            cluster_pf_required=algorithm_config["cluster_pf_required"],
-                                            precision=algorithm_config["precision"],
-                                            num_clusters=algorithm_config["n_clusters"],
-                                            save_img=True,
-                                            result_storage=f"{res_storage_dir}",
-                                            verbose=False
+                                          seed=seed,
+                                          NSGA_settings=algorithm_config["NSGA_settings"],
+                                          clustering_config=algorithm_config["clustering_config"],
+                                          non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
+                                          rand_regularity_coef_factor=algorithm_config["rand_regularity_coef_factor"],
+                                          rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
+                                          rand_regularity_MSE_threshold=algorithm_config["rand_regularity_MSE_threshold"],
+                                          non_rand_regularity_MSE_threshold=algorithm_config["non_rand_regularity_MSE_threshold"],
+                                          cluster_pf_required=algorithm_config["cluster_pf_required"],
+                                          precision=algorithm_config["precision"],
+                                          num_clusters=algorithm_config["n_clusters"],
+                                          save_img=True,
+                                          result_storage=f"{res_storage_dir}",
+                                          verbose=False
                                         )
 
     regularity_search.run()

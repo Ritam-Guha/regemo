@@ -128,11 +128,11 @@ class Regularity_Finder():
     def _validate_inputs(self):
         # function to validate user inputs
         default_NSGA_settings = {"pop_size": 100,
-                              "n_offsprings": 30,
-                              "sbx_prob": 0.8,
-                              "sbx_eta": 25,
-                              "mut_eta": 30,
-                              "n_eval": 40000}
+                                 "n_offsprings": 30,
+                                 "sbx_prob": 0.8,
+                                 "sbx_eta": 25,
+                                 "mut_eta": 30,
+                                 "n_eval": 40000}
 
         default_clustering_config = {
             "min_cluster_size": 3,
@@ -185,9 +185,9 @@ class Regularity_Finder():
             self.print("Searching for regularity inside non-rand variables...")
             self.print("================================================")
             self.non_rand_regularity()
-            self.print("The regularity is that all the population members are having the same values for the non-rand clusters "
-                  "variables\n where each cluster follows a non-decreasing curve with degree " +
-                  str(self.non_rand_regularity_degree))
+            self.print("The regularity is that all the population members are having the same values for the non-rand "
+                       "clusters variables\n where each cluster follows a non-decreasing curve with degree "
+                       + str(self.non_rand_regularity_degree))
             for cluster in self.non_rand_cluster:
                 self.print("Cluster: ", cluster, ", Values: ", self.X[0, cluster])
             # after the non-rand values are found, save those values in non_rand_vals
@@ -203,23 +203,22 @@ class Regularity_Finder():
             self.print("================================================")
             self.rand_regularity()
             if self.rand_dependent_vars:
-                self.print("The regularity is that the slopes of the projection of the variables with respect to the index variable "
-                      "are always multiples of " + str(self.rand_regularity_coef_factor))
-
+                self.print("The regularity is that the slopes of the projection of the variables with respect to the "
+                           "index variable are always multiples of " + str(self.rand_regularity_coef_factor))
 
         # save the regularity to a regularity object
         self.regularity = Regularity(dim=self.problem_args["dim"],
-                               lb=self.lb,
-                               ub=self.ub,
-                               non_rand_cluster=self.non_rand_cluster,
-                               non_rand_vals=self.non_rand_vals,
-                               rand_cluster=self.rand_cluster,
-                               rand_dependent_vars=self.rand_dependent_vars,
-                               rand_independent_vars=self.rand_independent_vars,
-                               rand_complete_vars=self.rand_complete_vars,
-                               rand_final_reg_coef_list=self.rand_final_reg_coef_list,
-                               degree=self.non_rand_regularity_degree,
-                               precision=self.precision)
+                                     lb=self.lb,
+                                     ub=self.ub,
+                                     non_rand_cluster=self.non_rand_cluster,
+                                     non_rand_vals=self.non_rand_vals,
+                                     rand_cluster=self.rand_cluster,
+                                     rand_dependent_vars=self.rand_dependent_vars,
+                                     rand_independent_vars=self.rand_independent_vars,
+                                     rand_complete_vars=self.rand_complete_vars,
+                                     rand_final_reg_coef_list=self.rand_final_reg_coef_list,
+                                     degree=self.non_rand_regularity_degree,
+                                     precision=self.precision)
 
         if self.verbose:
             self.regularity.display(self.orig_X, self.lb, self.ub)
@@ -244,6 +243,20 @@ class Regularity_Finder():
         if len(self.rand_cluster):
             self.print("\nRe-optimizing the population after regularity enforcement...")
             self.re_optimize()
+            # save the regularity to a regularity object
+            self.regularity = Regularity(dim=self.problem_args["dim"],
+                                         lb=self.lb,
+                                         ub=self.ub,
+                                         non_rand_cluster=self.non_rand_cluster,
+                                         non_rand_vals=self.non_rand_vals,
+                                         rand_cluster=self.rand_cluster,
+                                         rand_dependent_vars=self.rand_dependent_vars,
+                                         rand_independent_vars=self.rand_independent_vars,
+                                         rand_complete_vars=self.rand_complete_vars,
+                                         rand_final_reg_coef_list=self.rand_final_reg_coef_list,
+                                         degree=self.non_rand_regularity_degree,
+                                         precision=self.precision)
+
 
         # final metric calculation
         self.norm_F = self._normalize(self.F, self.norm_F_lb, self.norm_F_ub)
@@ -876,6 +889,16 @@ class Regularity_Finder():
             # set the X and evaluate the regularityed population
             self.X = new_X
             self.F = self.evaluate(self.X, self.problem_args)
+
+            # reset the bounds
+            final_rand_vars = self.rand_complete_vars + self.rand_independent_vars
+            self.lb = np.array(self.lb)
+            self.lb[final_rand_vars] = np.round(np.min(self.X[:, final_rand_vars], axis=0), self.precision)
+            self.lb = list(self.lb)
+
+            self.ub = np.array(self.ub)
+            self.ub[final_rand_vars] = np.round(np.max(self.X[:, final_rand_vars], axis=0), self.precision)
+            self.ub = list(self.ub)
 
         else:
             self.print("No feasible solution found with this regularity...")

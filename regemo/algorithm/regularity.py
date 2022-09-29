@@ -188,7 +188,14 @@ class Regularity():
             f.close()
             self.print = self.mod_print()
 
-    def display_tex(self, X_apply=None, lb=None, ub=None, save_file=None, front_num=-1, total_fronts=-1):
+    def display_tex(self,
+                    X_apply=None,
+                    lb=None,
+                    ub=None,
+                    save_file=None,
+                    front_num=-1,
+                    total_fronts=-1,
+                    long_version=True):
         def increment_cluster_indices(clusters):
             current_clusters = copy.deepcopy(clusters)
             for k, cluster in enumerate(current_clusters):
@@ -211,19 +218,25 @@ class Regularity():
            X = self.apply(X, lb, ub)
 
         # display final regularity
-        self.print("\\documentclass{article}\n"
-                   "\\usepackage[T1]{fontenc}\n"
-                   "\\usepackage{algorithm}\n"
-                   "\\usepackage[]{algpseudocode}\n"
-                   "\\usepackage{pseudo}\n"
-                   "\\usepackage{listings}\n"
-                   "\\lstset{escapeinside={(*@}{@*)}}\n"
+        if long_version:
+            self.print("\\documentclass{article}\n"
+                       "\\usepackage[T1]{fontenc}\n"
+                       "\\usepackage{algorithm}\n"
+                       "\\usepackage[]{algpseudocode}\n"
+                       "\\usepackage{pseudo}\n"
+                       "\\usepackage{listings}\n")
+
+
+        self.print("\\lstset{escapeinside={(*@}{@*)}}\n"
                    "\\lstdefinestyle{mystyle}{\n"
                    "basicstyle=\\ttfamily\\footnotesize,\n"
                    "}\n"
-                   "\lstset{style=mystyle}\n"
-                   "\\begin{document}\n"
-                   "\\begin{lstlisting}[mathescape, language=python]")
+                   "\lstset{style=mystyle}\n")
+
+        if long_version:
+            self.print("\\begin{document}\n")
+
+        self.print("\\begin{lstlisting}[mathescape, language=python]")
 
         if total_fronts > 1:
             self.print(f"Regular Front {front_num+1}")
@@ -298,13 +311,16 @@ class Regularity():
             # if self.rand_complete_vars:
             #     for var in self.rand_complete_vars:
             #         self.print("x_{" + str(var+1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]")
-        self.print("\\end{lstlisting}\n"
-                   "\\end{document}")
+        self.print("\\end{lstlisting}\n")
+
+        if long_version:
+            self.print("\\end{document}")
 
         if save_file:
             f.close()
             self.print = self.mod_print()
 
+    @staticmethod
     def _normalize(self, x, lb, ub):
         # function to normalize x between 0 and 1
         new_x = copy.deepcopy(x)
@@ -321,6 +337,7 @@ class Regularity():
 
         return new_x
 
+    @staticmethod
     def _denormalize(self, x, lb, ub):
         # function to denormalize a value between 0 and 1
         # to a value between lb and ub
@@ -337,6 +354,7 @@ class Regularity():
             new_x = new_x[0, :]
         return new_x
 
+    @staticmethod
     def mod_print(self, save_file=None):
         # modify the print operation to save in files
         if save_file:

@@ -16,7 +16,7 @@ import numpy as np
 import copy
 
 problems = ["bnh", "c2dtlz2", "crashworthiness", "dtlz2", "dtlz5", "dtlz7", "mod_zdt", "osy", "srn",
-            "two_member_truss", "welded_beam_design", "scalable_truss"]
+            "two_member_truss", "welded_beam_design"]
 
 evaluation_mapper = {
     "bnh": bnh.evaluate,
@@ -32,6 +32,7 @@ evaluation_mapper = {
     "two_member_truss": two_member_truss.evaluate,
     "welded_beam_design": welded_beam_design.evaluate
 }
+
 
 def get_problem(problem_name,
                 problem_args,

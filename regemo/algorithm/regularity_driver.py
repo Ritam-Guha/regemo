@@ -20,7 +20,7 @@ import plotly.express as px
 plt.rcParams.update({'font.size': 15})
 
 
-class Regularity_search_driver():
+class Regularity_search_driver:
     def __init__(self,
                  problem_args,
                  algorithm_args,
@@ -59,7 +59,7 @@ class Regularity_search_driver():
         self.param_comb = self.find_param_comb()
         self.create_file_structure()
         self.execute_regularity_search()
-        self.plot_complexity_vs_efficieny()
+        self.plot_complexity_vs_efficiency()
         self.save_config_df()
         self.perform_trade_off_analysis()
 
@@ -87,7 +87,6 @@ class Regularity_search_driver():
             self._rec_list(params, list_keys, cur_key_idx + 1, cur_list.copy(), list_param_comb)
             del cur_list[list_keys[cur_key_idx]]
 
-
     def execute_regularity_search(self):
         table_header = ["Id", "Degree", "Coef_factor", "Dependency", "SD_rand", "Precision", "Rand MSE Threshold",
                         "Complexity", "HV_dif_%"]
@@ -100,20 +99,20 @@ class Regularity_search_driver():
         for i, param in enumerate(self.param_comb):
             print(f"Config ID: {i}, Algorithm Config: {param}")
             cur_ps = Regularity_Search(problem_args=self.problem_args,
-                                    non_rand_regularity_degree=param["non_rand_regularity_degree"],
-                                    rand_regularity_coef_factor=param["rand_regularity_coef_factor"],
-                                    rand_regularity_dependency=param["rand_regularity_dependency"],
-                                    rand_factor_sd=param["rand_factor_sd"],
-                                    rand_regularity_MSE_threshold=param["rand_regularity_MSE_threshold"],
-                                    non_rand_regularity_MSE_threshold=param["non_rand_regularity_MSE_threshold"],
-                                    cluster_pf_required=param["clustering_required"],
-                                    num_clusters=param["n_clusters"],
-                                    precision=param["precision"],
-                                    seed=self.seed,
-                                    NSGA_settings=self.algorithm_args["NSGA_settings"],
-                                    clustering_config=self.algorithm_args["clustering_config"],
-                                    result_storage=(f"{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i+1}"),
-                                    verbose=self.verbose)
+                                       non_rand_regularity_degree=param["non_rand_regularity_degree"],
+                                       rand_regularity_coef_factor=param["rand_regularity_coef_factor"],
+                                       rand_regularity_dependency=param["rand_regularity_dependency"],
+                                       rand_factor_sd=param["rand_factor_sd"],
+                                       rand_regularity_MSE_threshold=param["rand_regularity_MSE_threshold"],
+                                       non_rand_regularity_MSE_threshold=param["non_rand_regularity_MSE_threshold"],
+                                       cluster_pf_required=param["clustering_required"],
+                                       num_clusters=param["n_clusters"],
+                                       precision=param["precision"],
+                                       seed=self.seed,
+                                       NSGA_settings=self.algorithm_args["NSGA_settings"],
+                                       clustering_config=self.algorithm_args["clustering_config"],
+                                       result_storage=(f"{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i+1}"),
+                                       verbose=self.verbose)
 
             cur_ps.run()
 
@@ -132,7 +131,6 @@ class Regularity_search_driver():
             print(f"Param Config {i} completed.\n")
             plt.close("all")
 
-
         print()
         print(tabulate(table_data, headers=table_header))
         print()
@@ -148,7 +146,7 @@ class Regularity_search_driver():
         for key in param.keys():
             print(key + "= " + str(param[key]), file=text_file)
 
-    def plot_complexity_vs_efficieny(self):
+    def plot_complexity_vs_efficiency(self):
         # plot the complexity vs efficiency curve
         fig = plt.figure()
         for param in self.param_comb:
@@ -159,7 +157,8 @@ class Regularity_search_driver():
         # plt.title("HV_dif_% vs Complexity")
         fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_trade_off.jpg")
 
-    def knee_point_estimation(self, pf, w_loss=1, w_gain=1):
+    @staticmethod
+    def knee_point_estimation(pf, w_loss=1, w_gain=1):
         # function to estimate the knee point from a pareto front
         num_solutions = np.array(pf).shape[0]
         R = np.zeros(num_solutions)
@@ -307,8 +306,9 @@ class Regularity_search_driver():
         fig.show()
         fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf_plot.jpg")
 
-    def convert_pf_regularity_to_pd(self, param_comb):
-        # convert the final PF regularitys to a pandas dataframe
+    @staticmethod
+    def convert_pf_regularity_to_pd(param_comb):
+        # convert the final PF regularities to a pandas dataframe
         df_dict = {}
         # first create dictionary with keys from the execution lists having empty lists
         for key in param_comb[0].keys():
@@ -335,8 +335,8 @@ class Regularity_search_driver():
         with pd.ExcelWriter(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/configurations.xlsx") as writer:
             df.to_excel(writer, sheet_name='All Configs', index=False, columns=ordered_list_cols)
 
-
-    def is_convex_front(self, F):
+    @staticmethod
+    def is_convex_front(F):
         # function to check if the front is convex
         n_pop = F.shape[0]
 
@@ -362,7 +362,6 @@ class Regularity_search_driver():
         return True
 
 
-
 if __name__ == "__main__":
     seed = 1
     # problem_name = "two_member_truss"
@@ -376,7 +375,6 @@ if __name__ == "__main__":
     problem_config_storage_dir = f"{config.BASE_PATH}/{config.problem_config_path}"
     use_existing_config = True
     algorithm_config, problem_config = {}, {}
-
 
     if use_existing_config:
         if not os.path.exists(f"{problem_config_storage_dir}/{problem_name}.pickle"):
@@ -411,12 +409,11 @@ if __name__ == "__main__":
     #                           "clustering_required": [False]
     #                           }
 
-
     driver = Regularity_search_driver(problem_args=problem_config,
-                                   algorithm_args=algorithm_config,
-                                   exec_list=exec_args,
-                                   seed=seed,
-                                   verbose=False)
+                                      algorithm_args=algorithm_config,
+                                      exec_list=exec_args,
+                                      seed=seed,
+                                      verbose=False)
 
-    param_combination = driver.run()
+    driver.run()
 

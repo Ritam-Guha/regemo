@@ -3,6 +3,7 @@ import regemo.config as config
 import os
 import shutil
 
+
 def create_dir(path,
                delete=False):
     """
@@ -46,6 +47,7 @@ def create_dir(path,
 
     _make_dir(os.path.join(cur_path, path_dirs[-1]), delete=delete)
 
+
 def helper_file_naming(name):
     # some of the characters in the sensor naming might not be appropriate for files
     special_chars = "#<>$%{}/+!`&*'?=/\:@"  # characters not allowed as part of the naming
@@ -54,8 +56,10 @@ def helper_file_naming(name):
         modified_name = modified_name.replace(c, '')
     return modified_name
 
+
 def main():
     create_dir(f"model_storage/yield_prediction/result-yo")
+
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def evaluate(X,
              problem_args,
              constr=False):
@@ -16,7 +17,7 @@ def evaluate(X,
     f1 = X[:, 0] * np.sqrt(16 + (X[:, 2] ** 2)) + X[:, 1] * np.sqrt(1 + (X[:, 2] ** 2))
 
     # def f2
-    sigma_ac = (20 * np.sqrt(16 + (X[:, 2] ** 2))) / (X[:, 2] * X[:, 0])
+    sigma_ac = (20 * np.sqrt(16 + (X[:, 2] ** 2))) / (X[:, 2] * (X[:, 0]))
     sigma_bc = (80 * np.sqrt(1 + (X[:, 2] ** 2))) / (X[:, 2] * X[:, 1])
 
     sigma = np.column_stack([sigma_ac, sigma_bc])

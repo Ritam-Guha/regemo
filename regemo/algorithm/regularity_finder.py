@@ -28,7 +28,8 @@ import pandas as pd
 
 plt.rcParams.update({'font.size': 15})
 
-class Regularity_Finder():
+
+class Regularity_Finder:
     def __init__(self,
                  X,
                  F,
@@ -257,7 +258,6 @@ class Regularity_Finder():
                                          degree=self.non_rand_regularity_degree,
                                          precision=self.precision)
 
-
         # final metric calculation
         self.norm_F = self._normalize(self.F, self.norm_F_lb, self.norm_F_ub)
         if self.norm_F.ndim == 1:
@@ -370,7 +370,7 @@ class Regularity_Finder():
 
     def rand_regularity(self):
 
-        if len(self.rand_cluster)>1:
+        if len(self.rand_cluster) > 1:
             # enforce regularity in random variables
             # sort the random variables according to decreasing order of correlation sum
             corr_var = pd.DataFrame(self.X[:, self.rand_cluster]).corr()
@@ -573,7 +573,7 @@ class Regularity_Finder():
 
         return reg_X, regularity_reg_coef_data
 
-    def _compute_regularityed_MSE(self, X, clusters):
+    def _compute_regular_MSE(self, X, clusters):
         # find the MSE between the mean vector and its regularityed version
         mean_X = np.mean(X, axis=0)
         reg_X = self._regularity_repair(mean_X, [clusters], self.non_rand_regularity_degree)
@@ -671,7 +671,7 @@ class Regularity_Finder():
         if spread <= (0.05/self.num_clusters):
             return False
 
-        n_bins = 5
+        n_bins = 20
         bin_counts = binned_statistic(x, x, bins=n_bins, range=(lb, ub), statistic="count")[0]
         bins_filled = np.sum(bin_counts >= 1)
         filled_fraction = bins_filled/n_bins
@@ -745,7 +745,7 @@ class Regularity_Finder():
             # it is important to fix which cluster to break
             # we break the cluster which results into the max MSE decrease
             for cluster_idx, cur_cluster in enumerate(remaining_cluster_list):
-                if self._compute_regularityed_MSE(self.X, cur_cluster) > self.clustering_config["MSE_threshold"]:
+                if self._compute_regular_MSE(self.X, cur_cluster) > self.clustering_config["MSE_threshold"]:
                     cur_break_res = self._cluster_break(self.X, cur_cluster, self.clustering_config["min_cluster_size"])
                     cluster_break_results[cluster_idx] = cur_break_res
 
@@ -784,16 +784,16 @@ class Regularity_Finder():
 
         # repair the mean values based on the clusters and clip+round them
         normalized_mean_X = self._normalize(mean_X, self.lb, self.ub)
-        normalized_regularityed_mean_X = fit_curve(normalized_mean_X, regularity_clusters, degree)
-        regularityed_mean_X = self._denormalize(normalized_regularityed_mean_X, self.lb, self.ub)
-        regularityed_mean_X = np.round(np.clip(regularityed_mean_X, self.lb, self.ub), self.precision)
+        normalized_regular_mean_X = fit_curve(normalized_mean_X, regularity_clusters, degree)
+        regular_mean_X = self._denormalize(normalized_regular_mean_X, self.lb, self.ub)
+        regular_mean_X = np.round(np.clip(regular_mean_X, self.lb, self.ub), self.precision)
 
         # check if the error is acceptable
-        if MSE(mean_X, regularityed_mean_X) <= self.non_rand_regularity_MSE_threshold:
+        if MSE(mean_X, regular_mean_X) <= self.non_rand_regularity_MSE_threshold:
             # for every cluster of non-random  variables, fix all the population members
             # to corresponding repaired mean values
             for cluster in regularity_clusters:
-                new_X[:, cluster] = regularityed_mean_X[cluster]
+                new_X[:, cluster] = regular_mean_X[cluster]
         else:
             for cluster in regularity_clusters:
                 new_X[:, cluster] = np.round(new_X[:, cluster], self.precision)
@@ -886,7 +886,7 @@ class Regularity_Finder():
                                                                     "rand_complete_vars"]]
             new_X = self._final_regularity_enforcement()(new_X)
 
-            # set the X and evaluate the regularityed population
+            # set the X and evaluate the regular population
             self.X = new_X
             self.F = self.evaluate(self.X, self.problem_args)
 
@@ -929,29 +929,29 @@ class Regularity_Finder():
     def _check_final_regularity(self):
         # create a population of random solutions and apply the regularity over them
         random_X = np.random.uniform(self.lb, self.ub, (self.X.shape[0]*10, self.problem_args["dim"]))
-        regularityed_X = self.regularity.apply(random_X, self.lb, self.ub)
-        regularityed_F, regularityed_G = self.evaluate(regularityed_X, self.problem_args, constr=True)
+        regular_X = self.regularity.apply(random_X, self.lb, self.ub)
+        regular_F, regularityed_G = self.evaluate(regular_X, self.problem_args, constr=True)
 
         if regularityed_G is not None:
             if len(regularityed_G.shape) == 1:
                 regularityed_G = regularityed_G.reshape(-1, 1)
             constrained_idx = list(np.where(np.sum(regularityed_G > 0, axis=1) == 0)[0])
-            regularityed_X = regularityed_X[constrained_idx, :]
-            regularityed_F = regularityed_F[constrained_idx, :]
+            regular_X = regular_X[constrained_idx, :]
+            regular_F = regular_F[constrained_idx, :]
 
-        required_pop_size = min(self.X.shape[0], regularityed_X.shape[0])
-        regularityed_pop = pop_from_array_or_individual(regularityed_X)
-        regularityed_pop.set("F", regularityed_F)
+        required_pop_size = min(self.X.shape[0], regular_X.shape[0])
+        regular_pop = pop_from_array_or_individual(regular_X)
+        regular_pop.set("F", regular_F)
 
         if self.problem_args["n_obj"] == 2:
             # for 2-objective problems use rank and crowding survival
-            survived_pop = RankAndCrowdingSurvival()._do(self.problem, regularityed_pop, n_survive=required_pop_size)
+            survived_pop = RankAndCrowdingSurvival()._do(self.problem, regular_pop, n_survive=required_pop_size)
             self.X = survived_pop.get("X")
             self.F = survived_pop.get("F")
 
         elif self.problem_args["n_obj"] > 2:
             # for >2 objectives use reference direction based survival
-            survived_pop = ReferenceDirectionSurvival(self.NSGA_settings["ref_dirs"])._do(self.problem, regularityed_pop, n_survive=required_pop_size)
+            survived_pop = ReferenceDirectionSurvival(self.NSGA_settings["ref_dirs"])._do(self.problem, regular_pop, n_survive=required_pop_size)
             self.X = survived_pop.get("X")
             self.F = survived_pop.get("F")
 

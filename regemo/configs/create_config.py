@@ -7,14 +7,15 @@ import pickle
 
 # problems = ["bnh", "c2dtlz2", "crashworthiness", "dtlz2", "dtlz5", "dtlz7", "mod_zdt", "osy", "scalable_truss", "srn",
 #             "two_member_truss", "welded_beam_design"]
-problems = ["srn"]
+problems = ["two_member_truss"]
+
 
 def create_config(problem_name):
     non_rand_regularity_degree = 1
     rand_regularity_coef_factor = 0.1
     rand_regularity_dependency = 1
     rand_factor_sd = 0.2
-    precision = 2
+    precision = 3
     rand_regularity_MSE_threshold = 0.1
     non_rand_regularity_MSE_threshold = 0.1
     cluster_pf_required = True
@@ -53,26 +54,26 @@ def create_config(problem_name):
             # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
             # algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
             # algorithm_config["rand_factor_sd"] = rand_factor_sd
-            # algorithm_config["precision"] = precision
+            algorithm_config["precision"] = precision
             # algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
             # algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
             # algorithm_config["cluster_pf_required"] = cluster_pf_required
             # algorithm_config["pf_cluster_eps"] = pf_cluster_eps
             # problem_config["name"] = problem_name
 
-            for key in list(algorithm_config.keys()):
-                if "pattern" in key:
-                    del algorithm_config[key]
-
-            algorithm_config["n_clusters"] = n_clusters
-            algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
-            algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
-            algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
-            algorithm_config["rand_factor_sd"] = rand_factor_sd
-            algorithm_config["precision"] = precision
-            algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
-            algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
-            algorithm_config["cluster_pf_required"] = cluster_pf_required
+            # for key in list(algorithm_config.keys()):
+            #     if "pattern" in key:
+            #         del algorithm_config[key]
+            #
+            # algorithm_config["n_clusters"] = n_clusters
+            # algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
+            # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
+            # algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
+            # algorithm_config["rand_factor_sd"] = rand_factor_sd
+            # algorithm_config["precision"] = precision
+            # algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
+            # algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
+            # algorithm_config["cluster_pf_required"] = cluster_pf_required
             #
             # algorithm_config["NSGA_settings"]["pop_size"] = NSGA_settings["pop_size"]
             # algorithm_config["NSGA_settings"]["n_offsprings"] = NSGA_settings["n_offsprings"]

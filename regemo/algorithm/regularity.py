@@ -355,7 +355,7 @@ class Regularity():
         return new_x
 
     @staticmethod
-    def mod_print(self, save_file=None):
+    def mod_print(save_file=None):
         # modify the print operation to save in files
         if save_file:
             def new_print(*args, end="\n"):

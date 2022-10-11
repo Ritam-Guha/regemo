@@ -273,7 +273,12 @@ class Regularity_Search:
         all_regularity_F = self.F[0]
         all_regularity_X = self.X[0]
 
+        # edge points collection
+        edge_points = []
+        edge_points.append(self.get_edge_points(self.orig_F[0]))
+
         for i in range(1, len(self.clusters)):
+            edge_points.append(self.get_edge_points(self.orig_F[i]))
             all_orig_F = np.append(all_orig_F, self.orig_F[i], axis=0)
             all_regularity_F = np.append(all_regularity_F, self.F[i], axis=0)
             all_regularity_X = np.append(all_regularity_X, self.X[i], axis=0)
@@ -318,10 +323,13 @@ class Regularity_Search:
         plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
         plot = plot.add(all_orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
         plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=40, label="Regular Efficient Front")
+        plt.text(0+1, 50, "A")
+        plt.text(72, 9, "B")
+        plt.text(136, 5, "C")
         # plot.title = "Final Merged Efficient Fronts (After Dominated Point Removal)"
 
         if self.save_img:
-            plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg")
+            plt.savefig(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg", dpi=1200)
 
         self.combined_F = all_regularity_F[fronts[0], :]
         self.combined_X = all_regularity_X[fronts[0], :]
@@ -331,6 +339,14 @@ class Regularity_Search:
         with open(f"{config.BASE_PATH}/{self.result_storage}/final_regular_population.pickle",
                   "wb") as file_handle:
             pickle.dump(final_population, file_handle)
+
+    def get_edge_points(self,
+                        F):
+        # F = F[~np.sum(F == np.inf, axis=1), :]
+        min_idx = np.argmin(F[:, 0])
+        max_idx = np.argmax(F[:, 0])
+
+        return [F[min_idx, :], F[max_idx, :]]
 
     def run_NSGA(self, problem, NSGA_settings):
         # run the NSGA2 over the problem
@@ -616,7 +632,7 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = 1
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="srn", help="Name of the problem")
+    parser.add_argument("--problem_name", default="bnh", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
 

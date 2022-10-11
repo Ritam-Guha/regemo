@@ -1,0 +1,22 @@
+clustering_config:
+  criterion: X
+dim: 5
+lb:
+- 1
+- 1
+- 1
+- 1
+- 1
+n_clusters: 3
+n_constr: 0
+n_obj: 3
+name: crashworthiness
+ub:
+- 3
+- 3
+- 3
+- 3
+- 3
+visualization_angle: !!python/tuple
+- 30
+- 30

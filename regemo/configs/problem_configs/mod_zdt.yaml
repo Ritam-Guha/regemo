@@ -1,0 +1,348 @@
+center_coef: !!python/object/apply:numpy.core.multiarray._reconstruct
+  args:
+  - !!python/name:numpy.ndarray ''
+  - !!python/tuple
+    - 0
+  - !!binary |
+    Yg==
+  state: !!python/tuple
+  - 1
+  - !!python/tuple
+    - 30
+  - !!python/object/apply:numpy.dtype
+    args:
+    - f8
+    - false
+    - true
+    state: !!python/tuple
+    - 3
+    - <
+    - null
+    - null
+    - null
+    - -1
+    - -1
+    - 0
+  - false
+  - !!binary |
+    u8wMaPwU8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAApp+1CnC36T/jHKYV3t/uPwAAAAAAAAAAnFummhUo7D8AAAAAAAAAAMSx
+    lQA7Aew/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFOyEVMN7mPwAAAAAAAAAAAAAA
+    AAAAAACRa+0CXWjvPwAAAAAAAAAAAAAAAAAAAAA19p2jbZrjPwAAAAAAAAAAW5dkaZu15j/+3C3y
+    957nPz5oMjtCBO4/
+center_offset:
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - &id001 !!python/object/apply:numpy.dtype
+    args:
+    - f8
+    - false
+    - true
+    state: !!python/tuple
+    - 3
+    - <
+    - null
+    - null
+    - null
+    - -1
+    - -1
+    - 0
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    mpmZmZmZ2T8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    mpmZmZmZyT8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    zczMzMzM3D8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    MzMzMzMz4z8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    mpmZmZmZyT8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    zczMzMzM5D8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    mpmZmZmZyT8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    mpmZmZmZyT8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    mpmZmZmZ4T8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    zczMzMzM5D8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    mZmZmZmZ4T8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    mpmZmZmZ6T8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    NDMzMzMz6z8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    zczMzMzM7D8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    Z2ZmZmZm5j8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAA4D8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    Z2ZmZmZm7j8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    MzMzMzMz4z8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    NDMzMzMz4z8=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAAAAA=
+clustering_config:
+  criterion: X
+dim: 30
+lb:
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+list_pattern_indices:
+- 2
+- 7
+- 8
+- 5
+- 1
+- 3
+- 21
+- 11
+- 26
+- 4
+- 6
+- 20
+- 13
+- 24
+- 15
+- 16
+- 17
+- 18
+- 23
+list_random_indices:
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - &id002 !!python/object/apply:numpy.dtype
+    args:
+    - i8
+    - false
+    - true
+    state: !!python/tuple
+    - 3
+    - <
+    - null
+    - null
+    - null
+    - -1
+    - -1
+    - 0
+  - !!binary |
+    AAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    CQAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    CgAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    DAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    DgAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    EwAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    FgAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    GQAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    GwAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    HAAAAAAAAAA=
+- !!python/object/apply:numpy.core.multiarray.scalar
+  - *id002
+  - !!binary |
+    HQAAAAAAAAA=
+n_clusters: 1
+n_constr: 0
+n_obj: 2
+name: mod_zdt
+pattern_indices:
+- !!python/tuple
+  - - 2
+    - 7
+    - 8
+    - 5
+  - 0.2
+  - const
+- !!python/tuple
+  - - 1
+    - 3
+    - 21
+    - 11
+    - 26
+  - 0.4
+  - linear
+- !!python/tuple
+  - - 4
+    - 6
+    - 20
+    - 13
+    - 24
+    - 15
+  - 0.6
+  - piecewise
+- !!python/tuple
+  - - 16
+    - 17
+    - 18
+    - 23
+  - 0.8
+  - linear
+ub:
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+visualization_angle: !!python/tuple
+- 0
+- 0

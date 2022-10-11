@@ -1,0 +1,32 @@
+clustering_config:
+  criterion: X
+dim: 10
+lb:
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+- 0
+n_clusters: 1
+n_constr: 0
+n_obj: 3
+name: dtlz2
+ub:
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+- 1
+visualization_angle: !!python/tuple
+- 45
+- 45

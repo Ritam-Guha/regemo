@@ -1,0 +1,17 @@
+clustering_config:
+  criterion: X
+dim: 3
+lb:
+- 0
+- 0
+- 1
+n_constr: 1
+n_obj: 2
+name: two_member_truss
+ub:
+- 0.01
+- 0.01
+- 3
+visualization_angle: !!python/tuple
+- 0
+- 0

@@ -11,7 +11,7 @@ def evaluate(X,
     :return: evaluation metrics
     """
 
-    x1, x2, x3 = X[0], X[1], X[2]
+    x1, x2, x3 = X[:, 0], X[:, 1], X[:, 2]
 
     f1 = 106780.37 * (x2 + x3) + 61704.67
     f2 = 3000 * x1
@@ -40,8 +40,8 @@ def evaluate(X,
     g7 = 0.164 / (x1 * x2) + 631.13 * x3 - 54.48
     g7 = -(550 - g7) / 550
 
-    F = np.column_stack([f1, f2, f3])
-    G = np.column_stack((g1, g2, g3, g4, g5, g6, g7))
+    F = np.column_stack([f1, f2, f3, f4, f5])
+    G = np.column_stack([g1, g2, g3, g4, g5, g6, g7])
 
     if constr:
         return F, G

@@ -143,7 +143,7 @@ class Regularity_Search:
             self.edge_point_estimation(self.NSGA_settings["ref_dirs"], res["F"])
 
         # plot the figure after nds
-        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
+        plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
         plot = plot.add(res["F"], color="blue", s=15, label="Original Efficient Front")
         # plot.title = "Initial Efficient Front"
 
@@ -244,7 +244,7 @@ class Regularity_Search:
             self.regularity_objs.append(copy.deepcopy(regularity_enforcement))
 
             # plot the regular front
-            plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
+            plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
             plot = plot.add(cur_F, color="red", marker="*", s=15, label="Regular Efficient Front")
 
             # plot.title = "Regular Efficient Front"
@@ -256,7 +256,7 @@ class Regularity_Search:
                 plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_cluster_{i + 1}.jpg")
 
             # plot the original and regular front
-            plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
+            plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
             plot = plot.add(self.orig_F[i], color="blue", marker="o", s=15, label="Original Efficient Front")
             plot = plot.add(cur_F, color="red", marker="*", s=40, label="Regular Efficient Front")
 
@@ -307,7 +307,7 @@ class Regularity_Search:
                    f"{self.final_metrics['hv_dif_%']}")
 
         # plot the figure before nds
-        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
+        plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
         plot = plot.add(all_orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
         plot = plot.add(all_regularity_F, color="red", marker="*", s=40, label="Regular Efficient Front")
         # plot.title = "Merged Efficient Fronts (From Different Clusters)"
@@ -320,7 +320,7 @@ class Regularity_Search:
 
         # plot the figure after nds
         fronts = NonDominatedSorting().do(all_regularity_F)
-        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
+        plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
         plot = plot.add(all_orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
         plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=40, label="Regular Efficient Front")
         plt.text(0+1, 50, "A")
@@ -632,7 +632,7 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = 1
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="bnh", help="Name of the problem")
+    parser.add_argument("--problem_name", default="water", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
 

@@ -26,7 +26,6 @@ def create_dir(path,
     def _make_dir(dir_path,
                   delete=False):
 
-
         if os.path.isdir(dir_path):
             if delete:
                 shutil.rmtree(dir_path)

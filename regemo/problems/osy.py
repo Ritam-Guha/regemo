@@ -1,5 +1,6 @@
 from pymoo.problems.multi.osy import OSY
 
+
 def evaluate(X,
              problem_args,
              constr=False):

@@ -21,7 +21,6 @@ import inspect
 import argparse
 import copy
 import os
-import glob
 import sys
 from hdbscan.hdbscan_ import HDBSCAN
 
@@ -30,7 +29,7 @@ from matplotlib import cm
 import numpy as np
 import pickle
 
-plt.rcParams.update({'font.size': 15})
+plt.rcParams.update({'font.size': 10})
 
 
 def get_default_args(func):
@@ -134,6 +133,7 @@ class Regularity_Search:
             res = self.run_NSGA(self.problem, self.NSGA_settings)
             # store the initial population
             initial_population = {"X": res.X, "F": res.F}
+            create_dir(os.path.dirname(initial_pop_storage.replace(config.BASE_PATH, "")))
             with open(initial_pop_storage, "wb") as file_handle:
                 pickle.dump(initial_population, file_handle)
             res = {"X": res.X, "F": res.F}
@@ -630,7 +630,7 @@ class Regularity_Search:
 
 
 if __name__ == "__main__":
-    seed = 1
+    seed = config.seed
     parser = argparse.ArgumentParser()
     parser.add_argument("--problem_name", default="water", help="Name of the problem")
     args = parser.parse_args()
@@ -672,7 +672,6 @@ if __name__ == "__main__":
                                           num_clusters=algorithm_config["n_clusters"],
                                           save_img=True,
                                           result_storage=f"{res_storage_dir}",
-                                          verbose=False
-                                        )
+                                          verbose=False)
 
     regularity_search.run()

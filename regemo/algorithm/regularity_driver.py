@@ -51,7 +51,7 @@ class Regularity_search_driver:
 
         # create a folder for every parameter combination
         for i in range(len(self.param_comb)):
-            final_folder_path = f"{problem_path}/param_comb_{i+1}"
+            final_folder_path = f"{problem_path}/param_comb_{i + 1}"
             create_dir(final_folder_path)
 
     def run(self):
@@ -111,13 +111,14 @@ class Regularity_search_driver:
                                        seed=self.seed,
                                        NSGA_settings=self.algorithm_args["NSGA_settings"],
                                        clustering_config=self.algorithm_args["clustering_config"],
-                                       result_storage=(f"{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i+1}"),
+                                       result_storage=(
+                                           f"{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i + 1}"),
                                        verbose=self.verbose)
 
             cur_ps.run()
 
             # add the additional information about the param config
-            param["ID"] = i+1
+            param["ID"] = i + 1
             param["complexity"] = cur_ps.final_metrics["complexity"]
             param["hv_dif_%"] = cur_ps.final_metrics["hv_dif_%"]
 
@@ -164,7 +165,7 @@ class Regularity_search_driver:
         R = np.zeros(num_solutions)
         trade_off_vals = np.zeros(num_solutions)
 
-        pf_norm = (pf - np.min(pf, axis=0))/(np.max(pf, axis=0) - (np.min(pf, axis=0))+1e-6)
+        pf_norm = (pf - np.min(pf, axis=0)) / (np.max(pf, axis=0) - (np.min(pf, axis=0)) + 1e-6)
 
         for i in range(num_solutions - 1):
             R[i] = (w_loss * (pf_norm[i + 1, 0] - pf_norm[i, 0])) / (w_gain * (pf_norm[i, 1] - pf_norm[i + 1, 1]))
@@ -200,9 +201,9 @@ class Regularity_search_driver:
         self.knee_point_ID = self.pf_param_comb[knee_point_index]["ID"]
 
         # if not self.convexity_front:
-            # in case of concave pareto front, the preferred choice is
-            # the one on the right extreme having the lowest hv_dif
-            # return self.pf_param_comb[-1]["ID"]
+        # in case of concave pareto front, the preferred choice is
+        # the one on the right extreme having the lowest hv_dif
+        # return self.pf_param_comb[-1]["ID"]
         # else:
         # in case of convex pareto front
         if pf[knee_point_index, 1] <= 2:
@@ -363,8 +364,7 @@ class Regularity_search_driver:
 
 
 if __name__ == "__main__":
-    seed = 1
-    # problem_name = "two_member_truss"
+    seed = config.seed
     parser = argparse.ArgumentParser()
     parser.add_argument("--problem_name", default="srn", help="Name of the problem")
     args = parser.parse_args()
@@ -397,17 +397,7 @@ if __name__ == "__main__":
                  "rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
                  "non_rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
                  "clustering_required": [True],
-                 "n_clusters": [1, 2, 3]
-                 }
-
-    # exec_args = {"non_rand_regularity_degree": [1],
-    #                           "rand_regularity_coef_factor": [0.5],
-    #                           "rand_regularity_dependency": [1, 2],
-    #                           "rand_factor_sd": [0.05, 0.1],
-    #                           "precision": [2],
-    #                           "rand_regularity_MSE_threshold": [0.5],
-    #                           "clustering_required": [False]
-    #                           }
+                 "n_clusters": [1, 2, 3]}
 
     driver = Regularity_search_driver(problem_args=problem_config,
                                       algorithm_args=algorithm_config,
@@ -416,4 +406,3 @@ if __name__ == "__main__":
                                       verbose=False)
 
     driver.run()
-

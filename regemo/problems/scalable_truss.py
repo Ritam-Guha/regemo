@@ -1,5 +1,6 @@
 from regemo.problems.scalable_truss_impl.truss.truss_problem_general import TrussProblemGeneral
 
+
 def evaluate(X,
              problem_args,
              constr=False):

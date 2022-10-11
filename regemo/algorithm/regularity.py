@@ -71,14 +71,14 @@ class Regularity():
         #
         # # repair the mean values based on the clusters and clip+round them
         # normalized_mean_X = self._normalize(mean_X, lb, ub)
-        # normalized_regularityed_mean_X = fit_curve(normalized_mean_X, regularity_clusters, degree)
-        # regularityed_mean_X = self._denormalize(normalized_regularityed_mean_X, lb, ub)
-        # regularityed_mean_X = np.round(np.clip(regularityed_mean_X, lb, ub), precision)
+        # normalized_regular_mean_X = fit_curve(normalized_mean_X, regularity_clusters, degree)
+        # regular_mean_X = self._denormalize(normalized_regular_mean_X, lb, ub)
+        # regular_mean_X = np.round(np.clip(regular_mean_X, lb, ub), precision)
         #
         # # for every cluster of non-random variables, fix all the population members
         # # to corresponding repaired mean values
         # for cluster in regularity_clusters:
-        #     new_X[:, cluster] = regularityed_mean_X[cluster]
+        #     new_X[:, cluster] = regular_mean_X[cluster]
         #
         # if new_X.shape[0] == 1:
         #     # converting a single array back to a 1D array

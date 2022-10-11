@@ -1,5 +1,6 @@
 from pymoo.problems.multi.bnh import BNH
 
+
 def evaluate(X,
              problem_args,
              constr=False):

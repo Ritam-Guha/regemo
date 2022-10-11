@@ -513,7 +513,7 @@ class Regularity_Finder:
         orig_reg_coef_data = np.zeros((len(rand_dep_vars), 4 + len(rand_indep_vars)))
         regularity_reg_coef_data = np.zeros((len(rand_dep_vars), 4 + len(rand_indep_vars)))
         orig_headers = ["Index"] + [str(idx) for idx in rand_indep_vars] + ["Intercept"] + ["HV dif"] + ["MSE"]
-        regularityed_headers = ["Index"] + [str(idx) + "'" for idx in rand_indep_vars] + ["Intercept"] + ["HV dif"] + [
+        regular_headers = ["Index"] + [str(idx) + "'" for idx in rand_indep_vars] + ["Intercept"] + ["HV dif"] + [
             "MSE"]
 
         for id, i in enumerate(rand_dep_vars):
@@ -569,12 +569,12 @@ class Regularity_Finder:
             self.print()
             self.print(tabulate(orig_reg_coef_data, headers=orig_headers))
             self.print()
-            self.print(tabulate(regularity_reg_coef_data, headers=regularityed_headers))
+            self.print(tabulate(regularity_reg_coef_data, headers=regular_headers))
 
         return reg_X, regularity_reg_coef_data
 
     def _compute_regular_MSE(self, X, clusters):
-        # find the MSE between the mean vector and its regularityed version
+        # find the MSE between the mean vector and its regular version
         mean_X = np.mean(X, axis=0)
         reg_X = self._regularity_repair(mean_X, [clusters], self.non_rand_regularity_degree)
 
@@ -930,12 +930,12 @@ class Regularity_Finder:
         # create a population of random solutions and apply the regularity over them
         random_X = np.random.uniform(self.lb, self.ub, (self.X.shape[0]*10, self.problem_args["dim"]))
         regular_X = self.regularity.apply(random_X, self.lb, self.ub)
-        regular_F, regularityed_G = self.evaluate(regular_X, self.problem_args, constr=True)
+        regular_F, regular_G = self.evaluate(regular_X, self.problem_args, constr=True)
 
-        if regularityed_G is not None:
-            if len(regularityed_G.shape) == 1:
-                regularityed_G = regularityed_G.reshape(-1, 1)
-            constrained_idx = list(np.where(np.sum(regularityed_G > 0, axis=1) == 0)[0])
+        if regular_G is not None:
+            if len(regular_G.shape) == 1:
+                regular_G = regular_G.reshape(-1, 1)
+            constrained_idx = list(np.where(np.sum(regular_G > 0, axis=1) == 0)[0])
             regular_X = regular_X[constrained_idx, :]
             regular_F = regular_F[constrained_idx, :]
 

@@ -11,13 +11,14 @@ from regemo.problems import srn
 from regemo.problems import two_member_truss
 from regemo.problems import welded_beam_design
 from regemo.problems import water
+from regemo.problems import gaa
 
 from pymoo.core.problem import Problem
 import numpy as np
 import copy
 
 problems = ["bnh", "c2dtlz2", "crashworthiness", "dtlz2", "dtlz5", "dtlz7", "mod_zdt", "osy", "srn",
-            "two_member_truss", "welded_beam_design", "water"]
+            "two_member_truss", "welded_beam_design", "water", "gaa"]
 
 evaluation_mapper = {
     "bnh": bnh.evaluate,
@@ -32,7 +33,8 @@ evaluation_mapper = {
     "srn": srn.evaluate,
     "two_member_truss": two_member_truss.evaluate,
     "welded_beam_design": welded_beam_design.evaluate,
-    "water": water.evaluate
+    "water": water.evaluate,
+    "gaa": gaa.evaluate
 }
 
 

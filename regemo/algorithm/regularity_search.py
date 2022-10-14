@@ -29,7 +29,7 @@ from matplotlib import cm
 import numpy as np
 import pickle
 
-plt.rcParams.update({'font.size': 10})
+plt.rcParams.update({'font.size': 15})
 
 
 def get_default_args(func):
@@ -143,7 +143,7 @@ class Regularity_Search:
             self.edge_point_estimation(self.NSGA_settings["ref_dirs"], res["F"])
 
         # plot the figure after nds
-        plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
+        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
         plot = plot.add(res["F"], color="blue", s=15, label="Original Efficient Front")
         # plot.title = "Initial Efficient Front"
 
@@ -244,7 +244,7 @@ class Regularity_Search:
             self.regularity_objs.append(copy.deepcopy(regularity_enforcement))
 
             # plot the regular front
-            plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
+            plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
             plot = plot.add(cur_F, color="red", marker="*", s=15, label="Regular Efficient Front")
 
             # plot.title = "Regular Efficient Front"
@@ -256,7 +256,7 @@ class Regularity_Search:
                 plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_cluster_{i + 1}.jpg")
 
             # plot the original and regular front
-            plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
+            plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
             plot = plot.add(self.orig_F[i], color="blue", marker="o", s=15, label="Original Efficient Front")
             plot = plot.add(cur_F, color="red", marker="*", s=40, label="Regular Efficient Front")
 
@@ -275,10 +275,10 @@ class Regularity_Search:
 
         # edge points collection
         edge_points = []
-        edge_points.append(self.get_edge_points(self.orig_F[0]))
+        edge_points.append(self.get_edge_points(self.F[0]))
 
         for i in range(1, len(self.clusters)):
-            edge_points.append(self.get_edge_points(self.orig_F[i]))
+            edge_points.append(self.get_edge_points(self.F[i]))
             all_orig_F = np.append(all_orig_F, self.orig_F[i], axis=0)
             all_regularity_F = np.append(all_regularity_F, self.F[i], axis=0)
             all_regularity_X = np.append(all_regularity_X, self.X[i], axis=0)
@@ -307,7 +307,7 @@ class Regularity_Search:
                    f"{self.final_metrics['hv_dif_%']}")
 
         # plot the figure before nds
-        plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
+        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
         plot = plot.add(all_orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
         plot = plot.add(all_regularity_F, color="red", marker="*", s=40, label="Regular Efficient Front")
         # plot.title = "Merged Efficient Fronts (From Different Clusters)"
@@ -320,16 +320,16 @@ class Regularity_Search:
 
         # plot the figure after nds
         fronts = NonDominatedSorting().do(all_regularity_F)
-        plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
-        plot = plot.add(all_orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
-        plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=40, label="Regular Efficient Front")
-        plt.text(0+1, 50, "A")
-        plt.text(72, 9, "B")
-        plt.text(136, 5, "C")
+        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
+        plot = plot.add(all_orig_F, color="blue", marker="o", s=60, label="Original Efficient Front")
+        plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=80, label="Regular Efficient Front")
+        # plt.text(edge_points[0][0][0]+0.001, edge_points[0][0][1], "A")
+        # plt.text(edge_points[0][1][0], edge_points[0][1][1]+2000, "B")
+        # plt.text(edge_points[1][1][0], edge_points[1][1][1]+2000, "C")
         # plot.title = "Final Merged Efficient Fronts (After Dominated Point Removal)"
 
         if self.save_img:
-            plt.savefig(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg", dpi=1200)
+            plt.savefig(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg", dpi=600)
 
         self.combined_F = all_regularity_F[fronts[0], :]
         self.combined_X = all_regularity_X[fronts[0], :]

@@ -10,7 +10,7 @@
         </fileTransfer>
       </webServer>
       <webServer id="5b44003e-b1f7-40aa-a54d-f0bbbed0a0af" name="coin" url="http:///">
-        <fileTransfer rootFolder="/home/guharita/Ritam/Projects/regemo" accessType="SFTP" host="coinlab.dhcp.egr.msu.edu" port="22" sshConfigId="84fde379-627f-4594-9e32-0d79787e9f4b" sshConfig="coin">
+        <fileTransfer rootFolder="/mnt/hdd/guharita/Projects/regemo" accessType="SFTP" host="coinlab.dhcp.egr.msu.edu" port="22" sshConfigId="84fde379-627f-4594-9e32-0d79787e9f4b" sshConfig="coin">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

@@ -2,6 +2,7 @@ import regemo.config as config
 
 import pandas as pd
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 30})
 
 
 def get_config_pf_plot():
@@ -17,17 +18,17 @@ def get_config_pf_plot():
     for key in list(custom_color_mapping.keys()):
         type_wise_partition[key] = df[df["type"] == key][["complexity", "hv_dif_%"]].values
 
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(10, 9))
     for key in list(custom_color_mapping.keys()):
         ax.scatter(type_wise_partition[key][:, 0], type_wise_partition[key][:, 1], c=custom_color_mapping[key],
-                   label=key, s=80)
+                   label=key, s=120)
 
-    ax.set_xlabel("complexity", fontsize=18)
-    ax.set_ylabel("hv difference (in %)", fontsize=18)
-    ax.legend(loc="upper right", fontsize=18, title_fontsize=15)
+    ax.set_xlabel("complexity", fontsize=30)
+    ax.set_ylabel("hv difference (in %)", fontsize=30)
+    ax.legend(loc="upper right", fontsize=30, title_fontsize=30)
 
     fig.show()
-    fig.savefig(f"{config.BASE_PATH}/results/hierarchical_search/bnh/config_pf_plot.jpg", dpi=1200)
+    fig.savefig(f"{config.BASE_PATH}/results/hierarchical_search/bnh/config_pf_plot.jpg", dpi=600)
 
 
 def main():

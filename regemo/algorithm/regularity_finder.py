@@ -789,7 +789,7 @@ class Regularity_Finder:
         regular_mean_X = np.round(np.clip(regular_mean_X, self.lb, self.ub), self.precision)
 
         # check if the error is acceptable
-        if MSE(mean_X, regular_mean_X) <= self.non_rand_regularity_MSE_threshold:
+        if MSE(normalized_mean_X, normalized_regular_mean_X) <= self.non_rand_regularity_MSE_threshold:
             # for every cluster of non-random  variables, fix all the population members
             # to corresponding repaired mean values
             for cluster in regularity_clusters:

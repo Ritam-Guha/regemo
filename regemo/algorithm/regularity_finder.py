@@ -174,7 +174,7 @@ class Regularity_Finder:
         self.norm_F_ub = np.max(self.orig_F, axis=0)
 
         self.norm_orig_F = self._normalize(self.orig_F, self.norm_F_lb, self.norm_F_ub)
-        self.orig_hv = self.hv._do(self.norm_orig_F)
+        self.orig_hv = self.hv.do(self.norm_orig_F)
 
         # clustering
         self.rand_cluster, self.non_rand_cluster = self.find_regularity_clusters()
@@ -264,14 +264,14 @@ class Regularity_Finder:
             self.norm_F = self.norm_F.reshape(1, -1)
 
         # save the final metrics
-        self.regularity_hv = self.hv._do(self.norm_F)
+        self.regularity_hv = self.hv.do(self.norm_F)
 
         if self.regularity_hv == 0:
             # when it converges to 1 point
             self.final_metrics["hv_dif_%"] = np.inf
         else:
             self.final_metrics["hv_dif_%"] = ((abs(self.orig_hv - self.regularity_hv)) / self.orig_hv) * 100
-        self.final_metrics["igd_plus"] = self.igd_plus._do(self.F)
+        self.final_metrics["igd_plus"] = self.igd_plus.do(self.F)
         # self.final_metrics["MSE"] = MSE(np.mean(self.orig_X, axis=0), np.mean(self.X, axis=0))
 
         self.print(f"Final IGD+ value: {'{:.2e}'.format(self.final_metrics['igd_plus'])}")
@@ -400,8 +400,8 @@ class Regularity_Finder:
                 F_1 = self.evaluate(X_1, self.problem_args)
                 F_2 = self.evaluate(X_2, self.problem_args)
 
-                hv_1 = self.hv._do(self.orig_F) - self.hv._do(F_1)
-                hv_2 = self.hv._do(self.orig_F) - self.hv._do(F_2)
+                hv_1 = self.hv.do(self.orig_F) - self.hv.do(F_1)
+                hv_2 = self.hv.do(self.orig_F) - self.hv.do(F_2)
 
                 # the one leading to lower hyper-volume deviation should be the better alternative
                 if hv_1 < hv_2:
@@ -529,7 +529,7 @@ class Regularity_Finder:
             # for table formation
             orig_reg_coef_data[id, 0] = i
             orig_reg_coef_data[id, -3] = reg.intercept_
-            new_hv = self.hv._do(self._normalize(self.evaluate(temp_X, self.problem_args), self.norm_F_lb, self.norm_F_ub))
+            new_hv = self.hv.do(self._normalize(self.evaluate(temp_X, self.problem_args), self.norm_F_lb, self.norm_F_ub))
             orig_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv)/self.orig_hv) * 100, self.precision)
             orig_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)
             orig_reg_coef_data[id, 1:-3] = coef_.copy()
@@ -560,7 +560,7 @@ class Regularity_Finder:
             # for table formation
             regularity_reg_coef_data[id, 0] = i
             regularity_reg_coef_data[id, -3] = reg.intercept_
-            new_hv = self.hv._do(
+            new_hv = self.hv.do(
                 self._normalize(self.evaluate(temp_X, self.problem_args), self.norm_F_lb, self.norm_F_ub))
             regularity_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv)/self.orig_hv) * 100, self.precision)
             regularity_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)

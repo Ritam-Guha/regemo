@@ -1,0 +1,15 @@
+dim: 3
+lb:
+- 0.01
+- 0.01
+- 0.01
+n_constr: 7
+n_obj: 5
+name: water
+ub:
+- 0.45
+- 0.1
+- 0.1
+visualization_angle: !!python/tuple
+- 0
+- 0

@@ -9,6 +9,7 @@ import sys
 import pickle
 from pymoo.factory import get_reference_directions
 
+problems = ["rocket_injector_design"]
 
 def create_config(problem_name):
     # non_rand_regularity_degree = 1
@@ -29,6 +30,7 @@ def create_config(problem_name):
     # NSGA_settings["n_offsprings"] = 100
     # NSGA_settings["mut_eta"] = 50
     # NSGA_settings["sbx_eta"] = 20
+    pop_size = 1000
 
     use_existing_config = True
     save_config = True
@@ -63,7 +65,8 @@ def create_config(problem_name):
             # algorithm_config["cluster_pf_required"] = cluster_pf_required
             # algorithm_config["pf_cluster_eps"] = pf_cluster_eps
             # problem_config["name"] = problem_name
-            # problem_config["visualization_angle"] = visualization_angle
+            # if problem_config["n_obj"] == 3:
+            #     problem_config["visualization_angle"] = (45, 45)
             # problem_config["n_obj"] = n_obj
             # problem_config["n_constr"] = n_constr
 
@@ -81,12 +84,12 @@ def create_config(problem_name):
             # algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
             # algorithm_config["cluster_pf_required"] = cluster_pf_required
             #
-            # algorithm_config["NSGA_settings"]["pop_size"] = NSGA_settings["pop_size"]
+            algorithm_config["NSGA_settings"]["pop_size"] = pop_size
             # algorithm_config["NSGA_settings"]["n_offsprings"] = NSGA_settings["n_offsprings"]
             # algorithm_config["NSGA_settings"]["mut_eta"] = NSGA_settings["mut_eta"]
             # algorithm_config["NSGA_settings"]["sbx_eta"] = NSGA_settings["sbx_eta"]
-            if problem_config["n_obj"] > 2:
-                algorithm_config["NSGA_settings"]["ref_dirs"] = get_reference_directions("das-dennis", problem_config["n_obj"], n_partitions=12)
+            # if problem_config["n_obj"] > 2:
+            #     algorithm_config["NSGA_settings"]["ref_dirs"] = get_reference_directions("das-dennis", problem_config["n_obj"], n_partitions=12)
 
             # problem_config["clustering_config"] = {"criterion": "X"}
             # problem_config["n_clusters"] = 3

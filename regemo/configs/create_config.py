@@ -1,32 +1,34 @@
+import numpy as np
+
 from regemo.utils.path_utils import create_dir
 import regemo.config as config
+from regemo.problems.get_problem import problems
 
 import os
 import sys
 import pickle
 from pymoo.factory import get_reference_directions
 
-# problems = ["bnh", "c2dtlz2", "crashworthiness", "dtlz2", "dtlz5", "dtlz7", "mod_zdt", "osy", "scalable_truss", "srn",
-#             "two_member_truss", "welded_beam_design"]
-problems = ["water"]
-
 
 def create_config(problem_name):
     # non_rand_regularity_degree = 1
     # rand_regularity_coef_factor = 0.1
     # rand_regularity_dependency = 1
-    # rand_factor_sd = 0.5
-    # precision = 3
+    # rand_factor_sd = 0.2
+    # precision = 2
     # rand_regularity_MSE_threshold = 0.1
     # non_rand_regularity_MSE_threshold = 0.1
     # cluster_pf_required = True
     # n_clusters = 1
+    # visualization_angle = (45, 45)
+    # n_obj = 3
+    # n_constr = 9
 
-    NSGA_settings = {}
-    NSGA_settings["pop_size"] = 1000
-    NSGA_settings["n_offsprings"] = 100
-    NSGA_settings["mut_eta"] = 50
-    NSGA_settings["sbx_eta"] = 20
+    # NSGA_settings = {}
+    # NSGA_settings["pop_size"] = 1000
+    # NSGA_settings["n_offsprings"] = 100
+    # NSGA_settings["mut_eta"] = 50
+    # NSGA_settings["sbx_eta"] = 20
 
     use_existing_config = True
     save_config = True
@@ -61,6 +63,9 @@ def create_config(problem_name):
             # algorithm_config["cluster_pf_required"] = cluster_pf_required
             # algorithm_config["pf_cluster_eps"] = pf_cluster_eps
             # problem_config["name"] = problem_name
+            # problem_config["visualization_angle"] = visualization_angle
+            # problem_config["n_obj"] = n_obj
+            # problem_config["n_constr"] = n_constr
 
             # for key in list(algorithm_config.keys()):
             #     if "pattern" in key:
@@ -76,11 +81,13 @@ def create_config(problem_name):
             # algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
             # algorithm_config["cluster_pf_required"] = cluster_pf_required
             #
-            algorithm_config["NSGA_settings"]["pop_size"] = NSGA_settings["pop_size"]
-            algorithm_config["NSGA_settings"]["n_offsprings"] = NSGA_settings["n_offsprings"]
+            # algorithm_config["NSGA_settings"]["pop_size"] = NSGA_settings["pop_size"]
+            # algorithm_config["NSGA_settings"]["n_offsprings"] = NSGA_settings["n_offsprings"]
             # algorithm_config["NSGA_settings"]["mut_eta"] = NSGA_settings["mut_eta"]
             # algorithm_config["NSGA_settings"]["sbx_eta"] = NSGA_settings["sbx_eta"]
-            #
+            if problem_config["n_obj"] > 2:
+                algorithm_config["NSGA_settings"]["ref_dirs"] = get_reference_directions("das-dennis", problem_config["n_obj"], n_partitions=12)
+
             # problem_config["clustering_config"] = {"criterion": "X"}
             # problem_config["n_clusters"] = 3
             # problem_config["n_constr"] = 4
@@ -98,18 +105,16 @@ def create_config(problem_name):
 
         problem_config = {
             "name": problem_name,
-            "dim": 27,
-            "n_obj": 10,
-            "n_constr": 18,
-            "lb": [0.24, 7, 0, 5.5, 19, 85, 14, 3, 0.46, 0.24, 7, 0, 5.5, 19, 85, 14, 3, 0.46, 0.24, 7, 0, 5.5, 19, 85,
-                   14, 3, 0.46],
-            "ub": [0.48, 11, 6, 5.968, 25, 110, 20, 3.75, 1, 0.48, 11, 6, 5.968, 25, 110, 20, 3.75, 1, 0.48, 11, 6,
-                   5.968, 25, 110, 20, 3.75, 1],
+            "dim": 7,
+            "n_obj": 9,
+            "n_constr": 0,
+            "lb": [0.5, 0.45, 0.5, 0.5, 0.875, 0.4, 0.4],
+            "ub": [1.5, 1.35, 1.5, 1.5, 2.625, 1.2, 1.2],
             "visualization_angle": (0, 0),
         }
 
-        NSGA_settings = {"pop_size": 100, "n_offsprings": 30, "sbx_prob": 0.9, "sbx_eta": 3, "mut_eta": 20,
-                         "n_eval": 5000,
+        NSGA_settings = {"pop_size": 200, "n_offsprings": 30, "sbx_prob": 1, "sbx_eta": 20, "mut_eta": 20,
+                         "n_eval": 40000,
                          "ref_dirs": get_reference_directions("das-dennis", problem_config["n_obj"], n_partitions=12)}
 
         #  for 3 or more objectives

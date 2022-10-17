@@ -12,13 +12,49 @@ from regemo.problems import two_member_truss
 from regemo.problems import welded_beam_design
 from regemo.problems import water
 from regemo.problems import gaa
+from regemo.problems import four_bar_truss_design 
+from regemo.problems import reinforced_concrete_beam_design
+from regemo.problems import pressure_vessel_design
+from regemo.problems import hatch_cover_design
+from regemo.problems import coil_compression_spring_design
+from regemo.problems import disk_brake_design
+from regemo.problems import speed_reducer_design
+from regemo.problems import gear_train_design
+from regemo.problems import rocket_injector_design
+from regemo.problems import car_side_impact
+from regemo.problems import conceptual_marine_design
+from regemo.problems import car_cab_design
+
 
 from pymoo.core.problem import Problem
 import numpy as np
 import copy
 
-problems = ["bnh", "c2dtlz2", "crashworthiness", "dtlz2", "dtlz5", "dtlz7", "mod_zdt", "osy", "srn",
-            "two_member_truss", "welded_beam_design", "water", "gaa"]
+problems = ["four_bar_truss_design",
+            "reinforced_concrete_beam_design",
+            "pressure_vessel_design",
+            "hatch_cover_design",
+            "coil_compression_spring_design",
+            "disk_brake_design",
+            "speed_reducer_design",
+            "gear_train_design",
+            "rocket_injector_design",
+            "car_side_impact",
+            "conceptual_marine_design",
+            "bnh",
+            "c2dtlz2",
+            "crashworthiness",
+            "dtlz2",
+            "dtlz5",
+            "dtlz7",
+            "mod_zdt",
+            "osy",
+            "srn",
+            "two_member_truss",
+            "welded_beam_design",
+            "water",
+            "gaa",
+            "car_cab_design"]
 
 evaluation_mapper = {
     "bnh": bnh.evaluate,
@@ -34,7 +70,19 @@ evaluation_mapper = {
     "two_member_truss": two_member_truss.evaluate,
     "welded_beam_design": welded_beam_design.evaluate,
     "water": water.evaluate,
-    "gaa": gaa.evaluate
+    "gaa": gaa.evaluate,
+    "four_bar_truss_design": four_bar_truss_design.evaluate,
+    "reinforced_concrete_beam_design": reinforced_concrete_beam_design.evaluate,
+    "pressure_vessel_design": pressure_vessel_design.evaluate,
+    "hatch_cover_design": hatch_cover_design.evaluate,
+    "coil_compression_spring_design": coil_compression_spring_design.evaluate,
+    "disk_brake_design": disk_brake_design.evaluate,
+    "speed_reducer_design": speed_reducer_design.evaluate,
+    "gear_train_design": gear_train_design.evaluate,
+    "rocket_injector_design": rocket_injector_design.evaluate,
+    "car_side_impact": car_side_impact.evaluate,
+    "conceptual_marine_design": conceptual_marine_design.evaluate,
+    "car_cab_design": car_cab_design.evaluate,
 }
 
 

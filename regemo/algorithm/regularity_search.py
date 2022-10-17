@@ -29,7 +29,7 @@ from matplotlib import cm
 import numpy as np
 import pickle
 
-plt.rcParams.update({'font.size': 15})
+plt.rcParams.update({'font.size': 5})
 
 
 def get_default_args(func):
@@ -294,8 +294,8 @@ class Regularity_Search:
         if norm_F.ndim == 1:
             norm_F = norm_F.reshape(1, -1)
 
-        orig_hv = self.hv._do(norm_orig_F)
-        new_hv = self.hv._do(norm_F)
+        orig_hv = self.hv.do(norm_orig_F)
+        new_hv = self.hv.do(norm_F)
 
         if new_hv > 0:
             self.final_metrics["hv_dif_%"] = ((abs(orig_hv - new_hv)) / orig_hv) * 100
@@ -632,46 +632,47 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="water", help="Name of the problem")
+    parser.add_argument("--problem_name", default="bnh", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
 
-    # for problem_name in problems:
-    res_storage_dir = f"results/{problem_name}"
-    algorithm_config_storage_dir = config.algorithm_config_path
-    problem_config_storage_dir = config.problem_config_path
-    algorithm_config = {}
+    for problem_name in problems[:12]:
+        # for problem_name in problems:
+        res_storage_dir = f"results/{problem_name}"
+        algorithm_config_storage_dir = config.algorithm_config_path
+        problem_config_storage_dir = config.problem_config_path
+        algorithm_config = {}
 
-    # create the dirs for storing images and config files
-    create_dir(res_storage_dir, delete=True)
+        # create the dirs for storing images and config files
+        create_dir(res_storage_dir, delete=True)
 
-    if not os.path.exists(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle"):
-        print("[Error!] Problem Configuration file not found...")
-        sys.exit(1)
-    if not os.path.exists(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle"):
-        print("[Error!] Algorithm Configuration file not found...")
-        sys.exit(1)
-    else:
-        problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
-        algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
+        if not os.path.exists(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle"):
+            print("[Error!] Problem Configuration file not found...")
+            sys.exit(1)
+        if not os.path.exists(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle"):
+            print("[Error!] Algorithm Configuration file not found...")
+            sys.exit(1)
+        else:
+            problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
+            algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
 
-    print(problem_config)
-    print(algorithm_config)
+        print(problem_config)
+        print(algorithm_config)
 
-    regularity_search = Regularity_Search(problem_args=problem_config,
-                                          seed=seed,
-                                          NSGA_settings=algorithm_config["NSGA_settings"],
-                                          clustering_config=algorithm_config["clustering_config"],
-                                          non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
-                                          rand_regularity_coef_factor=algorithm_config["rand_regularity_coef_factor"],
-                                          rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
-                                          rand_regularity_MSE_threshold=algorithm_config["rand_regularity_MSE_threshold"],
-                                          non_rand_regularity_MSE_threshold=algorithm_config["non_rand_regularity_MSE_threshold"],
-                                          cluster_pf_required=algorithm_config["cluster_pf_required"],
-                                          precision=algorithm_config["precision"],
-                                          num_clusters=algorithm_config["n_clusters"],
-                                          save_img=True,
-                                          result_storage=f"{res_storage_dir}",
-                                          verbose=False)
+        regularity_search = Regularity_Search(problem_args=problem_config,
+                                              seed=seed,
+                                              NSGA_settings=algorithm_config["NSGA_settings"],
+                                              clustering_config=algorithm_config["clustering_config"],
+                                              non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
+                                              rand_regularity_coef_factor=algorithm_config["rand_regularity_coef_factor"],
+                                              rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
+                                              rand_regularity_MSE_threshold=algorithm_config["rand_regularity_MSE_threshold"],
+                                              non_rand_regularity_MSE_threshold=algorithm_config["non_rand_regularity_MSE_threshold"],
+                                              cluster_pf_required=algorithm_config["cluster_pf_required"],
+                                              precision=algorithm_config["precision"],
+                                              num_clusters=algorithm_config["n_clusters"],
+                                              save_img=True,
+                                              result_storage=f"{res_storage_dir}",
+                                              verbose=False)
 
-    regularity_search.run()
+        regularity_search.run()

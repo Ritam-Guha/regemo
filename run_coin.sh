@@ -1,1 +1,1 @@
-python3 -m regemo.algorithm.regularity_driver --problem_name water
+python3 -m regemo.algorithm.regularity_driver --problem_name all

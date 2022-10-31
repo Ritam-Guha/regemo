@@ -9,18 +9,18 @@ import sys
 import pickle
 from pymoo.factory import get_reference_directions
 
-problems = ["rocket_injector_design"]
+problems = ["coil_compression_spring_design"]
 
 def create_config(problem_name):
-    # non_rand_regularity_degree = 1
-    # rand_regularity_coef_factor = 0.1
-    # rand_regularity_dependency = 1
-    # rand_factor_sd = 0.2
-    # precision = 2
-    # rand_regularity_MSE_threshold = 0.1
-    # non_rand_regularity_MSE_threshold = 0.1
-    # cluster_pf_required = True
-    # n_clusters = 1
+    non_rand_regularity_degree = 1
+    rand_regularity_coef_factor = 0.1
+    rand_regularity_dependency = 1
+    rand_factor_sd = 0.2
+    precision = 2
+    rand_regularity_MSE_threshold = 0.1
+    non_rand_regularity_MSE_threshold = 0.1
+    cluster_pf_required = True
+    n_clusters = 2
     # visualization_angle = (45, 45)
     # n_obj = 3
     # n_constr = 9
@@ -30,7 +30,7 @@ def create_config(problem_name):
     # NSGA_settings["n_offsprings"] = 100
     # NSGA_settings["mut_eta"] = 50
     # NSGA_settings["sbx_eta"] = 20
-    pop_size = 1000
+    # pop_size = 1000
 
     use_existing_config = True
     save_config = True
@@ -74,17 +74,17 @@ def create_config(problem_name):
             #     if "pattern" in key:
             #         del algorithm_config[key]
             #
-            # algorithm_config["n_clusters"] = n_clusters
-            # algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
-            # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
-            # algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
-            # algorithm_config["rand_factor_sd"] = rand_factor_sd
-            # algorithm_config["precision"] = precision
-            # algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
-            # algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
-            # algorithm_config["cluster_pf_required"] = cluster_pf_required
-            #
-            algorithm_config["NSGA_settings"]["pop_size"] = pop_size
+            algorithm_config["n_clusters"] = n_clusters
+            algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
+            algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
+            algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
+            algorithm_config["rand_factor_sd"] = rand_factor_sd
+            algorithm_config["precision"] = precision
+            algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
+            algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
+            algorithm_config["cluster_pf_required"] = cluster_pf_required
+            # algorithm_config["clustering_criterion"] = "X"
+            # algorithm_config["NSGA_settings"]["pop_size"] = pop_size
             # algorithm_config["NSGA_settings"]["n_offsprings"] = NSGA_settings["n_offsprings"]
             # algorithm_config["NSGA_settings"]["mut_eta"] = NSGA_settings["mut_eta"]
             # algorithm_config["NSGA_settings"]["sbx_eta"] = NSGA_settings["sbx_eta"]
@@ -146,8 +146,8 @@ def create_config(problem_name):
         algorithm_config["rand_factor_sd"] = rand_factor_sd
         algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
         algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
-        algorithm_config["cluster_pf_required"] = False
         algorithm_config["n_clusters"] = n_clusters
+        algorithm_config["clustering_criterion"] = "X"
 
     # store the algorithm and problem configurations
     if save_config:

@@ -11,7 +11,6 @@ from pymoo.algorithms.moo.nsga2 import RankAndCrowdingSurvival
 from pymoo.algorithms.moo.nsga3 import ReferenceDirectionSurvival
 from pymoo.factory import get_sampling, get_crossover, get_mutation, get_termination, get_performance_indicator
 from pymoo.optimize import minimize
-from pymoo.visualization.pcp import PCP
 from pymoo.visualization.scatter import Scatter
 
 from sklearn.linear_model import LinearRegression as linreg
@@ -295,21 +294,6 @@ class Regularity_Finder:
         self.print(tabulate(table_data, headers=table_header))
         self.print()
 
-        # get a pcp plot of the final population
-        plot = PCP(
-            # title=("Final Regular Population", {'pad': 30}),
-                   labels="X"
-                   )
-        plot.normalize_each_axis = False
-
-        plot.set_axis_style(color="grey", alpha=0.5)
-        plot.add(self.X)
-
-        if self.save_img:
-            plot.save(f"{config.BASE_PATH}/{self.result_storage}/PCP_final_population.jpg")
-
-        if self.verbose:
-            plot.show()
 
     def run_NSGA(self, problem, NSGA_settings):
         # run the NSGA2 over the problem

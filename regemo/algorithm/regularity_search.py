@@ -23,6 +23,7 @@ import copy
 import os
 import sys
 from hdbscan.hdbscan_ import HDBSCAN
+from pymoo.visualization.pcp import PCP
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -58,8 +59,8 @@ class Regularity_Search:
                  precision=2,
                  NSGA_settings=None,
                  clustering_config=None,
-                 cluster_pf_required=True,
                  num_clusters=1,
+                 clustering_criterion="X",
                  save_img=True,
                  result_storage=None,
                  verbose=True,
@@ -76,8 +77,8 @@ class Regularity_Search:
         self.rand_regularity_dependency = rand_regularity_dependency
         self.NSGA_settings = NSGA_settings
         self.clustering_config = clustering_config
-        self.cluster_pf_required = cluster_pf_required
         self.num_clusters = num_clusters
+        self.clustering_criterion = clustering_criterion
         self.rand_regularity_MSE_threshold = rand_regularity_MSE_threshold
         self.non_rand_regularity_MSE_threshold = non_rand_regularity_MSE_threshold
 
@@ -151,11 +152,11 @@ class Regularity_Search:
             plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.jpg")
 
         # do clustering of the pareto front
-        if self.cluster_pf_required:
+        if self.num_clusters > 1:
             res_pf = {"X": res["X"], "F": res["F"]}
             self.clusters = self.k_means_cluster(res_pf,
                                                  n_clusters=self.num_clusters,
-                                                 clustering_criterion=self.problem_args["clustering_config"]["criterion"])
+                                                 clustering_criterion=self.clustering_criterion)
 
         else:
             self.clusters = [{
@@ -339,6 +340,22 @@ class Regularity_Search:
         with open(f"{config.BASE_PATH}/{self.result_storage}/final_regular_population.pickle",
                   "wb") as file_handle:
             pickle.dump(final_population, file_handle)
+
+        # get a pcp plot of the final population
+        plot = PCP(
+            # title=("Final Regular Population", {'pad': 30}),
+            labels="X"
+        )
+        plot.normalize_each_axis = False
+
+        plot.set_axis_style(color="grey", alpha=0.5)
+        plot.add(self.combined_X)
+
+        if self.save_img:
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/PCP_final_population.jpg")
+
+        if self.verbose:
+            plot.show()
 
     def get_edge_points(self,
                         F):
@@ -632,7 +649,7 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="rocket_injector_design", help="Name of the problem")
+    parser.add_argument("--problem_name", default="coil_compression_spring_design", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
 
@@ -667,7 +684,6 @@ if __name__ == "__main__":
                                           rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
                                           rand_regularity_MSE_threshold=algorithm_config["rand_regularity_MSE_threshold"],
                                           non_rand_regularity_MSE_threshold=algorithm_config["non_rand_regularity_MSE_threshold"],
-                                          cluster_pf_required=algorithm_config["cluster_pf_required"],
                                           precision=algorithm_config["precision"],
                                           num_clusters=algorithm_config["n_clusters"],
                                           save_img=True,

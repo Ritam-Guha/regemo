@@ -2,7 +2,7 @@ from pymoo.problems.multi.bnh import BNH
 
 
 def evaluate(X,
-             problem_args,
+             problem_args=None,
              constr=False):
 
     # evaluation function for BNH problem

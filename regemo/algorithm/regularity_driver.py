@@ -56,11 +56,11 @@ class Regularity_search_driver:
 
     def run(self):
         # the main running part
-        self.param_comb = self.find_param_comb()
-        self.create_file_structure()
-        self.execute_regularity_search()
-        self.plot_complexity_vs_efficiency()
-        self.save_config_df()
+        # self.param_comb = self.find_param_comb()
+        # self.create_file_structure()
+        # self.execute_regularity_search()
+        # self.plot_complexity_vs_efficiency()
+        # self.save_config_df()
         self.perform_trade_off_analysis()
 
     def find_param_comb(self):
@@ -182,7 +182,8 @@ class Regularity_search_driver:
 
         return trade_off_point
 
-    def find_preferred_point(self):
+    def find_preferred_point(self,
+                             threshold_percentage=2):
         pf = np.zeros((len(self.pf_param_comb), 2))
         for i, comb in enumerate(self.pf_param_comb):
             pf[i, 0] = comb["complexity"]
@@ -200,18 +201,34 @@ class Regularity_search_driver:
         knee_point_index = self.knee_point_estimation(pf)
         self.knee_point_ID = self.pf_param_comb[knee_point_index]["ID"]
 
+        # get the pareto front under the threshold
+        pf_thres = pf[pf[:, 1] <= threshold_percentage, :]
+
         # if not self.convexity_front:
         # in case of concave pareto front, the preferred choice is
         # the one on the right extreme having the lowest hv_dif
         # return self.pf_param_comb[-1]["ID"]
         # else:
         # in case of convex pareto front
-        if pf[knee_point_index, 1] <= 2:
+        if pf[knee_point_index, 1] <= threshold_percentage:
             # the preferred point is the knee point, if it is within 2% error
             return self.knee_point_ID
+        elif pf_thres.shape[0] > 0:
+            knee_point_index_thres = self.knee_point_estimation(pf)
+            return self.pf_param_comb[knee_point_index_thres]["ID"]
         else:
-            # else it is the point with the lowest hv_diff
-            return self.pf_param_comb[-1]["ID"]
+            pf_norm = (pf - np.min(pf, axis=0)) / (np.max(pf, axis=0) - (np.min(pf, axis=0)) + 1e-6)
+            best_idx = pf_norm.shape[0] - 1
+            for i in range(1, pf.shape[0]):
+                gain = pf_norm[best_idx, 0] - pf_norm[best_idx-1, 0]
+                loss = pf_norm[best_idx-1, 1] - pf_norm[best_idx, 1]
+
+                if gain > loss:
+                    best_idx = best_idx-1
+                else:
+                    break
+
+            return self.pf_param_comb[best_idx]["ID"]
 
     def perform_trade_off_analysis(self):
         pf_df = pd.read_excel(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/configurations.xlsx",
@@ -366,7 +383,7 @@ class Regularity_search_driver:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="srn", help="Name of the problem")
+    parser.add_argument("--problem_name", default="coil_compression_spring_design", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":

@@ -152,122 +152,138 @@ class Regularity_Search:
             plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.jpg")
 
         # do clustering of the pareto front
-        if self.num_clusters > 1:
-            res_pf = {"X": res["X"], "F": res["F"]}
-            self.clusters = self.k_means_cluster(res_pf,
-                                                 n_clusters=self.num_clusters,
-                                                 clustering_criterion=self.clustering_criterion)
+        clustering_satisfied = False
 
-        else:
-            self.clusters = [{
-                "X": res["X"],
-                "F": res["F"]
-            }]
+        while not clustering_satisfied:
+            if self.num_clusters > 1:
+                res_pf = {"X": res["X"], "F": res["F"]}
+                self.clusters = self.k_means_cluster(res_pf,
+                                                     n_clusters=self.num_clusters,
+                                                     clustering_criterion=self.clustering_criterion)
 
-        if len(self.clusters) > 1:
-            self.print(f"The algorithm has found {len(self.clusters)} different clusters in the pareto front")
-            self.print("It will create different regularities for different clusters")
+            else:
+                clustering_satisfied = True
+                self.clusters = [{
+                    "X": res["X"],
+                    "F": res["F"]
+                }]
 
-        for i, cluster in enumerate(self.clusters):
-            # iterate over the clusters and find a regularity for each of the clusters
-            self.print(f"\n\n ================ PF Cluster {i+1} ================")
+            if len(self.clusters) > 1:
+                self.print(f"The algorithm has found {len(self.clusters)} different clusters in the pareto front")
+                self.print("It will create different regularities for different clusters")
 
-            self.orig_X.append(copy.deepcopy(cluster["X"]))
-            self.orig_F.append(copy.deepcopy(cluster["F"]))
+            for i, cluster in enumerate(self.clusters):
+                # iterate over the clusters and find a regularity for each of the clusters
+                self.print(f"\n\n ================ PF Cluster {i+1} ================")
 
-            # new NSGA settings
-            new_NSGA_settings = copy.deepcopy(self.NSGA_settings)
-            new_NSGA_settings["ideal_point"] = self.ideal_point
-            new_NSGA_settings["nadir_point"] = self.nadir_point
-            new_NSGA_settings["pop_size"] = cluster["X"].shape[0]
+                self.orig_X.append(copy.deepcopy(cluster["X"]))
+                self.orig_F.append(copy.deepcopy(cluster["F"]))
 
-            if self.problem_args["n_obj"] > 2:
-                cur_ref_dirs = self.check_closest_ref_dirs(self.NSGA_settings["ref_dirs"], cluster["F"])
-                new_NSGA_settings["ref_dirs"] = cur_ref_dirs
+                # new NSGA settings
+                new_NSGA_settings = copy.deepcopy(self.NSGA_settings)
+                new_NSGA_settings["ideal_point"] = self.ideal_point
+                new_NSGA_settings["nadir_point"] = self.nadir_point
+                new_NSGA_settings["pop_size"] = cluster["X"].shape[0]
 
-            # use the regularity enforcement object to extract the regularity
-            regularity_enforcement = Regularity_Finder( X=cluster["X"],
-                                                        F=cluster["F"],
-                                                        problem_args=self.problem_args,
-                                                        non_rand_regularity_degree=self.non_rand_regularity_degree,
-                                                        rand_regularity_coef_factor=self.rand_regularity_coef_factor,
-                                                        rand_regularity_dependency=self.rand_regularity_dependency,
-                                                        precision=self.precision,
-                                                        NSGA_settings=new_NSGA_settings,
-                                                        clustering_config=self.clustering_config,
-                                                        rand_regularity_MSE_threshold=self.rand_regularity_MSE_threshold,
-                                                        non_rand_regularity_MSE_threshold=self.non_rand_regularity_MSE_threshold,
-                                                        seed=self.seed,
-                                                        save_img=self.save_img,
-                                                        result_storage=self.result_storage,
-                                                        verbose=self.verbose,
-                                                        pf_cluster_num=i,
-                                                        num_clusters=self.num_clusters)
+                if self.problem_args["n_obj"] > 2:
+                    cur_ref_dirs = self.check_closest_ref_dirs(self.NSGA_settings["ref_dirs"], cluster["F"])
+                    new_NSGA_settings["ref_dirs"] = cur_ref_dirs
 
-            regularity_enforcement.run()
+                # use the regularity enforcement object to extract the regularity
+                regularity_enforcement = Regularity_Finder( X=cluster["X"],
+                                                            F=cluster["F"],
+                                                            problem_args=self.problem_args,
+                                                            non_rand_regularity_degree=self.non_rand_regularity_degree,
+                                                            rand_regularity_coef_factor=self.rand_regularity_coef_factor,
+                                                            rand_regularity_dependency=self.rand_regularity_dependency,
+                                                            precision=self.precision,
+                                                            NSGA_settings=new_NSGA_settings,
+                                                            clustering_config=self.clustering_config,
+                                                            rand_regularity_MSE_threshold=self.rand_regularity_MSE_threshold,
+                                                            non_rand_regularity_MSE_threshold=self.non_rand_regularity_MSE_threshold,
+                                                            seed=self.seed,
+                                                            save_img=self.save_img,
+                                                            result_storage=self.result_storage,
+                                                            verbose=self.verbose,
+                                                            pf_cluster_num=i,
+                                                            num_clusters=self.num_clusters)
 
-            self.final_metrics["complexity"] += regularity_enforcement.regularity.calc_process_complexity()
+                regularity_enforcement.run()
 
-            # storage file for every PF
-            text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i+1}.txt"
-            tex_storage_long = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}_long.tex"
-            tex_storage_short = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}.tex"
+                if self.num_clusters > 1 and np.unique(regularity_enforcement.X, axis=0).shape[0] == 1:
+                    # if we are getting 1 member, join the clusters and restart
+                    self.num_clusters -= 1
+                    clustering_satisfied = False
+                    self.X = []
+                    self.F = []
+                    self.regularity_obj = []
+                    create_dir(f"results/{problem_name}", delete=True)
+                    break
+                elif i == self.num_clusters-1:
+                    clustering_satisfied = True
 
-            # display the regularity for every cluster
-            regularity_enforcement.regularity.display(self.orig_X[i],
-                                                      self.problem_args["lb"],
-                                                      self.problem_args["ub"],
-                                                      save_file=text_storage)
-            regularity_enforcement.regularity.display_tex(self.orig_X[i],
+                self.final_metrics["complexity"] += regularity_enforcement.regularity.calc_process_complexity()
+
+                # storage file for every PF
+                text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i+1}.txt"
+                tex_storage_long = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}_long.tex"
+                tex_storage_short = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}.tex"
+
+                # display the regularity for every cluster
+                regularity_enforcement.regularity.display(self.orig_X[i],
                                                           self.problem_args["lb"],
                                                           self.problem_args["ub"],
-                                                          save_file=tex_storage_long,
-                                                          front_num=i, total_fronts=len(self.clusters),
-                                                          long_version=True)
-            regularity_enforcement.regularity.display_tex(self.orig_X[i],
-                                                          self.problem_args["lb"],
-                                                          self.problem_args["ub"],
-                                                          save_file=tex_storage_short, front_num=i,
-                                                          total_fronts=len(self.clusters),
-                                                          long_version=False)
-            self.print("Final Metrics")
-            self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
-            self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
-            self.print("\n======================================\n")
+                                                          save_file=text_storage)
+                regularity_enforcement.regularity.display_tex(self.orig_X[i],
+                                                              self.problem_args["lb"],
+                                                              self.problem_args["ub"],
+                                                              save_file=tex_storage_long,
+                                                              front_num=i, total_fronts=len(self.clusters),
+                                                              long_version=True)
+                regularity_enforcement.regularity.display_tex(self.orig_X[i],
+                                                              self.problem_args["lb"],
+                                                              self.problem_args["ub"],
+                                                              save_file=tex_storage_short, front_num=i,
+                                                              total_fronts=len(self.clusters),
+                                                              long_version=False)
+                self.print("Final Metrics")
+                self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
+                self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
+                self.print("\n======================================\n")
 
-            # get the X and F after regularity enforcement
-            cur_X = regularity_enforcement.X
-            cur_F = regularity_enforcement.F
-            self.X.append(cur_X)
-            self.F.append(cur_F)
+                # get the X and F after regularity enforcement
+                cur_X = regularity_enforcement.X
+                cur_F = regularity_enforcement.F
+                self.X.append(cur_X)
+                self.F.append(cur_F)
 
-            # save the objects
-            self.regularity_objs.append(copy.deepcopy(regularity_enforcement))
+                # save the objects
+                self.regularity_objs.append(copy.deepcopy(regularity_enforcement))
 
-            # plot the regular front
-            plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
-            plot = plot.add(cur_F, color="red", marker="*", s=15, label="Regular Efficient Front")
+                # plot the regular front
+                plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
+                plot = plot.add(cur_F, color="red", marker="*", s=15, label="Regular Efficient Front")
 
-            # plot.title = "Regular Efficient Front"
+                # plot.title = "Regular Efficient Front"
 
-            if self.verbose:
-                plot.show()
+                if self.verbose:
+                    plot.show()
 
-            if self.save_img:
-                plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_cluster_{i + 1}.jpg")
+                if self.save_img:
+                    plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_cluster_{i + 1}.jpg")
 
-            # plot the original and regular front
-            plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
-            plot = plot.add(self.orig_F[i], color="blue", marker="o", s=15, label="Original Efficient Front")
-            plot = plot.add(cur_F, color="red", marker="*", s=40, label="Regular Efficient Front")
+                # plot the original and regular front
+                plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
+                plot = plot.add(self.orig_F[i], color="blue", marker="o", s=15, label="Original Efficient Front")
+                plot = plot.add(cur_F, color="red", marker="*", s=40, label="Regular Efficient Front")
 
-            # plot.title = "Final Efficient Fronts (Before Merging the Clusters)"
+                # plot.title = "Final Efficient Fronts (Before Merging the Clusters)"
 
-            if self.verbose:
-                plot.show()
+                if self.verbose:
+                    plot.show()
 
-            if self.save_img:
-                plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts_pre_merge_cluster_{i+1}.jpg")
+                if self.save_img:
+                    plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts_pre_merge_cluster_{i+1}.jpg")
 
         # collect the original and regular F for all cluster members
         all_orig_F = self.orig_F[0]
@@ -330,7 +346,7 @@ class Regularity_Search:
         # plot.title = "Final Merged Efficient Fronts (After Dominated Point Removal)"
 
         if self.save_img:
-            plt.savefig(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg", dpi=600)
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg", dpi=600)
 
         self.combined_F = all_regularity_F[fronts[0], :]
         self.combined_X = all_regularity_X[fronts[0], :]

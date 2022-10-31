@@ -188,6 +188,7 @@ class PowerLaw:
 
     def __init__(self, n_var, error_metric='mse', normalization_flag=False):
         self.n_var = n_var
+        self.score_matrix = np.zeros((n_var, n_var))
         self.b = np.zeros([n_var, n_var])
         self.c = np.zeros([n_var, n_var])
         self.sigma_c = np.zeros([n_var, n_var])
@@ -275,6 +276,7 @@ class PowerLaw:
                 xj_log_data = log_x[:, j].reshape(-1, 1)
                 y = log_x[:, i]
                 reg = LinearRegression().fit(xj_log_data, y)
+                self.score_matrix[i, j] = reg.score(xj_log_data, y)
                 b = -reg.coef_
                 try:
                     c = np.exp(reg.intercept_)

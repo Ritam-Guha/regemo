@@ -1,7 +1,7 @@
 import numpy as np
 
 def evaluate(X,
-             problem_args,
+             problem_args=None,
              constr=False):
     # evaluation function for re_21 four bar truss design problem
     """

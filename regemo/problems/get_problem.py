@@ -87,7 +87,7 @@ evaluation_mapper = {
 
 
 def get_problem(problem_name,
-                problem_args,
+                problem_args=None,
                 class_required=True):
 
     """
@@ -103,6 +103,8 @@ def get_problem(problem_name,
     evaluate = evaluation_mapper[problem_name.lower()]
 
     if class_required:
+        assert(problem_args is not None)
+
         class Test(Problem):
             def __init__(self):
                 if len(problem_args['lb']) < problem_args['dim']:

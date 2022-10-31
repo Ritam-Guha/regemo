@@ -20,7 +20,7 @@ def create_config(problem_name):
     rand_regularity_MSE_threshold = 0.1
     non_rand_regularity_MSE_threshold = 0.1
     cluster_pf_required = True
-    n_clusters = 2
+    n_clusters = 3
     # visualization_angle = (45, 45)
     # n_obj = 3
     # n_constr = 9

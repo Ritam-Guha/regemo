@@ -56,11 +56,11 @@ class Regularity_search_driver:
 
     def run(self):
         # the main running part
-        # self.param_comb = self.find_param_comb()
-        # self.create_file_structure()
-        # self.execute_regularity_search()
-        # self.plot_complexity_vs_efficiency()
-        # self.save_config_df()
+        self.param_comb = self.find_param_comb()
+        self.create_file_structure()
+        self.execute_regularity_search()
+        self.plot_complexity_vs_efficiency()
+        self.save_config_df()
         self.perform_trade_off_analysis()
 
     def find_param_comb(self):
@@ -202,7 +202,9 @@ class Regularity_search_driver:
         self.knee_point_ID = self.pf_param_comb[knee_point_index]["ID"]
 
         # get the pareto front under the threshold
-        pf_thres = pf[pf[:, 1] <= threshold_percentage, :]
+        thres_idx = [i for i in range(pf.shape[0]) if pf[i, 1] <= threshold_percentage]
+        pf_thres = pf[thres_idx, :]
+        self.pf_param_comb_thres = [self.pf_param_comb[idx] for idx in thres_idx]
 
         # if not self.convexity_front:
         # in case of concave pareto front, the preferred choice is
@@ -214,8 +216,8 @@ class Regularity_search_driver:
             # the preferred point is the knee point, if it is within 2% error
             return self.knee_point_ID
         elif pf_thres.shape[0] > 0:
-            knee_point_index_thres = self.knee_point_estimation(pf)
-            return self.pf_param_comb[knee_point_index_thres]["ID"]
+            knee_point_index_thres = self.knee_point_estimation(pf_thres)
+            return self.pf_param_comb_thres[knee_point_index_thres]["ID"]
         else:
             pf_norm = (pf - np.min(pf, axis=0)) / (np.max(pf, axis=0) - (np.min(pf, axis=0)) + 1e-6)
             best_idx = pf_norm.shape[0] - 1
@@ -223,7 +225,7 @@ class Regularity_search_driver:
                 gain = pf_norm[best_idx, 0] - pf_norm[best_idx-1, 0]
                 loss = pf_norm[best_idx-1, 1] - pf_norm[best_idx, 1]
 
-                if gain > loss:
+                if (pf[best_idx-1, 1]-pf[-1, 1]) <= threshold_percentage and gain > loss:
                     best_idx = best_idx-1
                 else:
                     break
@@ -256,7 +258,8 @@ class Regularity_search_driver:
         is_unique = np.where(np.logical_not(find_duplicates(F, epsilon=1e-24)))[0]
         F = F[is_unique, :]
         self.pf_param_comb = [self.pf_param_comb[i] for i in is_unique]
-        self.preferred_ID = self.find_preferred_point()
+        thresholded_percentage = 2
+        self.preferred_ID = self.find_preferred_point(threshold_percentage=thresholded_percentage)
 
         pf_text = open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_PF.txt", "w")
         for param in self.pf_param_comb:
@@ -292,6 +295,7 @@ class Regularity_search_driver:
         y_title = "hv_dif_%"
         hover_data = list(self.param_comb[0].keys())
         pf_df = self.convert_pf_regularity_to_pd(self.pf_param_comb)
+        pickle.dump(self.preferred_ID, open(f"{config.BASE_PATH}/results/hierarchical_search/{problem_name}/preferred_id.pickle", "wb"))
 
         # save the interactive pf config
         custom_color_mapping = {"preferred": "green", "knee": "red", "normal": "blue"}
@@ -313,9 +317,13 @@ class Regularity_search_driver:
             type_wise_partition[key] = pf_df[pf_df["type"] == key][["complexity", "hv_dif_%"]].values
 
         fig, ax = plt.subplots(figsize=(10, 8))
+        min_complexity = np.min(F[:, 0])
+        max_complexity = np.max(F[:, 0])
         for key in list(custom_color_mapping.keys()):
             ax.scatter(type_wise_partition[key][:, 0], type_wise_partition[key][:, 1], c=custom_color_mapping[key],
                        label=key, s=80)
+
+        # ax.plot((min_complexity, max_complexity), (thresholded_percentage, thresholded_percentage), "-", color="black")
 
         ax.set_xlabel("complexity")
         ax.set_ylabel("hv difference (in %)")
@@ -383,7 +391,7 @@ class Regularity_search_driver:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="coil_compression_spring_design", help="Name of the problem")
+    parser.add_argument("--problem_name", default="all", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":

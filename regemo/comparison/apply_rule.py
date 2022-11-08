@@ -36,9 +36,9 @@ def get_rules(problem_name):
         with open(f'{config.BASE_PATH}/comparison/rules/{problem_name}.txt', 'w') as f:
             for i, j in power_rules_idx:
                 print(
-                    f"power_law: X[{i}] * X[{j}] ^ {np.round(power_law.b[i, j], 2)} = {np.round(power_law.c[i, j], 2)}",
+                    f"power_law: X[{i+1}] * X[{j+1}] ^ {np.round(power_law.b[i, j], 2)} = {np.round(power_law.c[i, j], 2)}",
                     end=" ", file=f)
-                print(f"r2 score: {np.round(power_law.score_matrix[i, j], 2)}", file=f)
+                print(f", r2 score: {np.round(power_law.score_matrix[i, j], 2)}", file=f)
 
     except ValueError:
         print(f"could not learn rules for {problem_name}")

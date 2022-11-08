@@ -93,6 +93,8 @@ class Regularity_Search:
         self.F = []
         self.orig_X = []
         self.orig_F = []
+        self.proxy_regular_X = []
+        self.proxy_regular_F = []
         self.combined_X = None
         self.combined_F = None
         self.result_storage = result_storage
@@ -114,13 +116,12 @@ class Regularity_Search:
 
         np.random.seed(self.seed)
 
-    @staticmethod
-    def save_param_config():
-        with open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "wb") as pkl_handler:
+    def save_param_config(self):
+        with open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{self.problem_name}.pickle", "wb") as pkl_handler:
             pickle.dump(algorithm_config, pkl_handler)
             pkl_handler.close()
 
-        with open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "wb") as pkl_handler:
+        with open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{self.problem_name}.pickle", "wb") as pkl_handler:
             pickle.dump(problem_config, pkl_handler)
             pkl_handler.close()
 
@@ -217,7 +218,7 @@ class Regularity_Search:
                     self.X = []
                     self.F = []
                     self.regularity_obj = []
-                    create_dir(f"results/{problem_name}", delete=True)
+                    create_dir(f"results/{self.problem_name}", delete=True)
                     break
                 elif i == self.num_clusters-1:
                     clustering_satisfied = True
@@ -256,6 +257,8 @@ class Regularity_Search:
                 cur_F = regularity_enforcement.F
                 self.X.append(cur_X)
                 self.F.append(cur_F)
+                self.proxy_regular_X.append(regularity_enforcement.proxy_regular_X)
+                self.proxy_regular_F.append(regularity_enforcement.proxy_regular_F)
 
                 # save the objects
                 self.regularity_objs.append(copy.deepcopy(regularity_enforcement))
@@ -289,6 +292,8 @@ class Regularity_Search:
         all_orig_F = self.orig_F[0]
         all_regularity_F = self.F[0]
         all_regularity_X = self.X[0]
+        all_proxy_regular_F = self.proxy_regular_F[0]
+        all_proxy_regular_X = self.proxy_regular_X[0]
 
         # edge points collection
         edge_points = []
@@ -299,6 +304,9 @@ class Regularity_Search:
             all_orig_F = np.append(all_orig_F, self.orig_F[i], axis=0)
             all_regularity_F = np.append(all_regularity_F, self.F[i], axis=0)
             all_regularity_X = np.append(all_regularity_X, self.X[i], axis=0)
+            if self.proxy_regular_F[i] is not None:
+                all_proxy_regular_F = np.append(all_proxy_regular_F, self.proxy_regular_F[i], axis=0)
+                all_proxy_regular_X = np.append(all_proxy_regular_X, self.proxy_regular_X[i], axis=0)
 
         # calculate the HV_diff_%
         self.hv = get_performance_indicator("hv", ref_point=np.ones(self.problem_args["n_obj"]))
@@ -337,6 +345,8 @@ class Regularity_Search:
 
         # plot the figure after nds
         fronts = NonDominatedSorting().do(all_regularity_F)
+        self.combined_F = all_regularity_F[fronts[0], :]
+        self.combined_X = all_regularity_X[fronts[0], :]
         plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
         plot = plot.add(all_orig_F, color="blue", marker="o", s=60, label="Original Efficient Front")
         plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=80, label="Regular Efficient Front")
@@ -348,8 +358,15 @@ class Regularity_Search:
         if self.save_img:
             plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg", dpi=600)
 
-        self.combined_F = all_regularity_F[fronts[0], :]
-        self.combined_X = all_regularity_X[fronts[0], :]
+        # plot the proxy regular population
+        fronts = NonDominatedSorting().do(all_proxy_regular_F)
+        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
+        plot = plot.add(all_orig_F, color="blue", marker="o", s=60, label="Original Efficient Front")
+        plot = plot.add(all_proxy_regular_F[fronts[0], :], color="red", marker="*", s=80,
+                        label="Proxy Regular Efficient Front")
+
+        if self.save_img:
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_proxy_regular_efficient_fronts.jpg", dpi=600)
 
         # store the final population
         final_population = {"X": self.combined_X, "F": self.combined_F}
@@ -372,6 +389,8 @@ class Regularity_Search:
 
         if self.verbose:
             plot.show()
+
+
 
     def get_edge_points(self,
                         F):

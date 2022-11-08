@@ -294,6 +294,20 @@ class Regularity_Finder:
         self.print(tabulate(table_data, headers=table_header))
         self.print()
 
+        # check the applicability of the final regularity principle
+        self.proxy_regular_X, self.proxy_regular_F = self._check_final_regularity(n_points=1000)
+
+        if self.proxy_regular_F is not None:
+            plot = Scatter(labels="F", legend=True, angle=self.problem_args["visualization_angle"])
+            plot = plot.add(self.orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
+            plot = plot.add(self.proxy_regular_F, color="red", marker="*", s=40, label="Proxy Regular Efficient Front")
+
+            if self.verbose:
+                plot.show()
+
+            if self.save_img:
+                plot.save(
+                    f"{config.BASE_PATH}/{self.result_storage}/proxy_regular_efficient_front_{self.pf_cluster_num + 1}.jpg")
 
     def run_NSGA(self, problem, NSGA_settings):
         # run the NSGA2 over the problem
@@ -910,18 +924,22 @@ class Regularity_Finder:
 
         return _regularity_enforcemnt
 
-    def _check_final_regularity(self):
+    def _check_final_regularity(self,
+                                n_points=1000):
         # create a population of random solutions and apply the regularity over them
-        random_X = np.random.uniform(self.lb, self.ub, (self.X.shape[0]*10, self.problem_args["dim"]))
+        random_X = np.random.uniform(self.lb, self.ub, (n_points, self.problem_args["dim"]))
         regular_X = self.regularity.apply(random_X, self.lb, self.ub)
         regular_F, regular_G = self.evaluate(regular_X, self.problem_args, constr=True)
 
         if regular_G is not None:
             if len(regular_G.shape) == 1:
                 regular_G = regular_G.reshape(-1, 1)
-            constrained_idx = list(np.where(np.sum(regular_G > 0, axis=1) == 0)[0])
+            constrained_idx = list(np.where((np.sum(regular_G > 0, axis=1) == 0) * np.prod((self.lb <= regular_X) * (regular_X <= self.ub), axis=1))[0])
             regular_X = regular_X[constrained_idx, :]
             regular_F = regular_F[constrained_idx, :]
+
+        if len(regular_X) == 0:
+            return None, None
 
         required_pop_size = min(self.X.shape[0], regular_X.shape[0])
         regular_pop = pop_from_array_or_individual(regular_X)
@@ -929,19 +947,24 @@ class Regularity_Finder:
 
         if self.problem_args["n_obj"] == 2:
             # for 2-objective problems use rank and crowding survival
-            survived_pop = RankAndCrowdingSurvival()._do(self.problem, regular_pop, n_survive=required_pop_size)
-            self.X = survived_pop.get("X")
-            self.F = survived_pop.get("F")
+            regular_pop = RankAndCrowdingSurvival()._do(self.problem,
+                                                        regular_pop,
+                                                        n_survive=required_pop_size)
+            regular_X = regular_pop.get("X")
+            regular_F = regular_pop.get("F")
 
         elif self.problem_args["n_obj"] > 2:
             # for >2 objectives use reference direction based survival
-            survived_pop = ReferenceDirectionSurvival(self.NSGA_settings["ref_dirs"])._do(self.problem, regular_pop, n_survive=required_pop_size)
-            self.X = survived_pop.get("X")
-            self.F = survived_pop.get("F")
+            regular_pop = ReferenceDirectionSurvival(self.NSGA_settings["ref_dirs"])._do(self.problem,
+                                                                                         regular_pop,
+                                                                                         n_survive=required_pop_size)
+            regular_X = regular_pop.get("X")
+            regular_F = regular_pop.get("F")
 
         else:
             print("[Error!] Wrong dimensions")
 
+        return regular_X, regular_F
 
 
 

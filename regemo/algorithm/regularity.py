@@ -36,6 +36,18 @@ class Regularity():
         self.complexity = 0
         self.print = self.mod_print()
 
+    def generate_points(self,
+                        n_points=1000):
+        dim = len(self.lb)
+        random_X = np.random.uniform(self.lb, self.ub, (n_points, dim))
+        regular_X = self.apply(random_X, self.lb, self.ub)
+        return regular_X
+
+    def check_bound(self, X):
+        mask = self.lb <= X <= self.ub
+        mask = np.prod(mask, axis=1)
+        return mask
+
     def apply(self, X, lb, ub):
         # function to apply the regularity to the population members in X
 
@@ -43,7 +55,7 @@ class Regularity():
         new_X = self.non_rand_regularity_repair(X, lb, ub, self.non_rand_cluster, self.degree, self.precision)
 
         # for random variables, use the equation found in the process
-        if(self.rand_dependent_vars and self.rand_independent_vars):
+        if self.rand_dependent_vars and self.rand_independent_vars:
             for i, dep_idx in enumerate(self.rand_dependent_vars):
                 # initialize every dependent variable to be zeros for the population members
                 new_X[:, dep_idx] = 0
@@ -55,6 +67,8 @@ class Regularity():
 
                 # finally, add the offset
                 new_X[:, dep_idx] += self.rand_final_reg_coef_list[i][-1]
+
+        # new_X = new_X[self.check_bound(new_X)]
 
         return new_X
 
@@ -105,7 +119,7 @@ class Regularity():
         # compute the complexity
         complexity = (fixed_weight * num_fixed) + (independent_weight * num_independent) + (dependent_weight *
                                                                                             num_dependent) + (
-            complete_random_weight * num_complete_random)
+                             complete_random_weight * num_complete_random)
 
         return complexity
 
@@ -114,7 +128,7 @@ class Regularity():
             current_clusters = copy.deepcopy(clusters)
             for k, cluster in enumerate(current_clusters):
                 if cluster:
-                    current_clusters[k] = [(i+1) for i in cluster]
+                    current_clusters[k] = [(i + 1) for i in cluster]
 
             return current_clusters
 
@@ -124,12 +138,11 @@ class Regularity():
             f = open(save_file, "w")
             self.print = self.mod_print(f)
 
-
         # if there is some X, apply the regularity
         X = copy.deepcopy(X_apply)
 
         if X is not None:
-           X = self.apply(X, lb, ub)
+            X = self.apply(X, lb, ub)
 
         # display final regularity
         self.print("\n=====================================")
@@ -145,38 +158,38 @@ class Regularity():
                 for j in cluster:
                     if X is not None:
                         # when there's some X, calculate the regularity mean and insert that
-                        self.print(f"X[{j+1}]: {X[0, j]}")
+                        self.print(f"X[{j + 1}]: {X[0, j]}")
                     else:
                         # display general regularity
-                        self.print(f"X[{j+1}]: mean(X[:, {j}])")
+                        self.print(f"X[{j + 1}]: mean(X[:, {j}])")
                 self.print()
         else:
             self.print("There is no Non-Random variables in the problem")
 
         if self.rand_cluster:
             self.print("Pattern for random variables")
-            self.print(f"Random variables: {[(i+1) for i in self.rand_cluster]}")
-            self.print(f"Random independent variables: {[(i+1) for i in self.rand_independent_vars]}")
-            self.print(f"Random dependent variables: {[(i+1) for i in self.rand_dependent_vars]}")
+            self.print(f"Random variables: {[(i + 1) for i in self.rand_cluster]}")
+            self.print(f"Random independent variables: {[(i + 1) for i in self.rand_independent_vars]}")
+            self.print(f"Random dependent variables: {[(i + 1) for i in self.rand_dependent_vars]}")
             for i, dep_idx in enumerate(self.rand_dependent_vars):
-                self.print(f"X[{dep_idx+1}] = ", end="")
+                self.print(f"X[{dep_idx + 1}] = ", end="")
                 for idx, indep_idx in enumerate(self.rand_independent_vars):
                     if self.rand_final_reg_coef_list[i][idx] != 0:
-                        self.print(f"({self.rand_final_reg_coef_list[i][idx]} * X[{indep_idx+1}]) + ", end="")
+                        self.print(f"({self.rand_final_reg_coef_list[i][idx]} * X[{indep_idx + 1}]) + ", end="")
                 self.print(f"({self.rand_final_reg_coef_list[i][-1]})")
 
-            self.print(f"Complete random variables: {[(i+1) for i in self.rand_complete_vars]}")
+            self.print(f"Complete random variables: {[(i + 1) for i in self.rand_complete_vars]}")
 
             self.print(f"\nRanges for the random variables")
             if self.rand_independent_vars:
                 self.print(f"Random independent variables")
                 for var in self.rand_independent_vars:
-                    self.print(f"X[{var+1}]: [{self.lb[var]}, {self.ub[var]}]")
+                    self.print(f"X[{var + 1}]: [{self.lb[var]}, {self.ub[var]}]")
 
             if self.rand_complete_vars:
                 self.print(f"\nComplete random variables")
                 for var in self.rand_complete_vars:
-                    self.print(f"X[{var+1}]: [{self.lb[var]}, {self.ub[var]}]")
+                    self.print(f"X[{var + 1}]: [{self.lb[var]}, {self.ub[var]}]")
 
         self.print("\n======================================\n")
 
@@ -200,7 +213,7 @@ class Regularity():
             current_clusters = copy.deepcopy(clusters)
             for k, cluster in enumerate(current_clusters):
                 if cluster:
-                    current_clusters[k] = [(i+1) for i in cluster]
+                    current_clusters[k] = [(i + 1) for i in cluster]
 
             return current_clusters
 
@@ -210,12 +223,11 @@ class Regularity():
             f = open(save_file, "w")
             self.print = self.mod_print(f)
 
-
         # if there is some X, apply the regularity
         X = copy.deepcopy(X_apply)
 
         if X is not None:
-           X = self.apply(X, lb, ub)
+            X = self.apply(X, lb, ub)
 
         # display final regularity
         if long_version:
@@ -225,7 +237,6 @@ class Regularity():
                        "\\usepackage[]{algpseudocode}\n"
                        "\\usepackage{pseudo}\n"
                        "\\usepackage{listings}\n")
-
 
         self.print("\\lstset{escapeinside={(*@}{@*)}}\n"
                    "\\lstdefinestyle{mystyle}{\n"
@@ -239,7 +250,7 @@ class Regularity():
         self.print("\\begin{lstlisting}[mathescape, language=python]")
 
         if total_fronts > 1:
-            self.print(f"Regular Front {front_num+1}")
+            self.print(f"Regular Front {front_num + 1}")
 
         if self.non_rand_cluster:
             const_list_clusters = increment_cluster_indices(self.non_rand_cluster)
@@ -265,10 +276,10 @@ class Regularity():
                 for j in cluster:
                     if X is not None:
                         # when there's some X, calculate the regularity mean and insert that
-                        self.print("$x_{" + str(j+1) + "}: " + str(X[0, j]) + "$")
+                        self.print("$x_{" + str(j + 1) + "}: " + str(X[0, j]) + "$")
                     else:
                         # display general regularity
-                        self.print("$x_{" + str(j+1) + "}: mean(X[:, " + str(j) + "])")
+                        self.print("$x_{" + str(j + 1) + "}: mean(X[:, " + str(j) + "])")
                 self.print()
 
             self.print()
@@ -280,7 +291,7 @@ class Regularity():
             if self.rand_independent_vars:
                 self.print("random independent variables: $", end="")
                 for idx in self.rand_independent_vars[:-1]:
-                    self.print("x_{" + str(idx+1) + "}, \ ", end="")
+                    self.print("x_{" + str(idx + 1) + "}, \ ", end="")
                 self.print("x_{" + str(self.rand_independent_vars[-1] + 1) + "}$")
 
             if self.rand_dependent_vars:
@@ -290,10 +301,12 @@ class Regularity():
                 self.print("x_{" + str(self.rand_dependent_vars[-1] + 1) + "}$")
 
             for i, dep_idx in enumerate(self.rand_dependent_vars):
-                self.print("$x_{" + str(dep_idx+1) + "} = ", end="")
+                self.print("$x_{" + str(dep_idx + 1) + "} = ", end="")
                 for idx, indep_idx in enumerate(self.rand_independent_vars):
                     if self.rand_final_reg_coef_list[i][idx] != 0:
-                        self.print(f"({self.rand_final_reg_coef_list[i][idx]} \\times " + "x_{" + str(indep_idx+1) + "}) + ", end="")
+                        self.print(
+                            f"({self.rand_final_reg_coef_list[i][idx]} \\times " + "x_{" + str(indep_idx + 1) + "}) + ",
+                            end="")
                 self.print(f"{self.rand_final_reg_coef_list[i][-1]}$")
 
             if self.rand_complete_vars:
@@ -303,8 +316,8 @@ class Regularity():
                 self.print("x_{" + str(self.rand_complete_vars[-1] + 1) + "}$")
 
             # if self.rand_independent_vars:
-            for var in self.rand_independent_vars+self.rand_complete_vars:
-                self.print("$x_{" + str(var+1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]$")
+            for var in self.rand_independent_vars + self.rand_complete_vars:
+                self.print("$x_{" + str(var + 1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]$")
 
             self.print()
 
@@ -329,7 +342,7 @@ class Regularity():
             new_x = np.array([new_x])
 
         for i in range(new_x.shape[1]):
-            new_x[:, i] = (new_x[:, i] - lb[i])/(ub[i] - lb[i])
+            new_x[:, i] = (new_x[:, i] - lb[i]) / (ub[i] - lb[i])
 
         if new_x.shape[0] == 1:
             # converting a single array back to a 1D array

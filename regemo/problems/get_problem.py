@@ -52,9 +52,7 @@ problems = ["four_bar_truss_design",
             "srn",
             "two_member_truss",
             "welded_beam_design",
-            "water",
-            "gaa",
-            "car_cab_design"]
+            "water"]
 
 evaluation_mapper = {
     "bnh": bnh.evaluate,

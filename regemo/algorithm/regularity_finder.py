@@ -24,6 +24,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import binned_statistic
 import pandas as pd
+import pickle
 
 plt.rcParams.update({'font.size': 15})
 
@@ -70,6 +71,8 @@ class Regularity_Finder:
         super().__init__()
 
         # set problem-specific information
+        self.proxy_regular_F = None
+        self.proxy_regular_X = None
         self.problem_name = problem_args["name"]
         self.problem_args = problem_args
         self.seed = seed
@@ -257,6 +260,9 @@ class Regularity_Finder:
                                          degree=self.non_rand_regularity_degree,
                                          precision=self.precision)
 
+        pickle.dump((len(self.rand_independent_vars)+len(self.rand_complete_vars), self.problem_args["dim"]),
+                    open(f"{config.BASE_PATH}/{self.result_storage}/random_var_count_{self.pf_cluster_num+1}.pickle", "wb"))
+
         # final metric calculation
         self.norm_F = self._normalize(self.F, self.norm_F_lb, self.norm_F_ub)
         if self.norm_F.ndim == 1:
@@ -296,18 +302,6 @@ class Regularity_Finder:
 
         # check the applicability of the final regularity principle
         self.proxy_regular_X, self.proxy_regular_F = self._check_final_regularity(n_points=1000)
-
-        if self.proxy_regular_F is not None:
-            plot = Scatter(labels="F", legend=True, angle=self.problem_args["visualization_angle"])
-            plot = plot.add(self.orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
-            plot = plot.add(self.proxy_regular_F, color="red", marker="*", s=40, label="Proxy Regular Efficient Front")
-
-            if self.verbose:
-                plot.show()
-
-            if self.save_img:
-                plot.save(
-                    f"{config.BASE_PATH}/{self.result_storage}/proxy_regular_efficient_front_{self.pf_cluster_num + 1}.jpg")
 
     def run_NSGA(self, problem, NSGA_settings):
         # run the NSGA2 over the problem

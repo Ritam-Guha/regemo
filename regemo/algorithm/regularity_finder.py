@@ -260,7 +260,7 @@ class Regularity_Finder:
                                          degree=self.non_rand_regularity_degree,
                                          precision=self.precision)
 
-        pickle.dump((len(self.rand_independent_vars)+len(self.rand_complete_vars), self.problem_args["dim"]),
+        pickle.dump((len(self.rand_independent_vars), self.problem_args["dim"]),
                     open(f"{config.BASE_PATH}/{self.result_storage}/random_var_count_{self.pf_cluster_num+1}.pickle", "wb"))
 
         # final metric calculation
@@ -368,7 +368,7 @@ class Regularity_Finder:
             corr_var = pd.DataFrame(self.X[:, self.rand_cluster]).corr()
             sum_corr_var = np.array(np.sum(abs(corr_var), axis=1) - 1)
             self.rand_cluster = list(np.array(self.rand_cluster)[np.argsort(-sum_corr_var)])
-            num_dependent_vars = self.rand_regularity_dependency
+            num_dependent_vars = max(len(self.rand_cluster)-self.problem_args["n_obj"]+1, 1)
             num_independent_vars = len(self.rand_cluster) - num_dependent_vars
 
             # figure out the dependent and independent variables from the set of random variables
@@ -430,21 +430,23 @@ class Regularity_Finder:
 
             # if normalized MSE < threshold,
             #   accept
-            rand_diff = abs(reg_X[:, self.rand_dependent_vars] - self.X[:, self.rand_dependent_vars])
-            normalized_diff = (rand_diff - np.array(self.lb)[self.rand_dependent_vars])/(np.array(self.ub)[
-                                                                                             self.rand_dependent_vars]-
-                                                                                         np.array(self.lb)[self.rand_dependent_vars])
-            normalized_MSE = np.mean(np.sqrt(np.sum(normalized_diff ** 2, axis=1) / len(self.rand_dependent_vars)))
+            normalized_MSE = 0
+            if len(self.rand_dependent_vars) > 0:
+                rand_diff = abs(reg_X[:, self.rand_dependent_vars] - self.X[:, self.rand_dependent_vars])
+                normalized_diff = (rand_diff - np.array(self.lb)[self.rand_dependent_vars])/(np.array(self.ub)[
+                                                                                                 self.rand_dependent_vars]-
+                                                                                             np.array(self.lb)[self.rand_dependent_vars])
+                normalized_MSE = np.mean(np.sqrt(np.sum(normalized_diff ** 2, axis=1) / len(self.rand_dependent_vars)))
 
-            if normalized_MSE <= self.rand_regularity_MSE_threshold:
-                # get the regressed population and evaluate them
-                self.rand_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:-2]
+                if normalized_MSE <= self.rand_regularity_MSE_threshold:
+                    # get the regressed population and evaluate them
+                    self.rand_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:-2]
 
-            else:
-                self.print("The metrics exceeded the threshold... Not enforcing the random regularity")
-                self.rand_dependent_vars = []
-                self.rand_independent_vars = []
-                self.rand_complete_vars = self.rand_cluster
+                else:
+                    self.print("The metrics exceeded the threshold... Not enforcing the random regularity")
+                    self.rand_dependent_vars = []
+                    self.rand_independent_vars = []
+                    self.rand_complete_vars = self.rand_cluster
 
             # Do a final check to see if there is any random variable which is unused
             # in the equations. Those variables are called complete random variables
@@ -661,7 +663,7 @@ class Regularity_Finder:
         min_var, max_var = np.min(x), np.max(x)
         spread = (max_var - min_var)/(ub - lb)
         if spread <= (0.05/self.num_clusters):
-            return False
+            return False, None
 
         n_bins = 20
         bin_counts = binned_statistic(x, x, bins=n_bins, range=(lb, ub), statistic="count")[0]
@@ -679,9 +681,9 @@ class Regularity_Finder:
             plt.show()
 
         if filled_fraction >= (0.5/self.num_clusters):
-            return True
+            return True, filled_fraction
         else:
-            return False
+            return False, filled_fraction
 
     def find_regularity_clusters(self):
         # define the way to find the regularity features
@@ -716,9 +718,21 @@ class Regularity_Finder:
 
         # find out the random variables
         for i in range(self.X.shape[1]):
-            if self._is_random(self.X[:, i], i, self.lb[i], self.ub[i]):
+            if self._is_random(self.X[:, i], i, self.lb[i], self.ub[i])[0]:
                 rand_cluster.append(i)
                 remaining_cluster_list.remove(i)
+
+        # change the random variables if they are greater than num_dims - 1
+        # if len(rand_cluster) > self.problem_args["dim"] - 1:
+        #     filled_fractions = []
+        #     for rand_idx in rand_cluster:
+        #         filled_fractions.append(self._is_random(self.X[:, rand_idx], rand_idx, self.lb[rand_idx], self.ub[rand_idx])[1])
+        #     filled_fractions = np.array(filled_fractions)
+        #
+        #     while len(rand_cluster) > self.problem_args["dim"] - 1:
+        #         max_idx = np.argmax(filled_fractions)
+        #         remaining_cluster_list.append(rand_cluster[max_idx])
+        #         rand_cluster.remove(rand_cluster[max_idx])
 
         # stage 2 - break the clusters from the most unstable point
         # sort the cluster indices in increasing order of mean values

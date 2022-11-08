@@ -31,6 +31,18 @@ import pickle
 
 plt.rcParams.update({'font.size': 5})
 
+color_mapping_orig_F = {
+    0: "blue",
+    1: "orange",
+    2: "purple"
+}
+
+color_mapping_reg_F = {
+    0: "brown",
+    1: "olive",
+    2: "gray"
+}
+
 
 def get_default_args(func):
     """
@@ -298,6 +310,7 @@ class Regularity_Search:
                             all_proxy_regular_F = np.append(all_proxy_regular_F, self.proxy_regular_F[i], axis=0)
                             all_proxy_regular_X = np.append(all_proxy_regular_X, self.proxy_regular_X[i], axis=0)
 
+
             # calculate the HV_diff_%
             self.hv = get_performance_indicator("hv", ref_point=np.ones(self.problem_args["n_obj"]))
             normalize_lb = np.min(all_orig_F, axis=0)
@@ -339,8 +352,9 @@ class Regularity_Search:
             self.combined_F = all_regularity_F[fronts[0], :]
             self.combined_X = all_regularity_X[fronts[0], :]
             plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
-            plot = plot.add(all_orig_F, color="blue", marker="o", s=60, label="Original Efficient Front")
-            plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=80, label="Regular Efficient Front")
+            for i in range(len(self.orig_F)):
+                plot = plot.add(self.orig_F[i], color=color_mapping_orig_F[i], marker="o", s=60, label=f"Original Efficient Front cluster {i}")
+            plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=50, label=f"Regular Efficient Front")
             plot = plot.add(all_proxy_regular_F[proxy_fronts[0], :], color="green", marker="s", s=5,
                             label="Proxy Regular Efficient Front")
 
@@ -662,7 +676,7 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="rocket_injector_design", help="Name of the problem")
+    parser.add_argument("--problem_name", default="car_side_impact", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":

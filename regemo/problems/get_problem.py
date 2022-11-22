@@ -24,6 +24,8 @@ from regemo.problems import rocket_injector_design
 from regemo.problems import car_side_impact
 from regemo.problems import conceptual_marine_design
 from regemo.problems import car_cab_design
+from regemo.problems import test_problem_zdt
+from regemo.problems import tnk
 
 
 from pymoo.core.problem import Problem
@@ -52,7 +54,9 @@ problems = ["four_bar_truss_design",
             "srn",
             "two_member_truss",
             "welded_beam_design",
-            "water"]
+            "water",
+            "test_problem_zdt",
+            "tnk"]
 
 evaluation_mapper = {
     "bnh": bnh.evaluate,
@@ -81,6 +85,8 @@ evaluation_mapper = {
     "car_side_impact": car_side_impact.evaluate,
     "conceptual_marine_design": conceptual_marine_design.evaluate,
     "car_cab_design": car_cab_design.evaluate,
+    "test_problem_zdt": test_problem_zdt.evaluate,
+    "tnk": tnk.evaluate
 }
 
 
@@ -131,8 +137,8 @@ def get_problem(problem_name,
                     # placing the fixed values in the new population
                     new_X[:, problem_args["rand_independent_vars"]] = X[:, problem_args["rand_variable_mapper"][
                                                                                "rand_independent_vars"]]
-                    new_X[:, problem_args["rand_complete_vars"]] = X[:, problem_args["rand_variable_mapper"][
-                                                                            "rand_complete_vars"]]
+                    new_X[:, problem_args["rand_orphan_vars"]] = X[:, problem_args["rand_variable_mapper"][
+                                                                            "rand_orphan_vars"]]
                     new_X = problem_args["regularity_enforcement_process"](new_X)
                     
                     # setting the new problem arguments

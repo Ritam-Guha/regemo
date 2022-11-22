@@ -11,12 +11,14 @@ class Regularity():
                  lb,
                  ub,
                  non_rand_cluster,
+                 non_rand_vars,
                  non_rand_vals,
-                 rand_cluster,
+                 rand_vars,
                  rand_dependent_vars,
                  rand_independent_vars,
-                 rand_complete_vars,
+                 rand_orphan_vars,
                  rand_final_reg_coef_list,
+                 problem_configs,
                  degree=1,
                  precision=2):
 
@@ -24,16 +26,17 @@ class Regularity():
         self.lb = lb
         self.ub = ub
         self.non_rand_cluster = non_rand_cluster
-        self.rand_cluster = rand_cluster
-        self.non_rand_vars = sum(self.non_rand_cluster, [])
+        self.rand_vars = rand_vars
+        self.non_rand_vars = non_rand_vars
         self.non_rand_vals = non_rand_vals
         self.rand_dependent_vars = rand_dependent_vars
         self.rand_independent_vars = rand_independent_vars
-        self.rand_complete_vars = rand_complete_vars
+        self.rand_orphan_vars = rand_orphan_vars
         self.rand_final_reg_coef_list = rand_final_reg_coef_list
         self.degree = degree
         self.precision = precision
         self.complexity = 0
+        self.problem_configs = problem_configs
         self.print = self.mod_print()
 
     def generate_points(self,
@@ -108,7 +111,7 @@ class Regularity():
         num_fixed = len(self.non_rand_vars)
         num_independent = len(self.rand_independent_vars)
         num_dependent = len(self.rand_dependent_vars)
-        num_complete_random = len(self.rand_complete_vars)
+        num_complete_random = len(self.rand_orphan_vars)
 
         # weight of the variables
         fixed_weight = 0.5
@@ -166,9 +169,9 @@ class Regularity():
         else:
             self.print("There is no Non-Random variables in the problem")
 
-        if self.rand_cluster:
+        if self.rand_vars:
             self.print("Pattern for random variables")
-            self.print(f"Random variables: {[(i + 1) for i in self.rand_cluster]}")
+            self.print(f"Random variables: {[(i + 1) for i in self.rand_vars]}")
             self.print(f"Random independent variables: {[(i + 1) for i in self.rand_independent_vars]}")
             self.print(f"Random dependent variables: {[(i + 1) for i in self.rand_dependent_vars]}")
             for i, dep_idx in enumerate(self.rand_dependent_vars):
@@ -178,7 +181,7 @@ class Regularity():
                         self.print(f"({self.rand_final_reg_coef_list[i][idx]} * X[{indep_idx + 1}]) + ", end="")
                 self.print(f"({self.rand_final_reg_coef_list[i][-1]})")
 
-            self.print(f"Complete random variables: {[(i + 1) for i in self.rand_complete_vars]}")
+            self.print(f"Orphan random variables: {[(i + 1) for i in self.rand_orphan_vars]}")
 
             self.print(f"\nRanges for the random variables")
             if self.rand_independent_vars:
@@ -186,15 +189,16 @@ class Regularity():
                 for var in self.rand_independent_vars:
                     self.print(f"X[{var + 1}]: [{self.lb[var]}, {self.ub[var]}]")
 
-            if self.rand_complete_vars:
-                self.print(f"\nComplete random variables")
-                for var in self.rand_complete_vars:
+            if self.rand_orphan_vars:
+                self.print(f"\nOrphan random variables")
+                for var in self.rand_orphan_vars:
                     self.print(f"X[{var + 1}]: [{self.lb[var]}, {self.ub[var]}]")
 
         self.print("\n======================================\n")
-
         self.complexity = self.calc_process_complexity()
         self.print(f"Final complexity of the regularity: {self.complexity}")
+        self.print(f"Original lb: {self.problem_configs['lb']}")
+        self.print(f"Original ub: {self.problem_configs['ub']}")
         self.print("\n======================================\n")
 
         if save_file:
@@ -287,7 +291,7 @@ class Regularity():
         else:
             self.print("There is no Non-Random variables in the problem")
 
-        if self.rand_cluster:
+        if self.rand_vars:
             if self.rand_independent_vars:
                 self.print("random independent variables: $", end="")
                 for idx in self.rand_independent_vars[:-1]:
@@ -309,20 +313,20 @@ class Regularity():
                             end="")
                 self.print(f"{self.rand_final_reg_coef_list[i][-1]}$")
 
-            if self.rand_complete_vars:
+            if self.rand_orphan_vars:
                 self.print("complete random variables: $", end="")
-                for idx in self.rand_complete_vars[:-1]:
+                for idx in self.rand_orphan_vars[:-1]:
                     self.print("x_{" + str(idx + 1) + "}, \ ", end="")
-                self.print("x_{" + str(self.rand_complete_vars[-1] + 1) + "}$")
+                self.print("x_{" + str(self.rand_orphan_vars[-1] + 1) + "}$")
 
             # if self.rand_independent_vars:
-            for var in self.rand_independent_vars + self.rand_complete_vars:
+            for var in self.rand_independent_vars + self.rand_orphan_vars:
                 self.print("$x_{" + str(var + 1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]$")
 
             self.print()
 
-            # if self.rand_complete_vars:
-            #     for var in self.rand_complete_vars:
+            # if self.rand_orphan_vars:
+            #     for var in self.rand_orphan_vars:
             #         self.print("x_{" + str(var+1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]")
         self.print("\\end{lstlisting}\n")
 
@@ -334,7 +338,7 @@ class Regularity():
             self.print = self.mod_print()
 
     @staticmethod
-    def _normalize(self, x, lb, ub):
+    def _normalize(x, lb, ub):
         # function to normalize x between 0 and 1
         new_x = copy.deepcopy(x)
 
@@ -351,7 +355,7 @@ class Regularity():
         return new_x
 
     @staticmethod
-    def _denormalize(self, x, lb, ub):
+    def _denormalize(x, lb, ub):
         # function to denormalize a value between 0 and 1
         # to a value between lb and ub
         new_x = copy.deepcopy(x)

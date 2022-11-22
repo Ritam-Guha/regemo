@@ -71,6 +71,7 @@ class Regularity_Search:
                  NSGA_settings=None,
                  clustering_config=None,
                  num_clusters=1,
+                 n_rand_bins=20,
                  clustering_criterion="X",
                  save_img=True,
                  result_storage=None,
@@ -93,6 +94,7 @@ class Regularity_Search:
         self.clustering_criterion = clustering_criterion
         self.rand_regularity_MSE_threshold = rand_regularity_MSE_threshold
         self.non_rand_regularity_MSE_threshold = non_rand_regularity_MSE_threshold
+        self.n_rand_bins = n_rand_bins
 
         # get the problem utilities
         self.problem = get_problem(self.problem_name, problem_args)
@@ -123,7 +125,7 @@ class Regularity_Search:
         self.hv = None
         self.final_metrics = {
             "complexity": 0,
-            "HV_dif_%": 0
+            "hv_dif_%": 0
         }
 
         np.random.seed(self.seed)
@@ -215,6 +217,7 @@ class Regularity_Search:
                                                        save_img=self.save_img,
                                                        result_storage=self.result_storage,
                                                        verbose=self.verbose,
+                                                       n_rand_bins=self.n_rand_bins,
                                                        pf_cluster_num=i,
                                                        num_clusters=self.num_clusters)
 
@@ -312,7 +315,7 @@ class Regularity_Search:
 
 
             # calculate the HV_diff_%
-            self.hv = get_performance_indicator("hv", ref_point=np.ones(self.problem_args["n_obj"]))
+            self.hv = get_performance_indicator("hv", ref_point=10*np.ones(self.problem_args["n_obj"]))
             normalize_lb = np.min(all_orig_F, axis=0)
             normalize_ub = np.max(all_orig_F, axis=0)
 
@@ -348,15 +351,17 @@ class Regularity_Search:
 
             # plot the figure after nds
             fronts = NonDominatedSorting().do(all_regularity_F)
-            proxy_fronts = NonDominatedSorting().do(all_proxy_regular_F)
             self.combined_F = all_regularity_F[fronts[0], :]
             self.combined_X = all_regularity_X[fronts[0], :]
             plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
             for i in range(len(self.orig_F)):
                 plot = plot.add(self.orig_F[i], color=color_mapping_orig_F[i], marker="o", s=60, label=f"Original Efficient Front cluster {i}")
             plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=50, label=f"Regular Efficient Front")
-            plot = plot.add(all_proxy_regular_F[proxy_fronts[0], :], color="green", marker="s", s=5,
-                            label="Proxy Regular Efficient Front")
+
+            if all_proxy_regular_F is not None:
+                proxy_fronts = NonDominatedSorting().do(all_proxy_regular_F)
+                plot = plot.add(all_proxy_regular_F[proxy_fronts[0], :], color="green", marker="s", s=5,
+                                label="Proxy Regular Efficient Front", alpha=0.6)
 
             if self.save_img:
                 plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg", dpi=600)
@@ -676,7 +681,7 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="car_side_impact", help="Name of the problem")
+    parser.add_argument("--problem_name", default="tnk", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -721,6 +726,7 @@ if __name__ == "__main__":
                                                   "non_rand_regularity_MSE_threshold"],
                                               precision=algorithm_config["precision"],
                                               num_clusters=algorithm_config["n_clusters"],
+                                              n_rand_bins=4,
                                               save_img=True,
                                               result_storage=f"{res_storage_dir}",
                                               verbose=False)

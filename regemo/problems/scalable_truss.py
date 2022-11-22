@@ -2,7 +2,7 @@ from regemo.problems.scalable_truss_impl.truss.truss_problem_general import Trus
 
 
 def evaluate(X,
-             problem_args,
+             problem_args=None,
              constr=False):
     # evaluation function for Scalable Truss problem
     """

@@ -16,6 +16,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="ccf8ae67-03c0-47b4-ac85-26d7e9fd71e3" name="darwin" url="http:///">
+        <fileTransfer rootFolder="/egr/research-coingrp/guharita/Projects/regemo" accessType="SFTP" host="darwin.egr.msu.edu" port="22" sshConfigId="cb15c546-591a-4737-af43-78fc9e70b042" sshConfig="guharita@darwin.egr.msu.edu:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

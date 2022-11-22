@@ -391,7 +391,7 @@ class Regularity_search_driver:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="all", help="Name of the problem")
+    parser.add_argument("--problem_name", default="conceptual_marine_design", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -418,14 +418,15 @@ if __name__ == "__main__":
         problem_config["problem_name"] = problem_name
 
         exec_args = {"non_rand_regularity_degree": [1, 2, 3],
-                     "rand_regularity_coef_factor": [0.1, 0.3, 0.5],
+                     "rand_regularity_coef_factor": [0.3, 0.5],
                      "rand_regularity_dependency": [1, 2],
                      "rand_factor_sd": [0.2, 0.5],
                      "precision": [2],
-                     "rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
-                     "non_rand_regularity_MSE_threshold": [0.1, 0.3, 0.5],
+                     "rand_regularity_MSE_threshold": [0.1, 0.5],
+                     "non_rand_regularity_MSE_threshold": [0.1, 0.5],
                      "clustering_required": [True],
-                     "n_clusters": [1, 2, 3]}
+                     "n_clusters": [1],
+                     "n_rand_bins": [3, 4]}
 
         driver = Regularity_search_driver(problem_args=problem_config,
                                           algorithm_args=algorithm_config,

@@ -2,7 +2,7 @@ import numpy as np
 
 
 def evaluate(X,
-             problem_args,
+             problem_args=None,
              constr=False):
     # evaluation function for car cab design problem
     """

@@ -6,6 +6,7 @@
       <sshConfig authType="PASSWORD" connectionConfig="{&quot;serverAliveInterval&quot;:300}" host="coinlab.dhcp.egr.msu.edu" id="84fde379-627f-4594-9e32-0d79787e9f4b" port="22" customName="coin" nameFormat="CUSTOM" username="guharita" useOpenSSHConfig="true">
         <option name="customName" value="coin" />
       </sshConfig>
+      <sshConfig authType="PASSWORD" host="darwin.egr.msu.edu" id="cb15c546-591a-4737-af43-78fc9e70b042" port="22" nameFormat="DESCRIPTIVE" username="guharita" useOpenSSHConfig="true" />
     </configs>
   </component>
 </project>

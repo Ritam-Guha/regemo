@@ -160,7 +160,7 @@ class Regularity_Search:
 
         # plot the figure after nds
         plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
-        plot = plot.add(res["F"], color="blue", s=15, label="Original Efficient Front")
+        plot = plot.add(res["F"], color="blue", s=15, label="Original Efficient Front", alpha=0.8)
         # plot.title = "Initial Efficient Front"
 
         if self.save_img:
@@ -355,13 +355,15 @@ class Regularity_Search:
             self.combined_X = all_regularity_X[fronts[0], :]
             plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
             for i in range(len(self.orig_F)):
-                plot = plot.add(self.orig_F[i], color=color_mapping_orig_F[i], marker="o", s=60, label=f"Original Efficient Front cluster {i}")
-            plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=50, label=f"Regular Efficient Front")
+                plot = plot.add(self.orig_F[i], color=color_mapping_orig_F[i], marker="o", s=60,
+                                label=f"Original Efficient Front", alpha=0.2)
+            plot = plot.add(all_regularity_F[fronts[0], :], color="red", marker="*", s=50,
+                            label=f"Regular Efficient Front", alpha=0.6)
 
             if all_proxy_regular_F is not None:
                 proxy_fronts = NonDominatedSorting().do(all_proxy_regular_F)
-                plot = plot.add(all_proxy_regular_F[proxy_fronts[0], :], color="green", marker="s", s=5,
-                                label="Proxy Regular Efficient Front", alpha=0.6)
+                # plot = plot.add(all_proxy_regular_F[proxy_fronts[0], :], color="green", marker="s", s=5,
+                #                 label="Proxy Regular Efficient Front", alpha=1)
 
             if self.save_img:
                 plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg", dpi=600)
@@ -681,7 +683,7 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="tnk", help="Name of the problem")
+    parser.add_argument("--problem_name", default="dtlz2", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -726,7 +728,7 @@ if __name__ == "__main__":
                                                   "non_rand_regularity_MSE_threshold"],
                                               precision=algorithm_config["precision"],
                                               num_clusters=algorithm_config["n_clusters"],
-                                              n_rand_bins=4,
+                                              n_rand_bins=algorithm_config["n_rand_bins"],
                                               save_img=True,
                                               result_storage=f"{res_storage_dir}",
                                               verbose=False)

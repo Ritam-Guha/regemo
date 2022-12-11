@@ -107,6 +107,7 @@ class Regularity_search_driver:
                                        non_rand_regularity_MSE_threshold=param["non_rand_regularity_MSE_threshold"],
                                        num_clusters=param["n_clusters"],
                                        clustering_criterion=self.algorithm_args["clustering_criterion"],
+                                       n_rand_bins=param["n_rand_bins"],
                                        precision=param["precision"],
                                        seed=self.seed,
                                        NSGA_settings=self.algorithm_args["NSGA_settings"],
@@ -426,7 +427,7 @@ if __name__ == "__main__":
                      "non_rand_regularity_MSE_threshold": [0.1, 0.5],
                      "clustering_required": [True],
                      "n_clusters": [1],
-                     "n_rand_bins": [3, 4]}
+                     "n_rand_bins": [3, 4, 5, 10, 15]}
 
         driver = Regularity_search_driver(problem_args=problem_config,
                                           algorithm_args=algorithm_config,

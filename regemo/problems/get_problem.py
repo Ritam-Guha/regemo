@@ -24,7 +24,8 @@ from regemo.problems import rocket_injector_design
 from regemo.problems import car_side_impact
 from regemo.problems import conceptual_marine_design
 from regemo.problems import car_cab_design
-from regemo.problems import test_problem_zdt
+from regemo.problems import zdt_mod_2d
+from regemo.problems import zdt_mod_3d
 from regemo.problems import tnk
 
 
@@ -49,13 +50,12 @@ problems = ["four_bar_truss_design",
             "dtlz2",
             "dtlz5",
             "dtlz7",
-            "mod_zdt",
             "osy",
             "srn",
             "two_member_truss",
             "welded_beam_design",
-            "water",
-            "test_problem_zdt",
+            "zdt_mod_2d",
+            "zdt_mod_3d",
             "tnk"]
 
 evaluation_mapper = {
@@ -85,7 +85,8 @@ evaluation_mapper = {
     "car_side_impact": car_side_impact.evaluate,
     "conceptual_marine_design": conceptual_marine_design.evaluate,
     "car_cab_design": car_cab_design.evaluate,
-    "test_problem_zdt": test_problem_zdt.evaluate,
+    "zdt_mod_2d": zdt_mod_2d.evaluate,
+    "zdt_mod_3d": zdt_mod_3d.evaluate,
     "tnk": tnk.evaluate
 }
 

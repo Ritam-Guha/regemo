@@ -92,8 +92,6 @@ class Regularity_Finder:
 
         # initialize the regularity algorithm parameters
         self.pf_cluster_num = pf_cluster_num
-        self.rand_vars = []
-        self.rand_vals = None
         self.non_rand_cluster = None
         self.non_rand_vars = []
         self.non_rand_vals = None
@@ -502,14 +500,16 @@ class Regularity_Finder:
                     self.rand_orphan_vars = self.rand_orphan_vars + self.rand_dependent_vars
                     self.rand_dependent_vars = []
 
+                idx_list = []
                 dep_vars = copy.deepcopy(self.rand_dependent_vars)
                 for i, dep_var in enumerate(self.rand_dependent_vars):
                     if np.sum(temp_coef_list[i, :]) == 0:
-                        self.rand_final_reg_coef_list = np.delete(self.rand_final_reg_coef_list, i, axis=0)
+                        idx_list.append(i)
                         self.non_rand_vars.append(dep_var)
                         dep_vars.remove(dep_var)
                         self.rand_vars.remove(dep_var)
                 self.rand_dependent_vars = dep_vars
+                self.rand_final_reg_coef_list = np.delete(self.rand_final_reg_coef_list, idx_list, axis=0)
 
             # the # of rand independent and orphan should be less than M
             violation = False
@@ -529,6 +529,7 @@ class Regularity_Finder:
                     self.rand_independent_vars.remove(var_num)
 
                 self.non_rand_vars.append(var_num)
+                self.rand_vars.remove(var_num)
 
             if violation:
                 self.rand_regularity()

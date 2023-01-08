@@ -62,7 +62,7 @@ def evaluate(X,
     f_0 = annual_costs / annual_cargo
     f_1 = light_ship_weight
     # f_2 is dealt as a minimization problem
-    f_2 = -annual_cargo
+    f_2 = -1*annual_cargo
 
     # Reformulated objective functions
     g_0 = (x_L / x_B) - 6.0

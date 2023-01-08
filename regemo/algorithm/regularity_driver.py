@@ -157,7 +157,7 @@ class Regularity_search_driver:
         plt.xlabel("complexity")
         plt.ylabel("hv_dif_%")
         # plt.title("HV_dif_% vs Complexity")
-        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_trade_off.jpg")
+        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_trade_off.png")
 
     @staticmethod
     def knee_point_estimation(pf, w_loss=1, w_gain=1):
@@ -309,7 +309,7 @@ class Regularity_search_driver:
         )
         fig.show()
         fig.write_html(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.html")
-        fig.write_image(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.jpg")
+        fig.write_image(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.png")
 
         # matplotlib plots
         custom_color_mapping = {"preferred": "green", "knee": "red", "normal": "blue"}
@@ -331,7 +331,7 @@ class Regularity_search_driver:
         ax.legend(loc="upper right")
 
         fig.show()
-        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf_plot.jpg")
+        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf_plot.png")
 
     @staticmethod
     def convert_pf_regularity_to_pd(param_comb):
@@ -436,3 +436,4 @@ if __name__ == "__main__":
                                           verbose=False)
 
         driver.run()
+

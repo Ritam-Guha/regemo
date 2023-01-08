@@ -29,7 +29,7 @@ from matplotlib import cm
 import numpy as np
 import pickle
 
-plt.rcParams.update({'font.size': 5})
+plt.rcParams.update({'font.size': 15})
 
 color_mapping_orig_F = {
     0: "blue",
@@ -160,11 +160,11 @@ class Regularity_Search:
 
         # plot the figure after nds
         plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
-        plot = plot.add(res["F"], color="blue", s=15, label="Original Efficient Front", alpha=0.8)
+        plot = plot.add(res["F"], color="blue", label="Original Efficient Front", alpha=0.2, s=60)
         # plot.title = "Initial Efficient Front"
 
         if self.save_img:
-            plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.jpg")
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.png")
 
         # do clustering of the pareto front
         if self.num_clusters > 1:
@@ -269,7 +269,7 @@ class Regularity_Search:
 
             # plot the regular front
             plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
-            plot = plot.add(cur_F, color="red", marker="*", s=15, label="Regular Efficient Front")
+            plot = plot.add(cur_F, color="red", marker="*", s=60, alpha=0.6, label="Regular Efficient Front")
 
             # plot.title = "Regular Efficient Front"
 
@@ -277,12 +277,12 @@ class Regularity_Search:
                 plot.show()
 
             if self.save_img:
-                plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_cluster_{i + 1}.jpg")
+                plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_cluster_{i + 1}.png")
 
             # plot the original and regular front
             plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
-            plot = plot.add(self.orig_F[i], color="blue", marker="o", s=15, label="Original Efficient Front")
-            plot = plot.add(cur_F, color="red", marker="*", s=40, label="Regular Efficient Front")
+            plot = plot.add(self.orig_F[i], color="blue", marker="o", s=60, alpha=0.2, label="Original Efficient Front")
+            plot = plot.add(cur_F, color="red", marker="*", s=50, alpha=0.6, label="Regular Efficient Front")
 
             # plot.title = "Final Efficient Fronts (Before Merging the Clusters)"
 
@@ -291,7 +291,7 @@ class Regularity_Search:
 
             if self.save_img:
                 plot.save(
-                    f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts_pre_merge_cluster_{i + 1}.jpg")
+                    f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts_pre_merge_cluster_{i + 1}.png")
 
         # collect the original and regular F for all cluster members
         if len(self.F) > 0:
@@ -339,15 +339,15 @@ class Regularity_Search:
 
             # plot the figure before nds
             plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
-            plot = plot.add(all_orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
-            plot = plot.add(all_regularity_F, color="red", marker="*", s=40, label="Regular Efficient Front")
+            plot = plot.add(all_orig_F, color="blue", marker="o", s=60, alpha=0.2, label="Original Efficient Front")
+            plot = plot.add(all_regularity_F, color="red", marker="*", s=50, alpha=0.6, label="Regular Efficient Front")
             # plot.title = "Merged Efficient Fronts (From Different Clusters)"
 
             if self.verbose:
                 plot.show()
 
             if self.save_img:
-                plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts_post_merge.jpg")
+                plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts_post_merge.png")
 
             # plot the figure after nds
             fronts = NonDominatedSorting().do(all_regularity_F)
@@ -366,7 +366,7 @@ class Regularity_Search:
                 #                 label="Proxy Regular Efficient Front", alpha=1)
 
             if self.save_img:
-                plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.jpg", dpi=600)
+                plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.png", dpi=600)
 
             # store the final population
             final_population = {"X": self.combined_X, "F": self.combined_F}
@@ -385,7 +385,7 @@ class Regularity_Search:
             plot.add(self.combined_X)
 
             if self.save_img:
-                plot.save(f"{config.BASE_PATH}/{self.result_storage}/PCP_final_population.jpg")
+                plot.save(f"{config.BASE_PATH}/{self.result_storage}/PCP_final_population.png")
 
             if self.verbose:
                 plot.show()
@@ -532,7 +532,7 @@ class Regularity_Search:
             clusters.append({"X": cur_cluster_X, "F": cur_cluster_F})
 
         if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_efficient_front.jpg")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_efficient_front.png")
 
         if self.verbose:
             plt.show()
@@ -553,7 +553,7 @@ class Regularity_Search:
         plt.tick_params(axis="y", labelsize=10, labelrotation=20)
 
         if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_pareto_front.jpg")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_pareto_front.png")
 
         if self.verbose:
             plt.show()
@@ -641,7 +641,7 @@ class Regularity_Search:
             clusters.append({"X": cur_cluster_X, "F": cur_cluster_F})
 
         if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/efficient_front_clustering.jpg")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/efficient_front_clustering.png")
 
         if self.verbose:
             plt.show()
@@ -683,7 +683,7 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="dtlz2", help="Name of the problem")
+    parser.add_argument("--problem_name", default="all", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":

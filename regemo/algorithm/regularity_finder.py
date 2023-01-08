@@ -246,7 +246,7 @@ class Regularity_Finder:
 
         if self.save_img:
             plot.save(
-                f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_pre_reopt_cluster_{self.pf_cluster_num + 1}.jpg")
+                f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_pre_reopt_cluster_{self.pf_cluster_num + 1}.png")
 
         # Re-optimization
         if len(self.rand_vars):
@@ -529,7 +529,8 @@ class Regularity_Finder:
                     self.rand_independent_vars.remove(var_num)
 
                 self.non_rand_vars.append(var_num)
-                self.rand_vars.remove(var_num)
+                if var_num in self.rand_vars:
+                    self.rand_vars.remove(var_num)
 
             if violation:
                 self.rand_regularity()
@@ -746,7 +747,7 @@ class Regularity_Finder:
         # plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
         if self.save_img:
             plt.savefig(
-                f"{config.BASE_PATH}/{self.result_storage}/cluster_{self.pf_cluster_num + 1}_variable_{i + 1}_histogram.jpg")
+                f"{config.BASE_PATH}/{self.result_storage}/cluster_{self.pf_cluster_num + 1}_variable_{i + 1}_histogram.png")
         if self.verbose:
             plt.show()
 
@@ -785,7 +786,7 @@ class Regularity_Finder:
 
         if self.save_img:
             fig.savefig(
-                f"{config.BASE_PATH}/{self.result_storage}/variable_spread_pf_cluster_{self.pf_cluster_num + 1}.jpg")
+                f"{config.BASE_PATH}/{self.result_storage}/variable_spread_pf_cluster_{self.pf_cluster_num + 1}.png")
 
         # find out the random variables
         for i in range(self.X.shape[1]):

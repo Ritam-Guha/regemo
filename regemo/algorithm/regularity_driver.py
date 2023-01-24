@@ -88,7 +88,7 @@ class Regularity_search_driver:
             del cur_list[list_keys[cur_key_idx]]
 
     def execute_regularity_search(self):
-        table_header = ["Id", "Degree", "Coef_factor", "Dependency", "SD_rand", "Precision", "Rand MSE Threshold",
+        table_header = ["Id", "Degree", "Coef_factor", "Dependency", "SD_rand", "Precision",
                         "Complexity", "HV_dif_%"]
         table_data = []
 
@@ -103,15 +103,12 @@ class Regularity_search_driver:
                                        rand_regularity_coef_factor=param["rand_regularity_coef_factor"],
                                        rand_regularity_dependency=param["rand_regularity_dependency"],
                                        rand_factor_sd=param["rand_factor_sd"],
-                                       rand_regularity_MSE_threshold=param["rand_regularity_MSE_threshold"],
-                                       non_rand_regularity_MSE_threshold=param["non_rand_regularity_MSE_threshold"],
                                        num_clusters=param["n_clusters"],
                                        clustering_criterion=self.algorithm_args["clustering_criterion"],
                                        n_rand_bins=param["n_rand_bins"],
                                        precision=param["precision"],
                                        seed=self.seed,
                                        NSGA_settings=self.algorithm_args["NSGA_settings"],
-                                       clustering_config=self.algorithm_args["clustering_config"],
                                        result_storage=(
                                            f"{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i + 1}"),
                                        verbose=self.verbose)
@@ -125,7 +122,6 @@ class Regularity_search_driver:
 
             table_data.append([param["ID"], param["non_rand_regularity_degree"], param["rand_regularity_coef_factor"],
                                param["rand_regularity_dependency"], param["rand_factor_sd"], param["precision"],
-                               param["rand_regularity_MSE_threshold"],
                                param["complexity"], param["hv_dif_%"]])
 
             # save the param config
@@ -418,15 +414,9 @@ if __name__ == "__main__":
 
         problem_config["problem_name"] = problem_name
 
-        exec_args = {"non_rand_regularity_degree": [1, 2, 3],
-                     "rand_regularity_coef_factor": [0.3, 0.5],
+        exec_args = {"rand_regularity_coef_factor": [0.1, 0.3, 0.5],
                      "rand_regularity_dependency": [1, 2],
-                     "rand_factor_sd": [0.2, 0.5],
-                     "precision": [2],
-                     "rand_regularity_MSE_threshold": [0.1, 0.5],
-                     "non_rand_regularity_MSE_threshold": [0.1, 0.5],
-                     "clustering_required": [True],
-                     "n_clusters": [1],
+                     "delta": [0.05, 0.1, 0.5],
                      "n_rand_bins": [3, 4, 5, 10, 15]}
 
         driver = Regularity_search_driver(problem_args=problem_config,

@@ -65,11 +65,8 @@ class Regularity_Search:
                  non_rand_regularity_degree=1,
                  rand_regularity_coef_factor=0.1,
                  rand_regularity_dependency=0,
-                 rand_regularity_MSE_threshold=1,
-                 non_rand_regularity_MSE_threshold=1,
                  precision=2,
                  NSGA_settings=None,
-                 clustering_config=None,
                  num_clusters=1,
                  n_rand_bins=20,
                  clustering_criterion="X",
@@ -89,11 +86,8 @@ class Regularity_Search:
         self.rand_regularity_coef_factor = rand_regularity_coef_factor
         self.rand_regularity_dependency = rand_regularity_dependency
         self.NSGA_settings = NSGA_settings
-        self.clustering_config = clustering_config
         self.num_clusters = num_clusters
         self.clustering_criterion = clustering_criterion
-        self.rand_regularity_MSE_threshold = rand_regularity_MSE_threshold
-        self.non_rand_regularity_MSE_threshold = non_rand_regularity_MSE_threshold
         self.n_rand_bins = n_rand_bins
 
         # get the problem utilities
@@ -210,9 +204,6 @@ class Regularity_Search:
                                                        rand_regularity_dependency=self.rand_regularity_dependency,
                                                        precision=self.precision,
                                                        NSGA_settings=new_NSGA_settings,
-                                                       clustering_config=self.clustering_config,
-                                                       rand_regularity_MSE_threshold=self.rand_regularity_MSE_threshold,
-                                                       non_rand_regularity_MSE_threshold=self.non_rand_regularity_MSE_threshold,
                                                        seed=self.seed,
                                                        save_img=self.save_img,
                                                        result_storage=self.result_storage,
@@ -717,15 +708,10 @@ if __name__ == "__main__":
         regularity_search = Regularity_Search(problem_args=problem_config,
                                               seed=seed,
                                               NSGA_settings=algorithm_config["NSGA_settings"],
-                                              clustering_config=algorithm_config["clustering_config"],
                                               non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
                                               rand_regularity_coef_factor=algorithm_config[
                                                   "rand_regularity_coef_factor"],
                                               rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],
-                                              rand_regularity_MSE_threshold=algorithm_config[
-                                                  "rand_regularity_MSE_threshold"],
-                                              non_rand_regularity_MSE_threshold=algorithm_config[
-                                                  "non_rand_regularity_MSE_threshold"],
                                               precision=algorithm_config["precision"],
                                               num_clusters=algorithm_config["n_clusters"],
                                               n_rand_bins=algorithm_config["n_rand_bins"],

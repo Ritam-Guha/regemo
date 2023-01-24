@@ -10,7 +10,6 @@ class Regularity():
                  dim,
                  lb,
                  ub,
-                 non_rand_cluster,
                  non_rand_vars,
                  non_rand_vals,
                  rand_vars,
@@ -25,7 +24,6 @@ class Regularity():
         self.dim = dim
         self.lb = lb
         self.ub = ub
-        self.non_rand_cluster = non_rand_cluster
         self.rand_vars = rand_vars
         self.non_rand_vars = non_rand_vars
         self.non_rand_vals = non_rand_vals
@@ -55,7 +53,7 @@ class Regularity():
         # function to apply the regularity to the population members in X
 
         # for non-random variables, fix them to the repaired mean values
-        new_X = self.non_rand_regularity_repair(X, lb, ub, self.non_rand_cluster, self.degree, self.precision)
+        new_X = self.non_rand_regularity_repair(X)
 
         # for random variables, use the equation found in the process
         if self.rand_dependent_vars and self.rand_independent_vars:
@@ -75,31 +73,13 @@ class Regularity():
 
         return new_X
 
-    def non_rand_regularity_repair(self, X_apply, lb, ub, regularity_clusters, degree, precision):
+    def non_rand_regularity_repair(self, X_apply):
         # define the regularity repair procedure for non-random clusters of variables
         X = copy.deepcopy(X_apply)
         if len(X.shape) == 1:
-            # linear regression needs a 2D array
             X = np.array([X])
 
         new_X = copy.deepcopy(X)
-        # take the mean of the population across the variables
-        # mean_X = np.mean(X, axis=0)
-        #
-        # # repair the mean values based on the clusters and clip+round them
-        # normalized_mean_X = self._normalize(mean_X, lb, ub)
-        # normalized_regular_mean_X = fit_curve(normalized_mean_X, regularity_clusters, degree)
-        # regular_mean_X = self._denormalize(normalized_regular_mean_X, lb, ub)
-        # regular_mean_X = np.round(np.clip(regular_mean_X, lb, ub), precision)
-        #
-        # # for every cluster of non-random variables, fix all the population members
-        # # to corresponding repaired mean values
-        # for cluster in regularity_clusters:
-        #     new_X[:, cluster] = regular_mean_X[cluster]
-        #
-        # if new_X.shape[0] == 1:
-        #     # converting a single array back to a 1D array
-        #     new_X = new_X[0, :]
         new_X[:, self.non_rand_vars] = self.non_rand_vals
 
         return new_X
@@ -127,14 +107,6 @@ class Regularity():
         return complexity
 
     def display(self, X_apply=None, lb=None, ub=None, save_file=None):
-        def increment_cluster_indices(clusters):
-            current_clusters = copy.deepcopy(clusters)
-            for k, cluster in enumerate(current_clusters):
-                if cluster:
-                    current_clusters[k] = [(i + 1) for i in cluster]
-
-            return current_clusters
-
         self.print = self.mod_print()
 
         if save_file:
@@ -152,19 +124,11 @@ class Regularity():
         self.print("           Final Pattern             ")
         self.print("=====================================\n")
 
-        if self.non_rand_cluster:
+        if self.non_rand_vars:
             self.print("Pattern for non-random variables")
-            self.print(f"Non-random variables: {increment_cluster_indices(self.non_rand_cluster)}")
 
-            for i, cluster in enumerate(self.non_rand_cluster):
-                self.print(f"Cluster {i + 1}: {increment_cluster_indices([cluster])}")
-                for j in cluster:
-                    if X is not None:
-                        # when there's some X, calculate the regularity mean and insert that
-                        self.print(f"X[{j + 1}]: {X[0, j]}")
-                    else:
-                        # display general regularity
-                        self.print(f"X[{j + 1}]: mean(X[:, {j}])")
+            for var, val in zip(self.non_rand_vars, self.non_rand_vals):
+                self.print(f"x_{var}: {val}")
                 self.print()
         else:
             self.print("There is no Non-Random variables in the problem")
@@ -175,10 +139,10 @@ class Regularity():
             self.print(f"Random independent variables: {[(i + 1) for i in self.rand_independent_vars]}")
             self.print(f"Random dependent variables: {[(i + 1) for i in self.rand_dependent_vars]}")
             for i, dep_idx in enumerate(self.rand_dependent_vars):
-                self.print(f"X[{dep_idx + 1}] = ", end="")
+                self.print(f"x[{dep_idx + 1}] = ", end="")
                 for idx, indep_idx in enumerate(self.rand_independent_vars):
                     if self.rand_final_reg_coef_list[i][idx] != 0:
-                        self.print(f"({self.rand_final_reg_coef_list[i][idx]} * X[{indep_idx + 1}]) + ", end="")
+                        self.print(f"({self.rand_final_reg_coef_list[i][idx]} * x[{indep_idx + 1}]) + ", end="")
                 self.print(f"({self.rand_final_reg_coef_list[i][-1]})")
 
             self.print(f"Orphan random variables: {[(i + 1) for i in self.rand_orphan_vars]}")
@@ -187,12 +151,12 @@ class Regularity():
             if self.rand_independent_vars:
                 self.print(f"Random independent variables")
                 for var in self.rand_independent_vars:
-                    self.print(f"X[{var + 1}]: [{self.lb[var]}, {self.ub[var]}]")
+                    self.print(f"x[{var + 1}]: [{self.lb[var]}, {self.ub[var]}]")
 
             if self.rand_orphan_vars:
                 self.print(f"\nOrphan random variables")
                 for var in self.rand_orphan_vars:
-                    self.print(f"X[{var + 1}]: [{self.lb[var]}, {self.ub[var]}]")
+                    self.print(f"x[{var + 1}]: [{self.lb[var]}, {self.ub[var]}]")
 
         self.print("\n======================================\n")
         self.complexity = self.calc_process_complexity()
@@ -256,35 +220,35 @@ class Regularity():
         if total_fronts > 1:
             self.print(f"Regular Front {front_num + 1}")
 
-        if self.non_rand_cluster:
-            const_list_clusters = increment_cluster_indices(self.non_rand_cluster)
-            const_list = sum(const_list_clusters, [])
+        if self.non_rand_vars:
+            # const_list_clusters = increment_cluster_indices(self.non_rand_cluster)
+            # const_list = sum(const_list_clusters, [])
 
-            if const_list:
-                self.print(f"constant variables: $", end="")
-                for idx in const_list[:-1]:
-                    self.print("x_{" + str(idx) + "}, \ ", end="")
-                self.print("x_{" + str(const_list[-1]) + "}$")
+            # if const_list:
+            #     self.print(f"constant variables: $", end="")
+            #     for idx in const_list[:-1]:
+            #         self.print("x_{" + str(idx) + "}, \ ", end="")
+            #     self.print("x_{" + str(const_list[-1]) + "}$")
 
-            for i, cluster in enumerate(self.non_rand_cluster):
-                const_list = increment_cluster_indices([cluster])[0]
-                if const_list:
-                    if len(self.non_rand_cluster) > 1:
-                        self.print(f"cluster {i + 1}: $", end="")
-                    else:
-                        self.print(f"$", end="")
-                    for idx in const_list[:-1]:
-                        self.print("x_{" + str(idx) + "}, \ ", end="")
-                    self.print("x_{" + str(const_list[-1]) + "}$")
-
-                for j in cluster:
-                    if X is not None:
-                        # when there's some X, calculate the regularity mean and insert that
-                        self.print("$x_{" + str(j + 1) + "}: " + str(X[0, j]) + "$")
-                    else:
-                        # display general regularity
-                        self.print("$x_{" + str(j + 1) + "}: mean(X[:, " + str(j) + "])")
-                self.print()
+            # for i, cluster in enumerate(self.non_rand_cluster):
+            #     const_list = increment_cluster_indices([cluster])[0]
+            #     if const_list:
+            #         if len(self.non_rand_cluster) > 1:
+            #             self.print(f"cluster {i + 1}: $", end="")
+            #         else:
+            #             self.print(f"$", end="")
+            #         for idx in const_list[:-1]:
+            #             self.print("x_{" + str(idx) + "}, \ ", end="")
+            #         self.print("x_{" + str(const_list[-1]) + "}$")
+            #
+            #     for j in cluster:
+            #         if X is not None:
+            #             # when there's some X, calculate the regularity mean and insert that
+            #             self.print("$x_{" + str(j + 1) + "}: " + str(X[0, j]) + "$")
+            #         else:
+            #             # display general regularity
+            #             self.print("$x_{" + str(j + 1) + "}: mean(X[:, " + str(j) + "])")
+            #     self.print()
 
             self.print()
 

@@ -9,20 +9,20 @@ import sys
 import pickle
 from pymoo.factory import get_reference_directions
 
-problems = ["dtlz2"]
+# problems = ["dtlz2"]
 
 
 def create_config(problem_name):
-    non_rand_regularity_degree = 1
-    rand_regularity_coef_factor = 0.3
-    rand_regularity_dependency = 1
-    rand_factor_sd = 0.2
-    precision = 2
-    rand_regularity_MSE_threshold = 0.5
-    non_rand_regularity_MSE_threshold = 0.1
-    cluster_pf_required = True
-    n_clusters = 1
-    n_rand_bins = 3
+    # non_rand_regularity_degree = 1
+    # rand_regularity_coef_factor = 0.3
+    # rand_regularity_dependency = 1
+    # rand_factor_sd = 0.2
+    # precision = 2
+    # rand_regularity_MSE_threshold = 0.5
+    # non_rand_regularity_MSE_threshold = 0.1
+    # cluster_pf_required = True
+    # n_clusters = 1
+    # n_rand_bins = 3
     # visualization_angle = (45, 45)
     # n_obj = 3
     # n_constr = 0
@@ -58,14 +58,17 @@ def create_config(problem_name):
         else:
             problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
             algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
-            algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
-            algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
-            algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
-            algorithm_config["rand_factor_sd"] = rand_factor_sd
-            algorithm_config["precision"] = precision
-            algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
-            algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
-            algorithm_config["cluster_pf_required"] = cluster_pf_required
+            # del algorithm_config["clustering_config"]
+            del algorithm_config["rand_regularity_MSE_threshold"]
+            del algorithm_config["non_rand_regularity_MSE_threshold"]
+            # algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
+            # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
+            # algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
+            # algorithm_config["rand_factor_sd"] = rand_factor_sd
+            # algorithm_config["precision"] = precision
+            # algorithm_config["rand_regularity_MSE_threshold"] = rand_regularity_MSE_threshold
+            # algorithm_config["non_rand_regularity_MSE_threshold"] = non_rand_regularity_MSE_threshold
+            # algorithm_config["cluster_pf_required"] = cluster_pf_required
             # algorithm_config["pf_cluster_eps"] = pf_cluster_eps
             # problem_config["name"] = problem_name
             # if problem_config["n_obj"] == 3:
@@ -96,10 +99,10 @@ def create_config(problem_name):
             #     algorithm_config["NSGA_settings"]["ref_dirs"] = get_reference_directions("das-dennis", problem_config["n_obj"], n_partitions=12)
 
             # problem_config["clustering_config"] = {"criterion": "X"}
-            problem_config["n_clusters"] = n_clusters
+            # problem_config["n_clusters"] = n_clusters
             # problem_config["n_constr"] = 4
             # problem_config["n_constr"] = 2
-            algorithm_config["n_rand_bins"] = n_rand_bins
+            # algorithm_config["n_rand_bins"] = n_rand_bins
     else:
         # HDBSCAN parameters
         # problem_clustering_config = {

@@ -59,8 +59,9 @@ def create_config(problem_name):
             problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
             algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
             # del algorithm_config["clustering_config"]
-            del algorithm_config["rand_regularity_MSE_threshold"]
-            del algorithm_config["non_rand_regularity_MSE_threshold"]
+            # del algorithm_config["rand_regularity_MSE_threshold"]
+            # del algorithm_config["non_rand_regularity_MSE_threshold"]
+            del algorithm_config["rand_factor_sd"]
             # algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
             # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
             # algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency

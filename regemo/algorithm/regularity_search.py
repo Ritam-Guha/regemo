@@ -62,7 +62,7 @@ class Regularity_Search:
     def __init__(self,
                  problem_args,
                  rand_factor_sd=0.1,
-                 non_rand_regularity_degree=1,
+                 rand_dependency_percent=0.9,
                  rand_regularity_coef_factor=0.1,
                  rand_regularity_dependency=0,
                  precision=2,
@@ -82,7 +82,7 @@ class Regularity_Search:
         self.problem_name = problem_args["name"]
         self.problem_args = problem_args
         self.seed = seed
-        self.non_rand_regularity_degree = non_rand_regularity_degree
+        self.rand_dependency_percent = rand_dependency_percent
         self.rand_regularity_coef_factor = rand_regularity_coef_factor
         self.rand_regularity_dependency = rand_regularity_dependency
         self.NSGA_settings = NSGA_settings
@@ -199,7 +199,7 @@ class Regularity_Search:
             regularity_enforcement = Regularity_Finder(X=cluster["X"],
                                                        F=cluster["F"],
                                                        problem_args=self.problem_args,
-                                                       non_rand_regularity_degree=self.non_rand_regularity_degree,
+                                                       rand_dependency_percent=self.rand_dependency_percent,
                                                        rand_regularity_coef_factor=self.rand_regularity_coef_factor,
                                                        rand_regularity_dependency=self.rand_regularity_dependency,
                                                        precision=self.precision,
@@ -222,26 +222,19 @@ class Regularity_Search:
 
             # storage file for every PF
             text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}.txt"
-            tex_storage_long = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}_long.tex"
-            tex_storage_short = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}.tex"
+            tex_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_{i + 1}.tex"
 
             # display the regularity for every cluster
             regularity_enforcement.regularity.display(self.orig_X[i],
                                                       self.problem_args["lb"],
                                                       self.problem_args["ub"],
                                                       save_file=text_storage)
+
             regularity_enforcement.regularity.display_tex(self.orig_X[i],
                                                           self.problem_args["lb"],
                                                           self.problem_args["ub"],
-                                                          save_file=tex_storage_long,
-                                                          front_num=i, total_fronts=len(self.clusters),
-                                                          long_version=True)
-            regularity_enforcement.regularity.display_tex(self.orig_X[i],
-                                                          self.problem_args["lb"],
-                                                          self.problem_args["ub"],
-                                                          save_file=tex_storage_short, front_num=i,
-                                                          total_fronts=len(self.clusters),
-                                                          long_version=False)
+                                                          save_file=tex_storage, front_num=i,
+                                                          total_fronts=len(self.clusters))
             self.print("Final Metrics")
             self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
             self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
@@ -674,7 +667,7 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="all", help="Name of the problem")
+    parser.add_argument("--problem_name", default="tnk", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -708,7 +701,6 @@ if __name__ == "__main__":
         regularity_search = Regularity_Search(problem_args=problem_config,
                                               seed=seed,
                                               NSGA_settings=algorithm_config["NSGA_settings"],
-                                              non_rand_regularity_degree=algorithm_config["non_rand_regularity_degree"],
                                               rand_regularity_coef_factor=algorithm_config[
                                                   "rand_regularity_coef_factor"],
                                               rand_regularity_dependency=algorithm_config["rand_regularity_dependency"],

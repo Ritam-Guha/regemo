@@ -18,7 +18,6 @@ class Regularity():
                  rand_orphan_vars,
                  rand_final_reg_coef_list,
                  problem_configs,
-                 degree=1,
                  precision=2):
 
         self.dim = dim
@@ -31,7 +30,6 @@ class Regularity():
         self.rand_independent_vars = rand_independent_vars
         self.rand_orphan_vars = rand_orphan_vars
         self.rand_final_reg_coef_list = rand_final_reg_coef_list
-        self.degree = degree
         self.precision = precision
         self.complexity = 0
         self.problem_configs = problem_configs
@@ -175,15 +173,7 @@ class Regularity():
                     ub=None,
                     save_file=None,
                     front_num=-1,
-                    total_fronts=-1,
-                    long_version=True):
-        def increment_cluster_indices(clusters):
-            current_clusters = copy.deepcopy(clusters)
-            for k, cluster in enumerate(current_clusters):
-                if cluster:
-                    current_clusters[k] = [(i + 1) for i in cluster]
-
-            return current_clusters
+                    total_fronts=-1):
 
         self.print = self.mod_print()
 
@@ -197,38 +187,18 @@ class Regularity():
         if X is not None:
             X = self.apply(X, lb, ub)
 
-        # display final regularity
-        if long_version:
-            self.print("\\documentclass{article}\n"
-                       "\\usepackage[T1]{fontenc}\n"
-                       "\\usepackage{algorithm}\n"
-                       "\\usepackage[]{algpseudocode}\n"
-                       "\\usepackage{pseudo}\n"
-                       "\\usepackage{listings}\n")
-
-        self.print("\\lstset{escapeinside={(*@}{@*)}}\n"
-                   "\\lstdefinestyle{mystyle}{\n"
-                   "basicstyle=\\ttfamily\\footnotesize,\n"
-                   "}\n"
-                   "\lstset{style=mystyle}\n")
-
-        if long_version:
-            self.print("\\begin{document}\n")
-
-        self.print("\\begin{lstlisting}[mathescape, language=python]")
+        self.print("\\begin{code}{0.3\\textwidth}{1in}{codebackground}")
 
         if total_fronts > 1:
             self.print(f"Regular Front {front_num + 1}")
 
         if self.non_rand_vars:
-            # const_list_clusters = increment_cluster_indices(self.non_rand_cluster)
-            # const_list = sum(const_list_clusters, [])
+            const_list = self.non_rand_vars
 
-            # if const_list:
-            #     self.print(f"constant variables: $", end="")
-            #     for idx in const_list[:-1]:
-            #         self.print("x_{" + str(idx) + "}, \ ", end="")
-            #     self.print("x_{" + str(const_list[-1]) + "}$")
+            if const_list:
+                self.print("\\codeline{\\codedef{Fixed Variables}:}")
+                for i, idx in enumerate(const_list):
+                    self.print("\\codeline{\\codetab $x_{" + str(idx) + "} = " + str(self.non_rand_vals[i]) + "$}")
 
             # for i, cluster in enumerate(self.non_rand_cluster):
             #     const_list = increment_cluster_indices([cluster])[0]
@@ -244,58 +214,71 @@ class Regularity():
             #     for j in cluster:
             #         if X is not None:
             #             # when there's some X, calculate the regularity mean and insert that
-            #             self.print("$x_{" + str(j + 1) + "}: " + str(X[0, j]) + "$")
+            #             self.print("$\\codetab x_{" + str(j + 1) + "}: " + str(X[0, j]) + "$")
             #         else:
             #             # display general regularity
-            #             self.print("$x_{" + str(j + 1) + "}: mean(X[:, " + str(j) + "])")
+            #             self.print("$\\codetab x_{" + str(j + 1) + "}: mean(X[:, " + str(j) + "])")
             #     self.print()
-
-            self.print()
+            #
+            # self.print()
 
         else:
-            self.print("There is no Non-Random variables in the problem")
+            self.print("\\codeline{\\codedef{Fixed Variables}: None}")
 
         if self.rand_vars:
+            if self.rand_orphan_vars:
+                self.print("\\codeline{\\codedef{Orphan Variables}:}")
+                for idx in self.rand_orphan_vars:
+                    self.print("\\codeline\\codetab $x_{" + str(idx + 1) + "} \\in [" + str(self.lb[idx]) + ", "
+                                                                                                      "" + str(self.ub[
+                                                                                                                 idx])+ "$]}")
+                # self.print("x_{" + str(self.rand_orphan_vars[-1] + 1) + "}$")
+            else:
+                self.print("\\codeline{\\codedef{Orphan Variables}: None}")
+
             if self.rand_independent_vars:
-                self.print("random independent variables: $", end="")
-                for idx in self.rand_independent_vars[:-1]:
-                    self.print("x_{" + str(idx + 1) + "}, \ ", end="")
-                self.print("x_{" + str(self.rand_independent_vars[-1] + 1) + "}$")
+                self.print("\\codeline{\\codedef{Non-fixed Independent Variables}:}")
+                for idx in self.rand_independent_vars:
+                    self.print("\\codeline{\\codetab $x_{" + str(idx + 1) + "} \\in [" + str(self.lb[idx]) + ", "
+                                                                                                        + str(self.ub[
+                                                                                                                idx])
+                               + "]$}")
+            else:
+                self.print("\\codeline{\\codedef{Non-fixed Independent Variables}: None}")
 
             if self.rand_dependent_vars:
-                self.print("random dependent variables: $", end="")
-                for idx in self.rand_dependent_vars[:-1]:
-                    self.print("x_{" + str(idx + 1) + "}, \ ", end="")
-                self.print("x_{" + str(self.rand_dependent_vars[-1] + 1) + "}$")
+                self.print("\\codeline{\\codedef{Non-fixed Dependent Variables}:}")
+                for i, dep_idx in enumerate(self.rand_dependent_vars):
+                    self.print("\\codeline{\\codetab $x_{" + str(dep_idx + 1) + "} = ", end="")
+                    for idx, indep_idx in enumerate(self.rand_independent_vars):
+                        if self.rand_final_reg_coef_list[i][idx] != 0:
+                            self.print(
+                                "(" + str({self.rand_final_reg_coef_list[i][idx]}) + "x_{" + str(
+                                    indep_idx + 1) + "}) + ", end="")
+                    self.print(str(self.rand_final_reg_coef_list[i][-1]) + "$}")
+                # for idx in self.rand_dependent_vars[:-1]:
+                #     self.print("x_{" + str(idx + 1) + "}, \ ", end="")
+                # self.print("x_{" + str(self.rand_dependent_vars[-1] + 1) + "}$")
+            else:
+                self.print("\\codeline{\\codedef{Non-fixed Dependent Variables}: None}")
 
-            for i, dep_idx in enumerate(self.rand_dependent_vars):
-                self.print("$x_{" + str(dep_idx + 1) + "} = ", end="")
-                for idx, indep_idx in enumerate(self.rand_independent_vars):
-                    if self.rand_final_reg_coef_list[i][idx] != 0:
-                        self.print(
-                            f"({self.rand_final_reg_coef_list[i][idx]} \\times " + "x_{" + str(indep_idx + 1) + "}) + ",
-                            end="")
-                self.print(f"{self.rand_final_reg_coef_list[i][-1]}$")
+        self.print("\\end{code}")
 
-            if self.rand_orphan_vars:
-                self.print("complete random variables: $", end="")
-                for idx in self.rand_orphan_vars[:-1]:
-                    self.print("x_{" + str(idx + 1) + "}, \ ", end="")
-                self.print("x_{" + str(self.rand_orphan_vars[-1] + 1) + "}$")
+
 
             # if self.rand_independent_vars:
-            for var in self.rand_independent_vars + self.rand_orphan_vars:
-                self.print("$x_{" + str(var + 1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]$")
+        #     for var in self.rand_independent_vars + self.rand_orphan_vars:
+        #         self.print("$x_{" + str(var + 1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]$")
+        #
+        #     self.print()
+        #
+        #     # if self.rand_orphan_vars:
+        #     #     for var in self.rand_orphan_vars:
+        #     #         self.print("x_{" + str(var+1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]")
+        # self.print("\\end{lstlisting}\n")
 
-            self.print()
-
-            # if self.rand_orphan_vars:
-            #     for var in self.rand_orphan_vars:
-            #         self.print("x_{" + str(var+1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]")
-        self.print("\\end{lstlisting}\n")
-
-        if long_version:
-            self.print("\\end{document}")
+        # if long_version:
+        #     self.print("\\end{document}")
 
         if save_file:
             f.close()

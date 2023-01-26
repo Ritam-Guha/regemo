@@ -88,7 +88,7 @@ class Regularity_search_driver:
             del cur_list[list_keys[cur_key_idx]]
 
     def execute_regularity_search(self):
-        table_header = ["Id", "Degree", "Coef_factor", "Dependency", "SD_rand", "Precision",
+        table_header = ["Id", "Coef_factor", "rand_dependency_percent",
                         "Complexity", "HV_dif_%"]
         table_data = []
 
@@ -99,14 +99,9 @@ class Regularity_search_driver:
         for i, param in enumerate(self.param_comb):
             print(f"Config ID: {i}, Algorithm Config: {param}")
             cur_ps = Regularity_Search(problem_args=self.problem_args,
-                                       non_rand_regularity_degree=param["non_rand_regularity_degree"],
                                        rand_regularity_coef_factor=param["rand_regularity_coef_factor"],
-                                       rand_regularity_dependency=param["rand_regularity_dependency"],
-                                       rand_factor_sd=param["rand_factor_sd"],
-                                       num_clusters=param["n_clusters"],
-                                       clustering_criterion=self.algorithm_args["clustering_criterion"],
+                                       rand_dependency_percent=param["rand_dependency_percent"],
                                        n_rand_bins=param["n_rand_bins"],
-                                       precision=param["precision"],
                                        seed=self.seed,
                                        NSGA_settings=self.algorithm_args["NSGA_settings"],
                                        result_storage=(
@@ -120,8 +115,8 @@ class Regularity_search_driver:
             param["complexity"] = cur_ps.final_metrics["complexity"]
             param["hv_dif_%"] = cur_ps.final_metrics["hv_dif_%"]
 
-            table_data.append([param["ID"], param["non_rand_regularity_degree"], param["rand_regularity_coef_factor"],
-                               param["rand_regularity_dependency"], param["rand_factor_sd"], param["precision"],
+            table_data.append([param["ID"], param["rand_regularity_coef_factor"],
+                               param["rand_dependency_percent"],
                                param["complexity"], param["hv_dif_%"]])
 
             # save the param config
@@ -415,9 +410,9 @@ if __name__ == "__main__":
         problem_config["problem_name"] = problem_name
 
         exec_args = {"rand_regularity_coef_factor": [0.1, 0.3, 0.5],
-                     "rand_regularity_dependency": [1, 2],
-                     "delta": [0.05, 0.1, 0.5],
-                     "n_rand_bins": [3, 4, 5, 10, 15]}
+                     "rand_dependency_percent": [0.1, 0.3, 0.5, 0.7],
+                     "delta": [0.05, 0.1, 0.2],
+                     "n_rand_bins": [3, 4, 5, 10]}
 
         driver = Regularity_search_driver(problem_args=problem_config,
                                           algorithm_args=algorithm_config,

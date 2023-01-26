@@ -34,7 +34,7 @@ class Regularity_Finder:
                  X,
                  F,
                  problem_args,
-                 non_rand_regularity_degree=1,
+                 rand_dependency_percent=0.9,
                  rand_regularity_coef_factor=0.1,
                  rand_regularity_dependency=0,
                  delta=0.05,
@@ -77,7 +77,7 @@ class Regularity_Finder:
         self.problem_args = problem_args
         self.seed = seed
         self.n_rand_bins = n_rand_bins
-        self.non_rand_regularity_degree = non_rand_regularity_degree
+        self.rand_dependency_percent = rand_dependency_percent
         self.rand_regularity_coef_factor = rand_regularity_coef_factor
         self.rand_regularity_dependency = rand_regularity_dependency
         self.delta=delta
@@ -183,8 +183,7 @@ class Regularity_Finder:
             self.print("================================================")
             self.non_rand_regularity()
             self.print("The regularity is that all the population members are having the same values for the non-rand "
-                       "clusters variables\n where each cluster follows a non-decreasing curve with degree "
-                       + str(self.non_rand_regularity_degree))
+                       "variables")
             # after the non-rand values are found, save those values in non_rand_vals
             self.non_rand_vals = list(self.X[0, self.non_rand_vars])
 
@@ -203,7 +202,6 @@ class Regularity_Finder:
                                      rand_orphan_vars=self.rand_orphan_vars,
                                      rand_final_reg_coef_list=self.rand_final_reg_coef_list,
                                      problem_configs=self.problem_args,
-                                     degree=self.non_rand_regularity_degree,
                                      precision=self.precision)
 
         if self.verbose:
@@ -230,79 +228,84 @@ class Regularity_Finder:
         if len(self.rand_vars):
             self.print("\nRe-optimizing the population after regularity enforcement...")
             self.re_optimize()
-            # save the regularity to a regularity object
-            self.regularity = Regularity(dim=self.problem_args["dim"],
-                                         lb=self.lb,
-                                         ub=self.ub,
-                                         non_rand_vars=self.non_rand_vars,
-                                         non_rand_vals=self.non_rand_vals,
-                                         rand_vars=self.rand_vars,
-                                         rand_dependent_vars=self.rand_dependent_vars,
-                                         rand_independent_vars=self.rand_independent_vars,
-                                         rand_orphan_vars=self.rand_orphan_vars,
-                                         rand_final_reg_coef_list=self.rand_final_reg_coef_list,
-                                         problem_configs=self.problem_args,
-                                         degree=self.non_rand_regularity_degree,
-                                         precision=self.precision)
 
-        pickle.dump((len(self.rand_independent_vars)+len(self.rand_orphan_vars), self.problem_args["dim"]),
-                    open(f"{config.BASE_PATH}/{self.result_storage}/random_var_count_{self.pf_cluster_num + 1}.pickle",
-                         "wb"))
+            if self.X is not None:
+                # save the regularity to a regularity object
+                self.regularity = Regularity(dim=self.problem_args["dim"],
+                                             lb=self.lb,
+                                             ub=self.ub,
+                                             non_rand_vars=self.non_rand_vars,
+                                             non_rand_vals=self.non_rand_vals,
+                                             rand_vars=self.rand_vars,
+                                             rand_dependent_vars=self.rand_dependent_vars,
+                                             rand_independent_vars=self.rand_independent_vars,
+                                             rand_orphan_vars=self.rand_orphan_vars,
+                                             rand_final_reg_coef_list=self.rand_final_reg_coef_list,
+                                             problem_configs=self.problem_args,
+                                             precision=self.precision)
 
-        # final metric calculation
-        self.norm_F = self._normalize(self.F, self.norm_F_lb, self.norm_F_ub)
-        if self.norm_F.ndim == 1:
-            self.norm_F = self.norm_F.reshape(1, -1)
+                pickle.dump((len(self.rand_independent_vars)+len(self.rand_orphan_vars), self.problem_args["dim"]),
+                            open(f"{config.BASE_PATH}/{self.result_storage}/random_var_count_{self.pf_cluster_num + 1}.pickle",
+                                 "wb"))
 
-        # save the final metrics
-        self.regularity_hv = self.hv.do(self.norm_F)
+                # final metric calculation
+                self.norm_F = self._normalize(self.F, self.norm_F_lb, self.norm_F_ub)
+                if self.norm_F.ndim == 1:
+                    self.norm_F = self.norm_F.reshape(1, -1)
 
-        if self.regularity_hv == 0:
-            # when it converges to 1 point
-            self.final_metrics["hv_dif_%"] = np.inf
-        else:
-            self.final_metrics["hv_dif_%"] = ((abs(self.orig_hv - self.regularity_hv)) / self.orig_hv) * 100
-        self.final_metrics["igd_plus"] = self.igd_plus.do(self.F)
+                # save the final metrics
+                self.regularity_hv = self.hv.do(self.norm_F)
 
-        self.print(f"Final IGD+ value: {'{:.2e}'.format(self.final_metrics['igd_plus'])}")
-        self.print(f"Hyper-volume difference: "f"{'{:.2e}'.format(self.final_metrics['hv_dif_%'])}")
+                if self.regularity_hv == 0:
+                    # when it converges to 1 point
+                    self.final_metrics["hv_dif_%"] = np.inf
+                else:
+                    self.final_metrics["hv_dif_%"] = ((abs(self.orig_hv - self.regularity_hv)) / self.orig_hv) * 100
+                self.final_metrics["igd_plus"] = self.igd_plus.do(self.F)
 
-        # only keep the non-dominated solutions
-        survived_pop = list(NonDominatedSorting().do(self.F)[0])
-        self.X = self.X[survived_pop, :]
-        self.F = self.F[survived_pop, :]
+                self.print(f"Final IGD+ value: {'{:.2e}'.format(self.final_metrics['igd_plus'])}")
+                self.print(f"Hyper-volume difference: "f"{'{:.2e}'.format(self.final_metrics['hv_dif_%'])}")
 
-        # display two random population members
-        self.print("\n Example of two population members:")
-        np.random.seed(self.seed)
-        ids = np.random.choice(self.X.shape[0], 2)
-        table_header = ["Id"] + [str(i) for i in range(self.problem_args["dim"])]
-        table_data = np.zeros((2, self.problem_args["dim"] + 1))
+                # only keep the non-dominated solutions
+                survived_pop = list(NonDominatedSorting().do(self.F)[0])
+                self.X = self.X[survived_pop, :]
+                self.F = self.F[survived_pop, :]
 
-        table_data[0, 0], table_data[0, 1:] = ids[0], self.X[ids[0], :]
-        table_data[1, 0], table_data[1, 1:] = ids[1], self.X[ids[1], :]
-        self.print()
-        self.print(tabulate(table_data, headers=table_header))
-        self.print()
+                # display two random population members
+                self.print("\n Example of two population members:")
+                np.random.seed(self.seed)
+                ids = np.random.choice(self.X.shape[0], 2)
+                table_header = ["Id"] + [str(i) for i in range(self.problem_args["dim"])]
+                table_data = np.zeros((2, self.problem_args["dim"] + 1))
 
-        # check the applicability of the final regularity principle
-        self.proxy_regular_X, self.proxy_regular_F = self._check_final_regularity(n_points=10000)
+                table_data[0, 0], table_data[0, 1:] = ids[0], self.X[ids[0], :]
+                table_data[1, 0], table_data[1, 1:] = ids[1], self.X[ids[1], :]
+                self.print()
+                self.print(tabulate(table_data, headers=table_header))
+                self.print()
 
-        regularity_principle = {
-            "rand_independent_vars": self.regularity.rand_independent_vars,
-            "rand_dependent_vars": self.regularity.rand_dependent_vars,
-            "rand_orphan_vars": self.regularity.rand_orphan_vars,
-            "coef_list": self.regularity.rand_final_reg_coef_list,
-            "lb": self.regularity.lb,
-            "ub": self.regularity.ub,
-            "non_rand_vars": self.regularity.non_rand_vars,
-            "non_rand_vals": self.regularity.non_rand_vals,
-            "problem_config": self.problem_args
-        }
+                # check the applicability of the final regularity principle
+                self.proxy_regular_X, self.proxy_regular_F = self._check_final_regularity(n_points=10000)
 
-        # save regularity principle
-        pickle.dump(regularity_principle, open(f"{config.BASE_PATH}/{self.result_storage}/regularity_principle_{self.pf_cluster_num + 1}.pickle",
-                    "wb"))
+                regularity_principle = {
+                    "rand_independent_vars": self.regularity.rand_independent_vars,
+                    "rand_dependent_vars": self.regularity.rand_dependent_vars,
+                    "rand_orphan_vars": self.regularity.rand_orphan_vars,
+                    "coef_list": self.regularity.rand_final_reg_coef_list,
+                    "lb": self.regularity.lb,
+                    "ub": self.regularity.ub,
+                    "non_rand_vars": self.regularity.non_rand_vars,
+                    "non_rand_vals": self.regularity.non_rand_vals,
+                    "problem_config": self.problem_args
+                }
+
+                # save regularity principle
+                pickle.dump(regularity_principle, open(f"{config.BASE_PATH}/{self.result_storage}/regularity_principle_{self.pf_cluster_num + 1}.pickle",
+                            "wb"))
+
+            else:
+                self.regularity_hv = 0
+
 
     def run_NSGA(self, problem, NSGA_settings):
         # run the NSGA2 over the problem
@@ -402,15 +405,15 @@ class Regularity_Finder:
         self.F = self.evaluate(self.X, self.problem_args)
 
     def rand_regularity(self):
-
         if len(self.rand_vars) > 1:
             # enforce regularity in random variables
             # sort the random variables according to decreasing order of correlation sum
             corr_var = pd.DataFrame(self.X[:, self.rand_vars]).corr()
             sum_corr_var = np.array(np.sum(abs(corr_var), axis=1) - 1)
             self.rand_vars = list(np.array(self.rand_vars)[np.argsort(-sum_corr_var)])
-            num_dependent_vars = max(len(self.rand_vars) - self.problem_args["n_obj"] + 1, 1)
-            num_independent_vars = len(self.rand_vars) - num_dependent_vars
+            num_dependent_vars = int(np.floor(self.rand_dependency_percent * len(self.rand_vars)))
+            # num_dependent_vars = max(len(self.rand_vars) - self.problem_args["n_obj"] + 1, 1)
+            # num_independent_vars = len(self.rand_vars) - num_dependent_vars
 
             # figure out the dependent and independent variables from the set of random variables
             if len(self.rand_vars) == 2:
@@ -448,9 +451,9 @@ class Regularity_Finder:
 
             elif len(self.rand_vars) > self.rand_regularity_dependency:
                 # when there are more variables in the cluster than dependency requirement
-                # select the first few variables as independent and rest as dependent
-                self.rand_independent_vars = self.rand_vars[0:num_independent_vars]
-                self.rand_dependent_vars = self.rand_vars[num_independent_vars:]
+                # select the first few variables as dependent and rest as dependent
+                self.rand_dependent_vars = self.rand_vars[0:num_dependent_vars]
+                self.rand_independent_vars = self.rand_vars[num_dependent_vars:]
 
             else:
                 # when the dependency requirement is higher than the number of variables in the cluster
@@ -462,8 +465,8 @@ class Regularity_Finder:
                 num_dependent_vars = self.rand_regularity_dependency
                 num_independent_vars = len(self.rand_vars) - num_dependent_vars
 
-                self.rand_independent_vars = self.rand_vars[0:num_independent_vars]
-                self.rand_dependent_vars = self.rand_vars[num_independent_vars:]
+                self.rand_dependent_vars = self.rand_vars[0:num_dependent_vars]
+                self.rand_independent_vars = self.rand_vars[num_independent_vars:]
 
             # get the regressed regularity (for random variables we are using degree of 1)
             reg_X, regularity_reg_coef_data = self._rand_regularity_regression(self.rand_dependent_vars,
@@ -473,7 +476,7 @@ class Regularity_Finder:
             self.rand_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:-2]
 
             # Do a final check to see if there is any random variable which is unused
-            # in the equations. Those variables are called complete random variables
+            # in the equations. Those variables are called orphan variables
             if self.rand_dependent_vars:
                 temp_coef_list = np.array(self.rand_final_reg_coef_list[:, 0:-1])
                 rand_indep_var_unutilized = np.prod(temp_coef_list == 0, axis=0)
@@ -553,7 +556,7 @@ class Regularity_Finder:
         # display the dependent a   nd independent variables
         self.print(f"Dependent Variables: {self.rand_dependent_vars}")
         self.print(f"Independent Variables: {self.rand_independent_vars}")
-        self.print(f"Complete Random Variables: {self.rand_orphan_vars}")
+        self.print(f"Orphan Variables: {self.rand_orphan_vars}")
 
 
     def _rand_regularity_regression(self, rand_dep_vars, rand_indep_vars):
@@ -592,7 +595,7 @@ class Regularity_Finder:
             for j in range(len(coef_)):
                 # for every coefficient, fix it as a multiple of the coef_factor
                 mult_factor_1 = int(coef_[j] / self.rand_regularity_coef_factor)
-                mult_factor_2 = mult_factor_1 + 1 if (mult_factor_1 > 0) else mult_factor_1 - 1
+                mult_factor_2 = mult_factor_1 + 1 if (coef_[j] > 0) else mult_factor_1 - 1
                 mult_factor = mult_factor_1 if abs(mult_factor_1 * self.rand_regularity_coef_factor - coef_[j]) < abs(
                     mult_factor_2 *
                     self.rand_regularity_coef_factor - coef_[j]) \
@@ -602,7 +605,14 @@ class Regularity_Finder:
                 reg.coef_[0, j] = round(self.rand_regularity_coef_factor * mult_factor, self.precision)
 
             # round the intercept too
-            reg.intercept_ = np.round(reg.intercept_, self.precision)
+            mult_factor_1 = int(reg.intercept_ / self.rand_regularity_coef_factor)
+            mult_factor_2 = mult_factor_1 + 1 if (reg.intercept_ > 0) else mult_factor_1 - 1
+            mult_factor = mult_factor_1 if abs(mult_factor_1 * self.rand_regularity_coef_factor - reg.intercept_) < abs(
+                mult_factor_2 *
+                self.rand_regularity_coef_factor - reg.intercept_) \
+                else mult_factor_2
+
+            reg.intercept_ = round(self.rand_regularity_coef_factor * mult_factor, self.precision)
 
             # final regressed version
             reg_X[:, i] = reg.predict(x)[:, 0]
@@ -790,6 +800,8 @@ class Regularity_Finder:
             self.ub = list(self.ub)
 
         else:
+            self.X = None
+            self.F = None
             self.print("No feasible solution found with this regularity...")
 
     def _final_regularity_enforcement(self):

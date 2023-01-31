@@ -16,6 +16,7 @@ from tabulate import tabulate
 import sys
 import argparse
 import plotly.express as px
+import multiprocessing as mp
 
 plt.rcParams.update({'font.size': 15})
 
@@ -88,7 +89,7 @@ class Regularity_search_driver:
             del cur_list[list_keys[cur_key_idx]]
 
     def execute_regularity_search(self):
-        table_header = ["Id", "Coef_factor", "rand_dependency_percent",
+        table_header = ["Id", "Coef_factor", "non_fixed_dependency_percent",
                         "Complexity", "HV_dif_%"]
         table_data = []
 
@@ -96,12 +97,14 @@ class Regularity_search_driver:
         print(f"              {self.problem_name}           ")
         print("=============================================")
         # execute the process for every regularity combination
+
         for i, param in enumerate(self.param_comb):
             print(f"Config ID: {i}, Algorithm Config: {param}")
             cur_ps = Regularity_Search(problem_args=self.problem_args,
-                                       rand_regularity_coef_factor=param["rand_regularity_coef_factor"],
-                                       rand_dependency_percent=param["rand_dependency_percent"],
+                                       non_fixed_regularity_coef_factor=param["non_fixed_regularity_coef_factor"],
+                                       non_fixed_dependency_percent=param["non_fixed_dependency_percent"],
                                        n_rand_bins=param["n_rand_bins"],
+                                       delta=param["delta"],
                                        seed=self.seed,
                                        NSGA_settings=self.algorithm_args["NSGA_settings"],
                                        result_storage=(
@@ -115,8 +118,8 @@ class Regularity_search_driver:
             param["complexity"] = cur_ps.final_metrics["complexity"]
             param["hv_dif_%"] = cur_ps.final_metrics["hv_dif_%"]
 
-            table_data.append([param["ID"], param["rand_regularity_coef_factor"],
-                               param["rand_dependency_percent"],
+            table_data.append([param["ID"], param["non_fixed_regularity_coef_factor"],
+                               param["non_fixed_dependency_percent"],
                                param["complexity"], param["hv_dif_%"]])
 
             # save the param config
@@ -204,25 +207,32 @@ class Regularity_search_driver:
         # return self.pf_param_comb[-1]["ID"]
         # else:
         # in case of convex pareto front
-        if pf[knee_point_index, 1] <= threshold_percentage:
+        if len(thres_idx) == 0:
+            return self.pf_param_comb[-1]["ID"]
+        elif pf[knee_point_index, 1] <= threshold_percentage:
             # the preferred point is the knee point, if it is within 2% error
             return self.knee_point_ID
         elif pf_thres.shape[0] > 0:
             knee_point_index_thres = self.knee_point_estimation(pf_thres)
             return self.pf_param_comb_thres[knee_point_index_thres]["ID"]
-        else:
-            pf_norm = (pf - np.min(pf, axis=0)) / (np.max(pf, axis=0) - (np.min(pf, axis=0)) + 1e-6)
-            best_idx = pf_norm.shape[0] - 1
-            for i in range(1, pf.shape[0]):
-                gain = pf_norm[best_idx, 0] - pf_norm[best_idx-1, 0]
-                loss = pf_norm[best_idx-1, 1] - pf_norm[best_idx, 1]
-
-                if (pf[best_idx-1, 1]-pf[-1, 1]) <= threshold_percentage and gain > loss:
-                    best_idx = best_idx-1
-                else:
-                    break
-
-            return self.pf_param_comb[best_idx]["ID"]
+        # else:
+        #     pf_norm = (pf - np.min(pf, axis=0)) / (np.max(pf, axis=0) - (np.min(pf, axis=0)) + 1e-6)
+            # pf_norm = copy.deepcopy(pf)
+            # N = self.problem_args["dim"]
+            # max_complexity = (6*N - 11)*(N-2) + 4
+            # min_complexity = 0.5 * N
+            # pf_norm[:, 0] = (pf_norm[:, 0] - min_complexity)/(max_complexity - min_complexity)
+            # best_idx = pf_norm.shape[0] - 1
+            # for i in range(1, pf.shape[0]):
+            #     gain = pf_norm[best_idx, 0] - pf_norm[best_idx-1, 0]
+            #     loss = pf_norm[best_idx-1, 1] - pf_norm[best_idx, 1]
+            #
+            #     if pf[best_idx-1, 1] <= threshold_percentage and gain > loss:
+            #         best_idx = best_idx-1
+            #     else:
+            #         break
+            #
+            # return self.pf_param_comb[best_idx]["ID"]
 
     def perform_trade_off_analysis(self):
         pf_df = pd.read_excel(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/configurations.xlsx",
@@ -250,7 +260,7 @@ class Regularity_search_driver:
         is_unique = np.where(np.logical_not(find_duplicates(F, epsilon=1e-24)))[0]
         F = F[is_unique, :]
         self.pf_param_comb = [self.pf_param_comb[i] for i in is_unique]
-        thresholded_percentage = 2
+        thresholded_percentage = 1
         self.preferred_ID = self.find_preferred_point(threshold_percentage=thresholded_percentage)
 
         pf_text = open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_PF.txt", "w")
@@ -383,7 +393,7 @@ class Regularity_search_driver:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="conceptual_marine_design", help="Name of the problem")
+    parser.add_argument("--problem_name", default="all", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -409,8 +419,8 @@ if __name__ == "__main__":
 
         problem_config["problem_name"] = problem_name
 
-        exec_args = {"rand_regularity_coef_factor": [0.1, 0.3, 0.5],
-                     "rand_dependency_percent": [0.1, 0.3, 0.5, 0.7],
+        exec_args = {"non_fixed_regularity_coef_factor": [0.1, 0.3, 0.5],
+                     "non_fixed_dependency_percent": [0.1, 0.3, 0.5, 0.7],
                      "delta": [0.05, 0.1, 0.2],
                      "n_rand_bins": [3, 4, 5, 10]}
 

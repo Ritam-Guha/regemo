@@ -34,9 +34,8 @@ class Regularity_Finder:
                  X,
                  F,
                  problem_args,
-                 rand_dependency_percent=0.9,
-                 rand_regularity_coef_factor=0.1,
-                 rand_regularity_dependency=0,
+                 non_fixed_dependency_percent=0.9,
+                 non_fixed_regularity_coef_factor=0.1,
                  delta=0.05,
                  precision=2,
                  NSGA_settings=None,
@@ -44,19 +43,17 @@ class Regularity_Finder:
                  save_img=True,
                  result_storage="/.",
                  verbose=True,
-                 pf_cluster_num=0,
-                 num_clusters=1,
                  n_rand_bins=20,
                  seed=0):
         """
         :param X: population of solutions
         :param F: evluation scores for the population
         :param problem_args: arguments for the problem
-        :param non_rand_regularity_degree: degree for non-random regularity fitting
-        :param rand_regularity_coef_factor: coefficient of multiplication for rand variable regularity
-        :param rand_regularity_dependency: max number of dependent random variables
-        :param rand_regularity_MSE_threshold: the threshold for keeping rand pattern
-        :param non_rand_regularity_MSE_threshold: the threshold for keeping non-rand pattern
+        :param fixed_regularity_degree: degree for non-random regularity fitting
+        :param non_fixed_regularity_coef_factor: coefficient of multiplication for rand variable regularity
+        :param non_fixed_regularity_dependency: max number of dependent random variables
+        :param non_fixed_regularity_MSE_threshold: the threshold for keeping rand pattern
+        :param fixed_regularity_MSE_threshold: the threshold for keeping non-rand pattern
         :param precision: precision for the floating point values (used for simplification of the regularity)
         :param NSGA_settings: algorithm settings for NSGA2/NSGA3
         :param clustering_config: configuration for clustering in the population
@@ -77,10 +74,9 @@ class Regularity_Finder:
         self.problem_args = problem_args
         self.seed = seed
         self.n_rand_bins = n_rand_bins
-        self.rand_dependency_percent = rand_dependency_percent
-        self.rand_regularity_coef_factor = rand_regularity_coef_factor
-        self.rand_regularity_dependency = rand_regularity_dependency
-        self.delta=delta
+        self.non_fixed_dependency_percent = non_fixed_dependency_percent
+        self.non_fixed_regularity_coef_factor = non_fixed_regularity_coef_factor
+        self.delta = delta
         self.NSGA_settings = NSGA_settings
         self.clustering_config = clustering_config
 
@@ -89,9 +85,8 @@ class Regularity_Finder:
         self.evaluate = get_problem(self.problem_name, problem_args, class_required=False)
 
         # initialize the regularity algorithm parameters
-        self.pf_cluster_num = pf_cluster_num
-        self.non_rand_vars = []
-        self.non_rand_vals = None
+        self.fixed_vars = []
+        self.fixed_vals = None
         self.X = X
         self.F = F
         self.norm_F = None
@@ -106,10 +101,10 @@ class Regularity_Finder:
         self.norm_orig_F = None
         self.ub = list(np.array(problem_args["ub"], dtype=float))
         self.lb = list(np.array(problem_args["lb"], dtype=float))
-        self.rand_final_reg_coef_list = []
-        self.rand_dependent_vars = []
-        self.rand_independent_vars = []
-        self.rand_orphan_vars = []
+        self.non_fixed_final_reg_coef_list = []
+        self.non_fixed_dependent_vars = []
+        self.non_fixed_independent_vars = []
+        self.non_fixed_orphan_vars = []
         self.result_storage = result_storage
         self.igd_plus = None
         self.hv = None
@@ -119,7 +114,6 @@ class Regularity_Finder:
         self.print = verboseprint(self.verbose)
         self.regularity = None
         self.final_metrics = {}
-        self.num_clusters = num_clusters
 
         np.random.seed(self.seed)
 
@@ -163,44 +157,43 @@ class Regularity_Finder:
         self.orig_hv = self.hv.do(self.norm_orig_F)
 
         # clustering
-        self.rand_vars, self.non_rand_vars = self.find_regularity_clusters()
+        self.non_fixed_vars, self.fixed_vars = self.find_regularity_clusters()
 
-        # regularity enforcement in random variables
-        if len(self.rand_vars) > 0:
+        # regularity enforcement in non-fixed variables
+        if len(self.non_fixed_vars) > 0:
             self.print("\n================================================")
-            self.print("Searching for regularity inside random variables...")
+            self.print("Searching for regularity inside non-fixed variables...")
             self.print("================================================")
-            self.rand_regularity()
-            if self.rand_dependent_vars:
+            self.non_fixed_regularity()
+            if self.non_fixed_dependent_vars:
                 self.print("The regularity is that the slopes of the projection of the variables with respect to the "
-                           "index variable are always multiples of " + str(self.rand_regularity_coef_factor))
-
-        # self.non_rand_vars = sum(self.non_rand_cluster, [])
-        if len(self.non_rand_vars) > 0:
-            # regularity enforcement in non-random variables
+                           "index variable are always multiples of " + str(self.non_fixed_regularity_coef_factor))
+                
+        if len(self.fixed_vars) > 0:
+            # regularity enforcement in fixed variables
             self.print("================================================")
-            self.print("Searching for regularity inside non-rand variables...")
+            self.print("Searching for regularity inside fixed variables...")
             self.print("================================================")
-            self.non_rand_regularity()
-            self.print("The regularity is that all the population members are having the same values for the non-rand "
+            self.fixed_regularity()
+            self.print("The regularity is that all the population members are having the same values for the fixed "
                        "variables")
-            # after the non-rand values are found, save those values in non_rand_vals
-            self.non_rand_vals = list(self.X[0, self.non_rand_vars])
+            # after the fixed values are found, save those values in fixed_vals
+            self.fixed_vals = list(self.X[0, self.fixed_vars])
 
         else:
-            self.print("[INFO] The process is stopping as there's no non-random variables")
+            self.print("[INFO] The process is stopping as there's no fixed variables")
 
         # save the regularity to a regularity object
         self.regularity = Regularity(dim=self.problem_args["dim"],
                                      lb=self.lb,
                                      ub=self.ub,
-                                     non_rand_vars=self.non_rand_vars,
-                                     non_rand_vals=self.non_rand_vals,
-                                     rand_vars=self.rand_vars,
-                                     rand_dependent_vars=self.rand_dependent_vars,
-                                     rand_independent_vars=self.rand_independent_vars,
-                                     rand_orphan_vars=self.rand_orphan_vars,
-                                     rand_final_reg_coef_list=self.rand_final_reg_coef_list,
+                                     fixed_vars=self.fixed_vars,
+                                     fixed_vals=self.fixed_vals,
+                                     non_fixed_vars=self.non_fixed_vars,
+                                     non_fixed_dependent_vars=self.non_fixed_dependent_vars,
+                                     non_fixed_independent_vars=self.non_fixed_independent_vars,
+                                     non_fixed_orphan_vars=self.non_fixed_orphan_vars,
+                                     non_fixed_final_reg_coef_list=self.non_fixed_final_reg_coef_list,
                                      problem_configs=self.problem_args,
                                      precision=self.precision)
 
@@ -222,30 +215,30 @@ class Regularity_Finder:
 
         if self.save_img:
             plot.save(
-                f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_pre_reopt_cluster_{self.pf_cluster_num + 1}.png")
+                f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_pre_reopt.png")
 
         # Re-optimization
-        if len(self.rand_vars):
+        if len(self.non_fixed_vars) > 0:
             self.print("\nRe-optimizing the population after regularity enforcement...")
             self.re_optimize()
 
-            if self.X is not None:
-                # save the regularity to a regularity object
-                self.regularity = Regularity(dim=self.problem_args["dim"],
-                                             lb=self.lb,
-                                             ub=self.ub,
-                                             non_rand_vars=self.non_rand_vars,
-                                             non_rand_vals=self.non_rand_vals,
-                                             rand_vars=self.rand_vars,
-                                             rand_dependent_vars=self.rand_dependent_vars,
-                                             rand_independent_vars=self.rand_independent_vars,
-                                             rand_orphan_vars=self.rand_orphan_vars,
-                                             rand_final_reg_coef_list=self.rand_final_reg_coef_list,
-                                             problem_configs=self.problem_args,
-                                             precision=self.precision)
+            # save the regularity to a regularity object
+            self.regularity = Regularity(dim=self.problem_args["dim"],
+                                         lb=self.lb,
+                                         ub=self.ub,
+                                         fixed_vars=self.fixed_vars,
+                                         fixed_vals=self.fixed_vals,
+                                         non_fixed_vars=self.non_fixed_vars,
+                                         non_fixed_dependent_vars=self.non_fixed_dependent_vars,
+                                         non_fixed_independent_vars=self.non_fixed_independent_vars,
+                                         non_fixed_orphan_vars=self.non_fixed_orphan_vars,
+                                         non_fixed_final_reg_coef_list=self.non_fixed_final_reg_coef_list,
+                                         problem_configs=self.problem_args,
+                                         precision=self.precision)
 
-                pickle.dump((len(self.rand_independent_vars)+len(self.rand_orphan_vars), self.problem_args["dim"]),
-                            open(f"{config.BASE_PATH}/{self.result_storage}/random_var_count_{self.pf_cluster_num + 1}.pickle",
+            if self.X is not None:
+                pickle.dump((len(self.non_fixed_independent_vars)+len(self.non_fixed_orphan_vars), self.problem_args["dim"]),
+                            open(f"{config.BASE_PATH}/{self.result_storage}/non_fixed_var_count.pickle",
                                  "wb"))
 
                 # final metric calculation
@@ -288,23 +281,36 @@ class Regularity_Finder:
                 self.proxy_regular_X, self.proxy_regular_F = self._check_final_regularity(n_points=10000)
 
                 regularity_principle = {
-                    "rand_independent_vars": self.regularity.rand_independent_vars,
-                    "rand_dependent_vars": self.regularity.rand_dependent_vars,
-                    "rand_orphan_vars": self.regularity.rand_orphan_vars,
-                    "coef_list": self.regularity.rand_final_reg_coef_list,
+                    "non_fixed_independent_vars": self.regularity.non_fixed_independent_vars,
+                    "non_fixed_dependent_vars": self.regularity.non_fixed_dependent_vars,
+                    "non_fixed_orphan_vars": self.regularity.non_fixed_orphan_vars,
+                    "coef_list": self.regularity.non_fixed_final_reg_coef_list,
                     "lb": self.regularity.lb,
                     "ub": self.regularity.ub,
-                    "non_rand_vars": self.regularity.non_rand_vars,
-                    "non_rand_vals": self.regularity.non_rand_vals,
+                    "fixed_vars": self.regularity.fixed_vars,
+                    "fixed_vals": self.regularity.fixed_vals,
                     "problem_config": self.problem_args
                 }
 
                 # save regularity principle
-                pickle.dump(regularity_principle, open(f"{config.BASE_PATH}/{self.result_storage}/regularity_principle_{self.pf_cluster_num + 1}.pickle",
+                pickle.dump(regularity_principle, open(f"{config.BASE_PATH}/{self.result_storage}/regularity_principle.pickle",
                             "wb"))
 
             else:
+                self.proxy_regular_F = None
+                self.proxy_regular_X = None
                 self.regularity_hv = 0
+                self.final_metrics["hv_dif_%"] = np.inf
+                self.final_metrics["igd_plus"] = 0
+
+        else:
+            self.proxy_regular_F = None
+            self.proxy_regular_X = None
+            self.regularity_hv = 0
+            self.final_metrics["hv_dif_%"] = np.inf
+            self.final_metrics["igd_plus"] = 0
+
+        self.print("done")
 
 
     def run_NSGA(self, problem, NSGA_settings):
@@ -356,10 +362,10 @@ class Regularity_Finder:
 
     def find_regularity_clusters(self):
         # define the way to find the regularity features
-        rand_vars = []
-        non_rand_clusters = []
+        non_fixed_vars = []
+        fixed_clusters = []
 
-        # stage 1 - remove random variables
+        # stage 1 - remove non-fixed variables
         num_features = self.X.shape[1]
         pop_spread = (np.max(self.X, axis=0) - np.min(self.X, axis=0)) / (np.array(self.ub) - np.array(self.lb))
         remaining_cluster_list = list(np.arange(num_features))
@@ -371,7 +377,7 @@ class Regularity_Finder:
         for i in range(self.X.shape[0]):
             plt.scatter(np.arange(dim), self.X[i, :])
 
-        plt.xticks(np.arange(dim), labels=[f"$X_{i + 1} ({str(round(spread, 3))})$" for i, spread in enumerate(
+        plt.xticks(np.arange(dim), labels=[f"$x_{i + 1} ({str(round(spread, 3))})$" for i, spread in enumerate(
             pop_spread)])
         plt.xlabel("Variables (Corresponding Spread)")
         # plt.title(f"Spread of Variables across Population for {self.problem_args['name']} Problem")
@@ -384,18 +390,18 @@ class Regularity_Finder:
 
         if self.save_img:
             fig.savefig(
-                f"{config.BASE_PATH}/{self.result_storage}/variable_spread_pf_cluster_{self.pf_cluster_num + 1}.png")
+                f"{config.BASE_PATH}/{self.result_storage}/variable_spread_pf.png")
 
-        # find out the random variables
+        # find out the non-fixed variables
         for i in range(self.X.shape[1]):
             if self._is_random(self.X[:, i], i, self.lb[i], self.ub[i], self.delta)[0]:
-                rand_vars.append(i)
+                non_fixed_vars.append(i)
                 remaining_cluster_list.remove(i)
 
-        non_rand_cluster = remaining_cluster_list
-        return rand_vars, non_rand_cluster
+        fixed_cluster = remaining_cluster_list
+        return non_fixed_vars, fixed_cluster
 
-    def non_rand_regularity(self):
+    def fixed_regularity(self):
         # find the regular population
         self.X = self._non_regularity_repair(self.X)
 
@@ -404,31 +410,34 @@ class Regularity_Finder:
 
         self.F = self.evaluate(self.X, self.problem_args)
 
-    def rand_regularity(self):
-        if len(self.rand_vars) > 1:
-            # enforce regularity in random variables
-            # sort the random variables according to decreasing order of correlation sum
-            corr_var = pd.DataFrame(self.X[:, self.rand_vars]).corr()
+    def non_fixed_regularity(self):
+        if len(self.non_fixed_vars) > 1:
+            # enforce regularity in non-fixed variables
+            # sort the non-fixed variables according to decreasing order of correlation sum
+            corr_var = pd.DataFrame(self.X[:, self.non_fixed_vars]).corr()
             sum_corr_var = np.array(np.sum(abs(corr_var), axis=1) - 1)
-            self.rand_vars = list(np.array(self.rand_vars)[np.argsort(-sum_corr_var)])
-            num_dependent_vars = int(np.floor(self.rand_dependency_percent * len(self.rand_vars)))
-            # num_dependent_vars = max(len(self.rand_vars) - self.problem_args["n_obj"] + 1, 1)
-            # num_independent_vars = len(self.rand_vars) - num_dependent_vars
+            self.non_fixed_vars = list(np.array(self.non_fixed_vars)[np.argsort(-sum_corr_var)])
+            num_dependent_vars = int(np.floor(self.non_fixed_dependency_percent * len(self.non_fixed_vars)))
 
-            # figure out the dependent and independent variables from the set of random variables
-            if len(self.rand_vars) == 2:
+            if num_dependent_vars == 0:
+                self.non_fixed_dependent_vars = []
+                self.non_fixed_independent_vars = []
+                self.non_fixed_orphan_vars = copy.deepcopy(self.non_fixed_vars)
+
+            # figure out the dependent and independent variables from the set of non-fixed variables
+            elif len(self.non_fixed_vars) == 2:
                 # if there are two variables, both of them will have the same PCC sum
                 # so check the regularities and deviations from original front and then
                 # decide on the independent and dependent variable clusters
-                self.print("As there are two random variables, both of them are eligible to become dependent or "
+                self.print("As there are two non-fixed variables, both of them are eligible to become dependent or "
                            "independent "
                            "variable.\nSo, we are checking the pareto front deviation for both the configurations and then "
                            "we'll decide which configuration to select")
 
                 self.print("Config 1")
-                reg_X_1, _ = self._rand_regularity_regression([self.rand_vars[0]], [self.rand_vars[1]])
+                reg_X_1, _ = self._non_fixed_regularity_regression([self.non_fixed_vars[0]], [self.non_fixed_vars[1]])
                 self.print("Config 2")
-                reg_X_2, _ = self._rand_regularity_regression([self.rand_vars[1]], [self.rand_vars[0]])
+                reg_X_2, _ = self._non_fixed_regularity_regression([self.non_fixed_vars[1]], [self.non_fixed_vars[0]])
 
                 X_1 = np.clip(reg_X_1, self.lb, self.ub)
                 X_2 = np.clip(reg_X_2, self.lb, self.ub)
@@ -442,136 +451,141 @@ class Regularity_Finder:
                 # the one leading to lower hyper-volume deviation should be the better alternative
                 if hv_1 < hv_2:
                     self.print("Config 1 is better than Config 2")
-                    self.rand_independent_vars = [self.rand_vars[1]]
-                    self.rand_dependent_vars = [self.rand_vars[0]]
+                    self.non_fixed_independent_vars = [self.non_fixed_vars[1]]
+                    self.non_fixed_dependent_vars = [self.non_fixed_vars[0]]
                 else:
                     self.print("Config 2 is better than Config 1")
-                    self.rand_independent_vars = [self.rand_vars[0]]
-                    self.rand_dependent_vars = [self.rand_vars[1]]
+                    self.non_fixed_independent_vars = [self.non_fixed_vars[0]]
+                    self.non_fixed_dependent_vars = [self.non_fixed_vars[1]]
 
-            elif len(self.rand_vars) > self.rand_regularity_dependency:
+            else:
                 # when there are more variables in the cluster than dependency requirement
                 # select the first few variables as dependent and rest as dependent
-                self.rand_dependent_vars = self.rand_vars[0:num_dependent_vars]
-                self.rand_independent_vars = self.rand_vars[num_dependent_vars:]
+                self.non_fixed_dependent_vars = self.non_fixed_vars[0:num_dependent_vars]
+                self.non_fixed_independent_vars = self.non_fixed_vars[num_dependent_vars:]
 
-            else:
-                # when the dependency requirement is higher than the number of variables in the cluster
-                # map the dependency to the closest applicable value
-                self.print("[INFO] The specified rand regularity dependency is not possible...")
-                self.rand_regularity_dependency = np.clip(self.rand_regularity_dependency, 0,
-                                                          len(self.rand_vars) - 1)
-                self.print(f"The closest dependency possible is: {self.rand_regularity_dependency}")
-                num_dependent_vars = self.rand_regularity_dependency
-                num_independent_vars = len(self.rand_vars) - num_dependent_vars
+            # the number of non_fixed independent and orphan should be less than M
+            # if len(self.non_fixed_independent_vars) >= self.problem_args["n_obj"]:
+            #     std_dev = np.std(self.X[:, self.non_fixed_independent_vars], axis=0)
+            #     sort_idx = np.argsort(std_dev)
+            #     self.non_fixed_independent_vars = list(np.array(self.non_fixed_independent_vars)[sort_idx])
+            #
+            #     removal_list = self.non_fixed_independent_vars[:len(self.non_fixed_independent_vars)-self.problem_args["n_obj"]+1]
+            #     self.fixed_vars += removal_list
+            #     self.non_fixed_independent_vars = self.non_fixed_independent_vars[len(self.non_fixed_independent_vars)-self.problem_args["n_obj"]+1:]
+            #
+            #     for idx in removal_list:
+            #         self.non_fixed_vars.remove(idx)
 
-                self.rand_dependent_vars = self.rand_vars[0:num_dependent_vars]
-                self.rand_independent_vars = self.rand_vars[num_independent_vars:]
+            if len(self.non_fixed_dependent_vars) > 0:
+                # get the regressed regularity (for non-fixed variables we are using degree of 1)
+                reg_X, regularity_reg_coef_data = self._non_fixed_regularity_regression(self.non_fixed_dependent_vars,
+                                                                                   self.non_fixed_independent_vars)
+                reg_X = np.clip(reg_X, self.lb, self.ub)
+                reg_F = self.evaluate(reg_X, self.problem_args)
+                self.non_fixed_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:-2]
 
-            # get the regressed regularity (for random variables we are using degree of 1)
-            reg_X, regularity_reg_coef_data = self._rand_regularity_regression(self.rand_dependent_vars,
-                                                                               self.rand_independent_vars)
-            reg_X = np.clip(reg_X, self.lb, self.ub)
-            reg_F = self.evaluate(reg_X, self.problem_args)
-            self.rand_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:-2]
+                # Do a final check to see if there is any non-fixed variable which is unused
+                # in the equations. Those variables are called orphan variables
+                if self.non_fixed_dependent_vars:
+                    temp_coef_list = np.array(self.non_fixed_final_reg_coef_list[:, 0:-1])
+                    non_fixed_indep_var_unutilized = np.prod(temp_coef_list == 0, axis=0)
+                    non_fixed_orphan_indices = list(np.where(non_fixed_indep_var_unutilized != 0)[0])
 
-            # Do a final check to see if there is any random variable which is unused
-            # in the equations. Those variables are called orphan variables
-            if self.rand_dependent_vars:
-                temp_coef_list = np.array(self.rand_final_reg_coef_list[:, 0:-1])
-                rand_indep_var_unutilized = np.prod(temp_coef_list == 0, axis=0)
-                rand_orphan_indices = list(np.where(rand_indep_var_unutilized != 0)[0])
+                    if non_fixed_orphan_indices:
+                        indep_non_fixed_indices = np.setdiff1d(np.arange(len(self.non_fixed_independent_vars)), non_fixed_orphan_indices)
+                        self.print(
+                            f"Non-fixed independent indices: {indep_non_fixed_indices}, Non-fixed orphan indices: {non_fixed_orphan_indices}, independent variables: {self.non_fixed_independent_vars}")
+                        self.non_fixed_orphan_vars = list(np.array(self.non_fixed_independent_vars)[non_fixed_orphan_indices])
+                        self.non_fixed_independent_vars = list(np.array(self.non_fixed_independent_vars)[indep_non_fixed_indices])
+                        useful_params = np.setdiff1d(np.arange(self.non_fixed_final_reg_coef_list.shape[1]),
+                                                     non_fixed_orphan_indices)
+                        self.non_fixed_final_reg_coef_list = self.non_fixed_final_reg_coef_list[:, useful_params]
 
-                if rand_orphan_indices:
-                    indep_rand_indices = np.setdiff1d(np.arange(len(self.rand_independent_vars)), rand_orphan_indices)
-                    self.print(
-                        f"Independent random indices: {indep_rand_indices}, complete random indices: {rand_orphan_indices}, independent variables: {self.rand_independent_vars}")
-                    self.rand_orphan_vars = list(np.array(self.rand_independent_vars)[rand_orphan_indices])
-                    self.rand_independent_vars = list(np.array(self.rand_independent_vars)[indep_rand_indices])
-                    useful_params = np.setdiff1d(np.arange(self.rand_final_reg_coef_list.shape[1]),
-                                                 rand_orphan_indices)
-                    self.rand_final_reg_coef_list = self.rand_final_reg_coef_list[:, useful_params]
+                    # if there is no independent variable, make the dependent variables non_fixed orphan
+                    if not self.non_fixed_independent_vars:
+                        self.non_fixed_orphan_vars = self.non_fixed_orphan_vars + self.non_fixed_dependent_vars
+                        self.non_fixed_dependent_vars = []
 
-                # if there is no independent variable, make the dependent variables complete random
-                if not self.rand_independent_vars:
-                    self.rand_orphan_vars = self.rand_orphan_vars + self.rand_dependent_vars
-                    self.rand_dependent_vars = []
+                    idx_list = []
+                    dep_vars = copy.deepcopy(self.non_fixed_dependent_vars)
+                    for i, dep_var in enumerate(self.non_fixed_dependent_vars):
+                        if np.sum(temp_coef_list[i, :]) == 0:
+                            idx_list.append(i)
+                            self.fixed_vars.append(dep_var)
+                            dep_vars.remove(dep_var)
+                            self.non_fixed_vars.remove(dep_var)
+                    self.non_fixed_dependent_vars = dep_vars
+                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list, idx_list, axis=0)
 
-                idx_list = []
-                dep_vars = copy.deepcopy(self.rand_dependent_vars)
-                for i, dep_var in enumerate(self.rand_dependent_vars):
-                    if np.sum(temp_coef_list[i, :]) == 0:
-                        idx_list.append(i)
-                        self.non_rand_vars.append(dep_var)
-                        dep_vars.remove(dep_var)
-                        self.rand_vars.remove(dep_var)
-                self.rand_dependent_vars = dep_vars
-                self.rand_final_reg_coef_list = np.delete(self.rand_final_reg_coef_list, idx_list, axis=0)
-
-            # the number of rand independent and orphan should be less than M
+            # the number of non_fixed independent and orphan should be less than M
             violation = False
-            while len(self.rand_orphan_vars + self.rand_independent_vars) >= self.problem_args["n_obj"]:
+            while len(self.non_fixed_orphan_vars + self.non_fixed_independent_vars) >= self.problem_args["n_obj"]:
                 violation = True
-                std_dev = np.std(self.X[:, self.rand_vars], axis=0)
+                std_dev = np.std(self.X[:, self.non_fixed_vars], axis=0)
                 min_idx = np.argmin(std_dev)
-                var_num = self.rand_vars[min_idx]
+                var_num = self.non_fixed_vars[min_idx]
 
-                if var_num in self.rand_orphan_vars:
-                    self.rand_orphan_vars.remove(var_num)
-                elif var_num in self.rand_dependent_vars:
-                    self.rand_final_reg_coef_list = np.delete(self.rand_final_reg_coef_list, self.rand_dependent_vars.index(var_num), axis=0)
-                    self.rand_dependent_vars.remove(var_num)
+                if var_num in self.non_fixed_orphan_vars:
+                    self.non_fixed_orphan_vars.remove(var_num)
+                elif var_num in self.non_fixed_dependent_vars:
+                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list, self.non_fixed_dependent_vars.index(var_num), axis=0)
+                    self.non_fixed_dependent_vars.remove(var_num)
                 else:
-                    self.rand_final_reg_coef_list = np.delete(self.rand_final_reg_coef_list, self.rand_independent_vars.index(var_num), axis=1)
-                    self.rand_independent_vars.remove(var_num)
+                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list, self.non_fixed_independent_vars.index(var_num), axis=1)
+                    self.non_fixed_independent_vars.remove(var_num)
 
-                self.non_rand_vars.append(var_num)
-                if var_num in self.rand_vars:
-                    self.rand_vars.remove(var_num)
+                self.fixed_vars.append(var_num)
+                if var_num in self.non_fixed_vars:
+                    self.non_fixed_vars.remove(var_num)
 
-            if violation:
-                self.rand_regularity()
+            if len(self.non_fixed_dependent_vars) == 1 and len(self.non_fixed_independent_vars) == 0:
+                self.fixed_vars.append(self.non_fixed_dependent_vars[0])
+                self.non_fixed_vars.remove(self.non_fixed_dependent_vars[0])
+                self.non_fixed_dependent_vars.remove(self.non_fixed_dependent_vars[0])
+                # if violation:
+                #     self.non_fixed_regularity()
 
         else:
-            self.rand_orphan_vars = self.rand_vars
+            self.non_fixed_orphan_vars = self.non_fixed_vars
 
         # change the bounds
-        final_rand_vars = self.rand_orphan_vars + self.rand_independent_vars
-        self.lb = np.array(self.lb)
-        self.lb[final_rand_vars] = np.round(np.min(self.X[:, final_rand_vars], axis=0), self.precision)
-        self.lb = list(self.lb)
-
-        self.ub = np.array(self.ub)
-        self.ub[final_rand_vars] = np.round(np.max(self.X[:, final_rand_vars], axis=0), self.precision)
-        self.ub = list(self.ub)
-
-        # fix ub if lb and ub becomes the same
-        # Add ub[i] = lb[i] * 1.0001
-        for i, x in enumerate(self.ub):
-            if self.lb[i] != x:
-                self.ub[i] = x
-            else:
-                self.ub[i] = x + (self.problem_args["ub"][i] - x) * 0.01
+        # final_non_fixed_vars = self.non_fixed_orphan_vars + self.non_fixed_independent_vars
+        # self.lb = np.array(self.lb)
+        # self.lb[final_non_fixed_vars] = np.round(np.min(self.X[:, final_non_fixed_vars], axis=0), self.precision)
+        # self.lb = list(self.lb)
+        #
+        # self.ub = np.array(self.ub)
+        # self.ub[final_non_fixed_vars] = np.round(np.max(self.X[:, final_non_fixed_vars], axis=0), self.precision)
+        # self.ub = list(self.ub)
+        #
+        # # fix ub if lb and ub becomes the same
+        # # Add ub[i] = lb[i] * 1.0001
+        # for i, x in enumerate(self.ub):
+        #     if self.lb[i] != x:
+        #         self.ub[i] = x
+        #     else:
+        #         self.ub[i] = x + (self.problem_args["ub"][i] - x) * 0.01
 
         # display the dependent a   nd independent variables
-        self.print(f"Dependent Variables: {self.rand_dependent_vars}")
-        self.print(f"Independent Variables: {self.rand_independent_vars}")
-        self.print(f"Orphan Variables: {self.rand_orphan_vars}")
+        self.print(f"Dependent Variables: {self.non_fixed_dependent_vars}")
+        self.print(f"Independent Variables: {self.non_fixed_independent_vars}")
+        self.print(f"Orphan Variables: {self.non_fixed_orphan_vars}")
 
 
-    def _rand_regularity_regression(self, rand_dep_vars, rand_indep_vars):
-        # function to regress in the random variables
-        x = self.X[:, rand_indep_vars]
+    def _non_fixed_regularity_regression(self, non_fixed_dep_vars, non_fixed_indep_vars):
+        # function to regress in the non-fixed variables
+        x = self.X[:, non_fixed_indep_vars]
         reg_X = copy.deepcopy(self.X)
 
         # storing data for tabular visualization
-        orig_reg_coef_data = np.zeros((len(rand_dep_vars), 4 + len(rand_indep_vars)))
-        regularity_reg_coef_data = np.zeros((len(rand_dep_vars), 4 + len(rand_indep_vars)))
-        orig_headers = ["Index"] + [str(idx) for idx in rand_indep_vars] + ["Intercept"] + ["HV dif"] + ["MSE"]
-        regular_headers = ["Index"] + [str(idx) + "'" for idx in rand_indep_vars] + ["Intercept"] + ["HV dif"] + [
+        orig_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 4 + len(non_fixed_indep_vars)))
+        regularity_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 4 + len(non_fixed_indep_vars)))
+        orig_headers = ["Index"] + [str(idx) for idx in non_fixed_indep_vars] + ["Intercept"] + ["HV dif"] + ["MSE"]
+        regular_headers = ["Index"] + [str(idx) + "'" for idx in non_fixed_indep_vars] + ["Intercept"] + ["HV dif"] + [
             "MSE"]
 
-        for id, i in enumerate(rand_dep_vars):
+        for id, i in enumerate(non_fixed_dep_vars):
             # for every dependent variable
             # we are finding the coefficients wrt the independent variables
             y = self.X[:, i].reshape(-1, 1)
@@ -594,25 +608,25 @@ class Regularity_Finder:
             # is a multiple of coefficient factor provided by the user
             for j in range(len(coef_)):
                 # for every coefficient, fix it as a multiple of the coef_factor
-                mult_factor_1 = int(coef_[j] / self.rand_regularity_coef_factor)
+                mult_factor_1 = int(coef_[j] / self.non_fixed_regularity_coef_factor)
                 mult_factor_2 = mult_factor_1 + 1 if (coef_[j] > 0) else mult_factor_1 - 1
-                mult_factor = mult_factor_1 if abs(mult_factor_1 * self.rand_regularity_coef_factor - coef_[j]) < abs(
+                mult_factor = mult_factor_1 if abs(mult_factor_1 * self.non_fixed_regularity_coef_factor - coef_[j]) < abs(
                     mult_factor_2 *
-                    self.rand_regularity_coef_factor - coef_[j]) \
+                    self.non_fixed_regularity_coef_factor - coef_[j]) \
                     else mult_factor_2
 
                 # round it of to the user provided precision
-                reg.coef_[0, j] = round(self.rand_regularity_coef_factor * mult_factor, self.precision)
+                reg.coef_[0, j] = round(self.non_fixed_regularity_coef_factor * mult_factor, self.precision)
 
             # round the intercept too
-            mult_factor_1 = int(reg.intercept_ / self.rand_regularity_coef_factor)
+            mult_factor_1 = int(reg.intercept_ / self.non_fixed_regularity_coef_factor)
             mult_factor_2 = mult_factor_1 + 1 if (reg.intercept_ > 0) else mult_factor_1 - 1
-            mult_factor = mult_factor_1 if abs(mult_factor_1 * self.rand_regularity_coef_factor - reg.intercept_) < abs(
+            mult_factor = mult_factor_1 if abs(mult_factor_1 * self.non_fixed_regularity_coef_factor - reg.intercept_) < abs(
                 mult_factor_2 *
-                self.rand_regularity_coef_factor - reg.intercept_) \
+                self.non_fixed_regularity_coef_factor - reg.intercept_) \
                 else mult_factor_2
 
-            reg.intercept_ = round(self.rand_regularity_coef_factor * mult_factor, self.precision)
+            reg.intercept_ = round(self.non_fixed_regularity_coef_factor * mult_factor, self.precision)
 
             # final regressed version
             reg_X[:, i] = reg.predict(x)[:, 0]
@@ -672,7 +686,7 @@ class Regularity_Finder:
         # function to predict if a variable is random
         min_var, max_var = np.min(x), np.max(x)
         spread = (max_var - min_var) / (ub - lb)
-        if spread <= (delta / self.num_clusters):
+        if spread <= delta:
             return False, None
 
         n_bins = self.n_rand_bins
@@ -687,19 +701,19 @@ class Regularity_Finder:
         # plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
         if self.save_img:
             plt.savefig(
-                f"{config.BASE_PATH}/{self.result_storage}/cluster_{self.pf_cluster_num + 1}_variable_{i + 1}_histogram.png")
+                f"{config.BASE_PATH}/{self.result_storage}/variable_{i + 1}_histogram.png")
         if self.verbose:
             plt.show()
 
-        if filled_fraction >= (0.5 / self.num_clusters):
+        if filled_fraction >= 0.5:
             return True, filled_fraction
         else:
             return False, filled_fraction
 
     def _non_regularity_repair(self, X_apply):
         X_copy = copy.deepcopy(X_apply)
-        self.non_rand_vals = np.round(np.mean(X_apply[:, self.non_rand_vars], axis=0), self.precision)
-        X_copy[:, self.non_rand_vars] = self.non_rand_vals
+        self.fixed_vals = np.round(np.mean(X_apply[:, self.fixed_vars], axis=0), self.precision)
+        X_copy[:, self.fixed_vars] = self.fixed_vals
 
         return X_copy
 
@@ -715,37 +729,37 @@ class Regularity_Finder:
 
         # formulate the new shorter problem
 
-        # dim of the new problem is the number of random independent and complete random variables
-        new_problem_args["dim"] = len(self.rand_independent_vars) + len(self.rand_orphan_vars)
-        combined_rand_vars = self.rand_independent_vars + self.rand_orphan_vars
+        # dim of the new problem is the number of non-fixed independent and non-fixed orphan variables
+        new_problem_args["dim"] = len(self.non_fixed_independent_vars) + len(self.non_fixed_orphan_vars)
+        combined_non_fixed_vars = self.non_fixed_independent_vars + self.non_fixed_orphan_vars
 
         # take the corresponding lb and ubs
         new_problem_args["lb"] = self.lb if len(self.lb) == 1 else [
-            self.lb[i] for i in combined_rand_vars]
+            self.lb[i] for i in combined_non_fixed_vars]
         new_problem_args["ub"] = self.ub if len(self.ub) == 1 else [
-            self.ub[i] for i in combined_rand_vars]
+            self.ub[i] for i in combined_non_fixed_vars]
 
         # save the mapping of the variables of the smaller problem to the large problem
-        new_problem_args["rand_variable_mapper"] = {
-            "rand_independent_vars": list(np.arange(len(self.rand_independent_vars))),
-            "rand_orphan_vars": list(np.arange(len(self.rand_independent_vars), len(combined_rand_vars))),
+        new_problem_args["non_fixed_variable_mapper"] = {
+            "non_fixed_independent_vars": list(np.arange(len(self.non_fixed_independent_vars))),
+            "non_fixed_orphan_vars": list(np.arange(len(self.non_fixed_independent_vars), len(combined_non_fixed_vars))),
         }
 
         # set the regularity information so that every time it enforces the regularity on its population
-        new_problem_args["non_rand_vars"] = self.non_rand_vars
-        new_problem_args["non_rand_vals"] = self.non_rand_vals
-        new_problem_args["rand_vars"] = self.rand_vars
-        new_problem_args["rand_dependent_vars"] = self.rand_dependent_vars
-        new_problem_args["rand_dependent_lb"] = self.lb if len(self.lb) == 1 else [
-            self.lb[i] for i in self.rand_dependent_vars]
-        new_problem_args["rand_dependent_ub"] = self.ub if len(self.ub) == 1 else [
-            self.ub[i] for i in self.rand_dependent_vars]
-        new_problem_args["rand_independent_vars"] = self.rand_independent_vars
-        new_problem_args["rand_orphan_vars"] = self.rand_orphan_vars
-        new_problem_args["rand_complete_lb"] = self.lb if len(self.lb) == 1 else [
-            self.lb[i] for i in self.rand_orphan_vars]
-        new_problem_args["rand_complete_ub"] = self.ub if len(self.ub) == 1 else [
-            self.ub[i] for i in self.rand_orphan_vars]
+        new_problem_args["fixed_vars"] = self.fixed_vars
+        new_problem_args["fixed_vals"] = self.fixed_vals
+        new_problem_args["non_fixed_vars"] = self.non_fixed_vars
+        new_problem_args["non_fixed_dependent_vars"] = self.non_fixed_dependent_vars
+        new_problem_args["non_fixed_dependent_lb"] = self.lb if len(self.lb) == 1 else [
+            self.lb[i] for i in self.non_fixed_dependent_vars]
+        new_problem_args["non_fixed_dependent_ub"] = self.ub if len(self.ub) == 1 else [
+            self.ub[i] for i in self.non_fixed_dependent_vars]
+        new_problem_args["non_fixed_independent_vars"] = self.non_fixed_independent_vars
+        new_problem_args["non_fixed_orphan_vars"] = self.non_fixed_orphan_vars
+        new_problem_args["non_fixed_orphan_lb"] = self.lb if len(self.lb) == 1 else [
+            self.lb[i] for i in self.non_fixed_orphan_vars]
+        new_problem_args["non_fixed_orphan_ub"] = self.ub if len(self.ub) == 1 else [
+            self.ub[i] for i in self.non_fixed_orphan_vars]
 
         # regularity_enforcement is True when we are dealing with the smaller problem
         new_problem_args["regularity_enforcement"] = True
@@ -753,21 +767,10 @@ class Regularity_Finder:
 
         # add constraints on the bounds of the dependent variables
         # following the regularitys may take some of them out of bounds
-        new_problem_args["n_constr"] = self.problem_args["n_constr"] + (len(self.rand_dependent_vars) * 2)
+        new_problem_args["n_constr"] = self.problem_args["n_constr"] + (len(self.non_fixed_dependent_vars) * 2)
 
         # get the smaller problem
         new_problem = get_problem(self.problem_name, new_problem_args)
-
-        # before re-optimization, generate random samples for re-optimization
-        # intermediate_init = Initialization(sampling=get_sampling("real_random"))
-        # sample_X = intermediate_init.do(new_problem, self.NSGA_settings["pop_size"] * 10).get("X")
-        # intermediate_X = np.zeros((sample_X.shape[0], self.problem_args["dim"]))
-        # intermediate_X[:, self.rand_independent_vars] = sample_X
-        # intermediate_X = self._final_regularity_enforcement()(intermediate_X)
-        # intermediate_F = self.evaluate(intermediate_X, self.problem_args)
-        # fronts = NonDominatedSorting().do(intermediate_F)
-        # self.intermediate_X = intermediate_X[fronts[0], :]
-        # self.intermediate_F = intermediate_F[fronts[0], :]
 
         # rerun NSGA2
         new_res = self.run_NSGA(new_problem, new_NSGA_settings)
@@ -779,10 +782,10 @@ class Regularity_Finder:
 
             # get the solutions from the smaller problem and map them to the original problem
             new_X = np.zeros((new_res.X.shape[0], self.problem_args["dim"]))
-            new_X[:, self.rand_independent_vars] = new_res.X[:, new_problem_args["rand_variable_mapper"][
-                                                                    "rand_independent_vars"]]
-            new_X[:, self.rand_orphan_vars] = new_res.X[:, new_problem_args["rand_variable_mapper"][
-                                                               "rand_orphan_vars"]]
+            new_X[:, self.non_fixed_independent_vars] = new_res.X[:, new_problem_args["non_fixed_variable_mapper"][
+                                                                    "non_fixed_independent_vars"]]
+            new_X[:, self.non_fixed_orphan_vars] = new_res.X[:, new_problem_args["non_fixed_variable_mapper"][
+                                                               "non_fixed_orphan_vars"]]
             new_X = self._final_regularity_enforcement()(new_X)
 
             # set the X and evaluate the regular population
@@ -790,14 +793,14 @@ class Regularity_Finder:
             self.F = self.evaluate(self.X, self.problem_args)
 
             # reset the bounds
-            final_rand_vars = self.rand_orphan_vars + self.rand_independent_vars
-            self.lb = np.array(self.lb)
-            self.lb[final_rand_vars] = np.round(np.min(self.X[:, final_rand_vars], axis=0), self.precision)
-            self.lb = list(self.lb)
-
-            self.ub = np.array(self.ub)
-            self.ub[final_rand_vars] = np.round(np.max(self.X[:, final_rand_vars], axis=0), self.precision)
-            self.ub = list(self.ub)
+            # final_non_fixed_vars = self.non_fixed_orphan_vars + self.non_fixed_independent_vars
+            # self.lb = np.array(self.lb)
+            # self.lb[final_non_fixed_vars] = np.round(np.min(self.X[:, final_non_fixed_vars], axis=0), self.precision)
+            # self.lb = list(self.lb)
+            #
+            # self.ub = np.array(self.ub)
+            # self.ub[final_non_fixed_vars] = np.round(np.max(self.X[:, final_non_fixed_vars], axis=0), self.precision)
+            # self.ub = list(self.ub)
 
         else:
             self.X = None
@@ -810,17 +813,17 @@ class Regularity_Finder:
             # enforce the final regularity to any vector of same size
             new_X = copy.deepcopy(X)
 
-            # for non-random variables fix them to the found values
-            new_X[:, self.non_rand_vars] = self.non_rand_vals
+            # for fixed variables fix them to the found values
+            new_X[:, self.fixed_vars] = self.fixed_vals
 
-            # for random variables use the equation found in the process
-            if self.rand_dependent_vars and self.rand_independent_vars:
-                for i, dep_idx in enumerate(self.rand_dependent_vars):
+            # for non-fixed variables use the equation found in the process
+            if self.non_fixed_dependent_vars and self.non_fixed_independent_vars:
+                for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
                     new_X[:, dep_idx] = 0
-                    for j, indep_idx in enumerate(self.rand_independent_vars):
-                        new_X[:, dep_idx] += self.rand_final_reg_coef_list[i][j] * new_X[:, indep_idx]
+                    for j, indep_idx in enumerate(self.non_fixed_independent_vars):
+                        new_X[:, dep_idx] += self.non_fixed_final_reg_coef_list[i][j] * new_X[:, indep_idx]
 
-                    new_X[:, dep_idx] += self.rand_final_reg_coef_list[i][-1]
+                    new_X[:, dep_idx] += self.non_fixed_final_reg_coef_list[i][-1]
 
             return new_X
 

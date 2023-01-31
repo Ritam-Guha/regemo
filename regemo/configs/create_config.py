@@ -9,7 +9,7 @@ import sys
 import pickle
 from pymoo.factory import get_reference_directions
 
-# problems = ["dtlz2"]
+problems = ["two_member_truss"]
 
 
 def create_config(problem_name):
@@ -58,10 +58,24 @@ def create_config(problem_name):
         else:
             problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
             algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
+            algorithm_config["non_fixed_regularity_coef_factor"] = 0.3
+            algorithm_config["non_fixed_dependency_percent"] = 0.5
+            algorithm_config["delta"] = 0.05
+            algorithm_config["n_rand_bins"] = 3
             # del algorithm_config["clustering_config"]
             # del algorithm_config["rand_regularity_MSE_threshold"]
             # del algorithm_config["non_rand_regularity_MSE_threshold"]
-            del algorithm_config["rand_factor_sd"]
+            # del algorithm_config["rand_factor_sd"]
+            # del algorithm_config["non_rand_regularity_degree"]
+            # del algorithm_config["rand_regularity_dependency"]
+            # del algorithm_config["n_clusters"]
+            # del algorithm_config["clustering_criterion"]
+            # if "n_bins" in algorithm_config.keys():
+            #     del algorithm_config["n_bins"]
+            # del algorithm_config["clustering_required"]
+            # algorithm_config["non_fixed_regularity_coef_factor"] = algorithm_config.pop("rand_regularity_coef_factor")
+            # algorithm_config["delta"] = 0.05
+            # algorithm_config["non_fixed_dependency_percent"] = 0.4
             # algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
             # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
             # algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency

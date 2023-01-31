@@ -36,7 +36,7 @@ def evaluate(X,
     G = np.where(G < 0, -G, 0)
     f_1 = np.sum(G, axis=1)
     F = np.column_stack((f_0, f_1))
-    G = None
+    G = f_1 - 200
 
     if constr:
         return F, G

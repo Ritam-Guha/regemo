@@ -131,15 +131,15 @@ def get_problem(problem_name,
                 if "regularity_enforcement" in problem_args.keys() and problem_args["regularity_enforcement"]:
                     # if the algorithm wants to enforce the regularity
                     # mapping to original dimension
-                    new_dim = problem_args["dim"] + len(problem_args["non_rand_vars"]) + len(problem_args[
-                                                                                                 "rand_dependent_vars"])
+                    new_dim = problem_args["dim"] + len(problem_args["fixed_vars"]) + len(problem_args[
+                                                                                                 "non_fixed_dependent_vars"])
                     new_X = np.zeros((X.shape[0], new_dim))
                     
                     # placing the fixed values in the new population
-                    new_X[:, problem_args["rand_independent_vars"]] = X[:, problem_args["rand_variable_mapper"][
-                                                                               "rand_independent_vars"]]
-                    new_X[:, problem_args["rand_orphan_vars"]] = X[:, problem_args["rand_variable_mapper"][
-                                                                            "rand_orphan_vars"]]
+                    new_X[:, problem_args["non_fixed_independent_vars"]] = X[:, problem_args["non_fixed_variable_mapper"][
+                                                                               "non_fixed_independent_vars"]]
+                    new_X[:, problem_args["non_fixed_orphan_vars"]] = X[:, problem_args["non_fixed_variable_mapper"][
+                                                                            "non_fixed_orphan_vars"]]
                     new_X = problem_args["regularity_enforcement_process"](new_X)
                     
                     # setting the new problem arguments
@@ -155,12 +155,12 @@ def get_problem(problem_name,
 
                 # add the bound constraints
                 if "regularity_enforcement" in new_problem_args.keys() and new_problem_args["regularity_enforcement"]:
-                    for i, idx in enumerate(new_problem_args["rand_dependent_vars"]):
+                    for i, idx in enumerate(new_problem_args["non_fixed_dependent_vars"]):
                         if G is None:  # first time G may be None
-                            G = new_X[:, idx] - new_problem_args["rand_dependent_ub"][i]
+                            G = new_X[:, idx] - new_problem_args["non_fixed_dependent_ub"][i]
                         else:
-                            G = np.column_stack((G, new_X[:, idx] - new_problem_args["rand_dependent_ub"][i]))
-                        G = np.column_stack((G, new_problem_args["rand_dependent_lb"][i] - new_X[:, idx]))
+                            G = np.column_stack((G, new_X[:, idx] - new_problem_args["non_fixed_dependent_ub"][i]))
+                        G = np.column_stack((G, new_problem_args["non_fixed_dependent_lb"][i] - new_X[:, idx]))
 
                 out["F"], out["G"] = F, G
 

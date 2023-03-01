@@ -9,12 +9,13 @@ import sys
 import pickle
 from pymoo.factory import get_reference_directions
 
-problems = ["two_member_truss"]
+# problems = ["car_side_impact", "conceptual_marine_design", "rocket_injector_design", "dtlz5"]
+problems = ["bnh"]
 
 
 def create_config(problem_name):
     # non_rand_regularity_degree = 1
-    # rand_regularity_coef_factor = 0.3
+    # rand_regularity_coef_factor = 0.1
     # rand_regularity_dependency = 1
     # rand_factor_sd = 0.2
     # precision = 2
@@ -58,9 +59,9 @@ def create_config(problem_name):
         else:
             problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
             algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
-            algorithm_config["non_fixed_regularity_coef_factor"] = 0.3
-            algorithm_config["non_fixed_dependency_percent"] = 0.5
-            algorithm_config["delta"] = 0.05
+            algorithm_config["non_fixed_regularity_coef_factor"] = 0.1
+            # algorithm_config["non_fixed_dependency_percent"] = 0.5
+            # algorithm_config["delta"] = 0.05
             algorithm_config["n_rand_bins"] = 3
             # del algorithm_config["clustering_config"]
             # del algorithm_config["rand_regularity_MSE_threshold"]
@@ -74,8 +75,8 @@ def create_config(problem_name):
             #     del algorithm_config["n_bins"]
             # del algorithm_config["clustering_required"]
             # algorithm_config["non_fixed_regularity_coef_factor"] = algorithm_config.pop("rand_regularity_coef_factor")
-            # algorithm_config["delta"] = 0.05
-            # algorithm_config["non_fixed_dependency_percent"] = 0.4
+            algorithm_config["delta"] = 0.05
+            algorithm_config["non_fixed_dependency_percent"] = 0.5
             # algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
             # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor
             # algorithm_config["rand_regularity_dependency"] = rand_regularity_dependency
@@ -118,6 +119,7 @@ def create_config(problem_name):
             # problem_config["n_constr"] = 4
             # problem_config["n_constr"] = 2
             # algorithm_config["n_rand_bins"] = n_rand_bins
+            problem_config["visualization_angle"] = (34, 29)
     else:
         # HDBSCAN parameters
         # problem_clustering_config = {

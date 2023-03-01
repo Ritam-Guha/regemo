@@ -1,10 +1,11 @@
 import regemo.config as config
 from regemo.algorithm.regularity_search import Regularity_Search
-from regemo.problems.get_problem import get_problem, problems
+from regemo.problems.get_problem import problems as problem_set
 from regemo.utils.path_utils import create_dir
 
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 from pymoo.util.misc import find_duplicates
+from pymoo.factory import get_performance_indicator
 
 import copy
 import pandas as pd
@@ -16,7 +17,6 @@ from tabulate import tabulate
 import sys
 import argparse
 import plotly.express as px
-import multiprocessing as mp
 
 plt.rcParams.update({'font.size': 15})
 
@@ -28,20 +28,30 @@ class Regularity_search_driver:
                  exec_list,
                  seed=1,
                  verbose=True):
-
+        """
+        :param problem_args: parameters of the problem
+        :param algorithm_args: parameters of the algorithm (NSGA2/NSGA3)
+        :param exec_list: list of values for the hyperparameters
+        :param seed: seed assigned to the runs
+        :param verbose: whether to print the details of the runs to the console
+        """
+        # store the passed arguments
         self.problem_args = problem_args
         self.algorithm_args = algorithm_args
         self.exec_list = exec_list
+        self.seed = seed
+        self.verbose = verbose
+
+        # create proxy variables
         self.root_dir = f"results/hierarchical_search"
         self.problem_name = self.problem_args["problem_name"]
         self.param_comb = None
         self.pf_param_comb = None
         self.knee_point_ID = -10
-        self.seed = seed
-        self.verbose = verbose
         self.convexity_front = None
         self.preferred_ID = None
 
+        # set the run seed
         np.random.seed(self.seed)
 
     def create_file_structure(self):
@@ -57,9 +67,10 @@ class Regularity_search_driver:
 
     def run(self):
         # the main running part
-        self.param_comb = self.find_param_comb()
-        self.create_file_structure()
-        self.execute_regularity_search()
+        self.param_comb = self.find_param_comb()    # recursively find all the hyperparameter configs
+        self.create_file_structure()                # create the file structure for storing results
+        self.execute_regularity_search()            # execute the reg search wrt the hyperparameter configs
+        self.test_spread()
         self.plot_complexity_vs_efficiency()
         self.save_config_df()
         self.perform_trade_off_analysis()
@@ -142,7 +153,104 @@ class Regularity_search_driver:
         for key in param.keys():
             print(key + "= " + str(param[key]), file=text_file)
 
+    def test_spread(self):
+        init_F = pickle.load(open(
+                f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/initial_population_{self.problem_name}.pickle",
+                "rb"))["F"]
+
+        if self.problem_args["n_obj"] == 2:
+            init_extreme_F_1 = np.argmax(init_F[:, 0])
+            init_extreme_F_2 = np.argmax(init_F[:, 1])
+
+            normalized_extreme_F_1 = copy.deepcopy(init_F[init_extreme_F_1, :])
+            normalized_extreme_F_2 = copy.deepcopy(init_F[init_extreme_F_2, :])
+
+            min_F_1 = init_F[init_extreme_F_2, 0]
+            max_F_1 = init_F[init_extreme_F_1, 0]
+
+            min_F_2 = init_F[init_extreme_F_1, 1]
+            max_F_2 = init_F[init_extreme_F_2, 1]
+
+            normalized_extreme_F_1[0] = (normalized_extreme_F_1[0] - min_F_1) / (max_F_1 - min_F_1)
+            normalized_extreme_F_1[1] = (normalized_extreme_F_1[1] - min_F_2) / (max_F_2 - min_F_2)
+            normalized_extreme_F_2[0] = (normalized_extreme_F_2[0] - min_F_1) / (max_F_1 - min_F_1)
+            normalized_extreme_F_2[1] = (normalized_extreme_F_2[1] - min_F_2) / (max_F_2 - min_F_2)
+
+            init_dist = np.sqrt((normalized_extreme_F_1[0] - normalized_extreme_F_2[0])**2 + (normalized_extreme_F_1[1] - normalized_extreme_F_2[1])**2)
+
+        for param_id in range(1, len(self.param_comb)+1):
+            reg_F = pickle.load(open(
+                    f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{param_id}/final_regular_population.pickle",
+                    "rb"))["F"]
+            param = pickle.load(open(
+                    f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{param_id}/param_comb.pkl",
+                    "rb"))
+
+            if self.problem_args["n_obj"] == 2:
+                if reg_F is not None:
+                    reg_extreme_F_1 = np.argmax(reg_F[:, 0])
+                    reg_extreme_F_2 = np.argmax(reg_F[:, 1])
+
+                    normalized_extreme_F_1 = copy.deepcopy(reg_F[reg_extreme_F_1, :])
+                    normalized_extreme_F_2 = copy.deepcopy(reg_F[reg_extreme_F_2, :])
+
+                    normalized_extreme_F_1[0] = (normalized_extreme_F_1[0] - min_F_1) / (max_F_1 - min_F_1)
+                    normalized_extreme_F_1[1] = (normalized_extreme_F_1[1] - min_F_2) / (max_F_2 - min_F_2)
+                    normalized_extreme_F_2[0] = (normalized_extreme_F_2[0] - min_F_1) / (max_F_1 - min_F_1)
+                    normalized_extreme_F_2[1] = (normalized_extreme_F_2[1] - min_F_2) / (max_F_2 - min_F_2)
+
+                    reg_dist = np.sqrt((normalized_extreme_F_1[0] - normalized_extreme_F_2[0]) ** 2 + (
+                                normalized_extreme_F_1[1] - normalized_extreme_F_2[1]) ** 2)
+
+                    if reg_dist/init_dist < 0.5:
+                        param["hv_dif_%"] = np.inf
+
+            elif self.problem_args["n_obj"] == 3:
+                pass
+
+            self.param_comb[param_id - 1] = param
+
+            pickle.dump(param, open(
+                    f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{param_id}/param_comb.pkl",
+                    "wb"))
+
     def plot_complexity_vs_efficiency(self):
+        ####### fixing code. remove after fixed ####
+        num_comb = len(self.param_comb)
+        self.param_comb = []
+        orig_F = pickle.load(open(
+                f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/initial_population_{self.problem_name}.pickle",
+                "rb"))["F"]
+
+        norm_F_lb = np.min(orig_F, axis=0)
+        norm_F_ub = np.max(orig_F, axis=0)
+        hv = get_performance_indicator("hv", ref_point=2 * np.ones(self.problem_args["n_obj"]))
+        norm_orig_F = (orig_F - norm_F_lb)/(norm_F_ub - norm_F_lb)
+        orig_hv = hv.do(norm_orig_F)
+        fixed_var_cost = 0.5
+        non_fixed_independent_cost = 3 * self.problem_args["dim"]
+        non_fixed_orphan_cost = non_fixed_independent_cost * (self.problem_args["dim"] - 2) + 4
+
+        for i in range(num_comb):
+            cur_comb = pickle.load(open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{i+1}/param_comb.pkl", "rb"))
+            cur_reg_F = pickle.load(open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{i+1}/final_regular_population.pickle", "rb"))["F"]
+            reg = pickle.load(open(
+                f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{i+1}/regularity_principle.pickle",
+                "rb"))
+            non_fixed_dependent_cost = 3 * len(reg["non_fixed_independent_vars"])
+            cur_complexity = fixed_var_cost * len(reg["fixed_vars"]) + non_fixed_dependent_cost * len(reg["non_fixed_dependent_vars"]) + non_fixed_independent_cost * len(reg["non_fixed_independent_vars"]) + non_fixed_orphan_cost * len(reg["non_fixed_orphan_vars"])
+
+            if cur_reg_F is not None:
+                cur_norm_reg_F = (cur_reg_F - norm_F_lb)/(norm_F_ub - norm_F_lb)
+                reg_hv = hv.do(cur_norm_reg_F)
+                cur_comb["hv_dif_%"] = np.abs(reg_hv - orig_hv)/orig_hv * 100
+            else:
+                cur_comb["hv_dif_%"] = np.inf
+
+            cur_comb["complexity"] = cur_complexity
+            self.param_comb.append(cur_comb)
+        ####### fixing code. remove after fixed ####
+
         # plot the complexity vs efficiency curve
         fig = plt.figure()
         for param in self.param_comb:
@@ -151,7 +259,7 @@ class Regularity_search_driver:
         plt.xlabel("complexity")
         plt.ylabel("hv_dif_%")
         # plt.title("HV_dif_% vs Complexity")
-        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_trade_off.png")
+        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_trade_off.pdf", format="pdf")
 
     @staticmethod
     def knee_point_estimation(pf, w_loss=1, w_gain=1):
@@ -310,7 +418,7 @@ class Regularity_search_driver:
         )
         fig.show()
         fig.write_html(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.html")
-        fig.write_image(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.png")
+        fig.write_image(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf.pdf", format="pdf")
 
         # matplotlib plots
         custom_color_mapping = {"preferred": "green", "knee": "red", "normal": "blue"}
@@ -332,7 +440,7 @@ class Regularity_search_driver:
         ax.legend(loc="upper right")
 
         fig.show()
-        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf_plot.png")
+        fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf_plot.pdf", format="pdf")
 
     @staticmethod
     def convert_pf_regularity_to_pd(param_comb):
@@ -390,17 +498,22 @@ class Regularity_search_driver:
         return True
 
 
-if __name__ == "__main__":
+def main():
+    # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="all", help="Name of the problem")
+    parser.add_argument("--problem_name", default="bnh", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
+        # if you want to run it on a specific problem
         problems = [problem_name]
+    else:
+        # if you want to run it on all the problems in regemo suite
+        problems = problem_set
 
+    # for the specified problems, run the regularity driver
     for problem_name in problems:
-        # for problem_name in problems:
         algorithm_config_storage_dir = f"{config.BASE_PATH}/{config.algorithm_config_path}"
         problem_config_storage_dir = f"{config.BASE_PATH}/{config.problem_config_path}"
         use_existing_config = True
@@ -419,16 +532,23 @@ if __name__ == "__main__":
 
         problem_config["problem_name"] = problem_name
 
+        # mention the possible values for the hyperparameters
         exec_args = {"non_fixed_regularity_coef_factor": [0.1, 0.3, 0.5],
                      "non_fixed_dependency_percent": [0.1, 0.3, 0.5, 0.7],
                      "delta": [0.05, 0.1, 0.2],
                      "n_rand_bins": [3, 4, 5, 10]}
 
+        # create the driver object
         driver = Regularity_search_driver(problem_args=problem_config,
                                           algorithm_args=algorithm_config,
                                           exec_list=exec_args,
                                           seed=seed,
                                           verbose=False)
 
+        # run the driver object
         driver.run()
+
+
+if __name__ == "__main__":
+    main()
 

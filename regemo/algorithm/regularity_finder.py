@@ -47,7 +47,7 @@ class Regularity_Finder:
                  seed=0):
         """
         :param X: population of solutions
-        :param F: evluation scores for the population
+        :param F: evaluation scores for the population
         :param problem_args: arguments for the problem
         :param fixed_regularity_degree: degree for non-random regularity fitting
         :param non_fixed_regularity_coef_factor: coefficient of multiplication for rand variable regularity
@@ -87,6 +87,7 @@ class Regularity_Finder:
         # initialize the regularity algorithm parameters
         self.fixed_vars = []
         self.fixed_vals = None
+        self.non_fixed_vars = None
         self.X = X
         self.F = F
         self.norm_F = None
@@ -101,6 +102,8 @@ class Regularity_Finder:
         self.norm_orig_F = None
         self.ub = list(np.array(problem_args["ub"], dtype=float))
         self.lb = list(np.array(problem_args["lb"], dtype=float))
+        self.pareto_lb = None
+        self.pareto_ub = None
         self.non_fixed_final_reg_coef_list = []
         self.non_fixed_dependent_vars = []
         self.non_fixed_independent_vars = []
@@ -129,25 +132,26 @@ class Regularity_Finder:
                                  "mut_eta": 30,
                                  "n_eval": 40000}
 
-
         if self.NSGA_settings is None:
             # if NSGA_settings is not specified, use the default one
             self.NSGA_settings = default_NSGA_settings
         else:
-            # if NSGA_settings is specified, but all the parameters are not properly set
-            # set the remaining parameters from the default setting
+            # if NSGA_settings is specified, but all the parameters are not properly set the remaining parameters from the default setting
             missing_keys = list(np.setdiff1d(list(default_NSGA_settings.keys()), list(self.NSGA_settings.keys())))
             for i in missing_keys:
                 self.NSGA_settings[i] = default_NSGA_settings[i]
 
-
     def run(self):
         # main code to run the regularity enforcing algorithm
         self.orig_X, self.orig_F = copy.deepcopy(self.X), copy.deepcopy(self.F)
+        self.pareto_lb = np.round(np.min(self.orig_X, axis=0), self.precision)
+        self.pareto_ub = np.round(np.max(self.orig_X, axis=0), self.precision)
+        # self.pareto_lb = np.array(copy.deepcopy(self.lb))
+        # self.pareto_ub = np.array(copy.deepcopy(self.ub))
 
         # set the performance indicators
         self.igd_plus = get_performance_indicator("igd+", self.orig_F)
-        self.hv = get_performance_indicator("hv", ref_point=10*np.ones(self.problem_args["n_obj"]))
+        self.hv = get_performance_indicator("hv", ref_point=2 * np.ones(self.problem_args["n_obj"]))
 
         # set the initial metrics
         self.norm_F_lb = np.min(self.orig_F, axis=0)
@@ -168,7 +172,7 @@ class Regularity_Finder:
             if self.non_fixed_dependent_vars:
                 self.print("The regularity is that the slopes of the projection of the variables with respect to the "
                            "index variable are always multiples of " + str(self.non_fixed_regularity_coef_factor))
-                
+
         if len(self.fixed_vars) > 0:
             # regularity enforcement in fixed variables
             self.print("================================================")
@@ -185,8 +189,8 @@ class Regularity_Finder:
 
         # save the regularity to a regularity object
         self.regularity = Regularity(dim=self.problem_args["dim"],
-                                     lb=self.lb,
-                                     ub=self.ub,
+                                     lb=self.pareto_lb,
+                                     ub=self.pareto_ub,
                                      fixed_vars=self.fixed_vars,
                                      fixed_vals=self.fixed_vals,
                                      non_fixed_vars=self.non_fixed_vars,
@@ -198,9 +202,9 @@ class Regularity_Finder:
                                      precision=self.precision)
 
         if self.verbose:
-            self.regularity.display(self.orig_X, self.lb, self.ub)
+            self.regularity.display(self.orig_X)
 
-        self.X = self.regularity.apply(self.X, self.lb, self.ub)
+        self.X = self.regularity.apply(self.X)
         self.F = self.evaluate(self.X, problem_args=self.problem_args)
 
         # plot the regular front
@@ -215,7 +219,7 @@ class Regularity_Finder:
 
         if self.save_img:
             plot.save(
-                f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_pre_reopt.png")
+                f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_pre_reopt.pdf", format="pdf")
 
         # Re-optimization
         if len(self.non_fixed_vars) > 0:
@@ -224,8 +228,8 @@ class Regularity_Finder:
 
             # save the regularity to a regularity object
             self.regularity = Regularity(dim=self.problem_args["dim"],
-                                         lb=self.lb,
-                                         ub=self.ub,
+                                         lb=self.pareto_lb,
+                                         ub=self.pareto_ub,
                                          fixed_vars=self.fixed_vars,
                                          fixed_vals=self.fixed_vals,
                                          non_fixed_vars=self.non_fixed_vars,
@@ -237,9 +241,10 @@ class Regularity_Finder:
                                          precision=self.precision)
 
             if self.X is not None:
-                pickle.dump((len(self.non_fixed_independent_vars)+len(self.non_fixed_orphan_vars), self.problem_args["dim"]),
-                            open(f"{config.BASE_PATH}/{self.result_storage}/non_fixed_var_count.pickle",
-                                 "wb"))
+                pickle.dump(
+                    (len(self.non_fixed_independent_vars) + len(self.non_fixed_orphan_vars), self.problem_args["dim"]),
+                    open(f"{config.BASE_PATH}/{self.result_storage}/non_fixed_var_count.pickle",
+                         "wb"))
 
                 # final metric calculation
                 self.norm_F = self._normalize(self.F, self.norm_F_lb, self.norm_F_ub)
@@ -293,8 +298,9 @@ class Regularity_Finder:
                 }
 
                 # save regularity principle
-                pickle.dump(regularity_principle, open(f"{config.BASE_PATH}/{self.result_storage}/regularity_principle.pickle",
-                            "wb"))
+                pickle.dump(regularity_principle,
+                            open(f"{config.BASE_PATH}/{self.result_storage}/regularity_principle.pickle",
+                                 "wb"))
 
             else:
                 self.proxy_regular_F = None
@@ -311,7 +317,6 @@ class Regularity_Finder:
             self.final_metrics["igd_plus"] = 0
 
         self.print("done")
-
 
     def run_NSGA(self, problem, NSGA_settings):
         # run the NSGA2 over the problem
@@ -371,7 +376,7 @@ class Regularity_Finder:
         remaining_cluster_list = list(np.arange(num_features))
 
         # plot the deviations of variables across population
-        fig = plt.figure(figsize=(10, 8))
+        fig = plt.figure(figsize=(8, 10))
         dim = self.X.shape[1]
 
         for i in range(self.X.shape[0]):
@@ -379,18 +384,18 @@ class Regularity_Finder:
 
         plt.xticks(np.arange(dim), labels=[f"$x_{i + 1} ({str(round(spread, 3))})$" for i, spread in enumerate(
             pop_spread)])
-        plt.xlabel("Variables (Corresponding Spread)")
+        plt.xlabel("Variables (Corresponding Spread)", fontsize=15)
         # plt.title(f"Spread of Variables across Population for {self.problem_args['name']} Problem")
 
-        plt.tick_params(axis="x", labelsize=10, labelrotation=40)
-        plt.tick_params(axis="y", labelsize=10, labelrotation=20)
+        plt.tick_params(axis="x", labelsize=15, labelrotation=40)
+        plt.tick_params(axis="y", labelsize=15, labelrotation=20)
 
         if self.verbose:
             plt.show()
 
         if self.save_img:
             fig.savefig(
-                f"{config.BASE_PATH}/{self.result_storage}/variable_spread_pf.png")
+                f"{config.BASE_PATH}/{self.result_storage}/variable_spread_pf.pdf", format="pdf")
 
         # find out the non-fixed variables
         for i in range(self.X.shape[1]):
@@ -480,7 +485,7 @@ class Regularity_Finder:
             if len(self.non_fixed_dependent_vars) > 0:
                 # get the regressed regularity (for non-fixed variables we are using degree of 1)
                 reg_X, regularity_reg_coef_data = self._non_fixed_regularity_regression(self.non_fixed_dependent_vars,
-                                                                                   self.non_fixed_independent_vars)
+                                                                                        self.non_fixed_independent_vars)
                 reg_X = np.clip(reg_X, self.lb, self.ub)
                 reg_F = self.evaluate(reg_X, self.problem_args)
                 self.non_fixed_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:-2]
@@ -493,11 +498,14 @@ class Regularity_Finder:
                     non_fixed_orphan_indices = list(np.where(non_fixed_indep_var_unutilized != 0)[0])
 
                     if non_fixed_orphan_indices:
-                        indep_non_fixed_indices = np.setdiff1d(np.arange(len(self.non_fixed_independent_vars)), non_fixed_orphan_indices)
+                        indep_non_fixed_indices = np.setdiff1d(np.arange(len(self.non_fixed_independent_vars)),
+                                                               non_fixed_orphan_indices)
                         self.print(
                             f"Non-fixed independent indices: {indep_non_fixed_indices}, Non-fixed orphan indices: {non_fixed_orphan_indices}, independent variables: {self.non_fixed_independent_vars}")
-                        self.non_fixed_orphan_vars = list(np.array(self.non_fixed_independent_vars)[non_fixed_orphan_indices])
-                        self.non_fixed_independent_vars = list(np.array(self.non_fixed_independent_vars)[indep_non_fixed_indices])
+                        self.non_fixed_orphan_vars = list(
+                            np.array(self.non_fixed_independent_vars)[non_fixed_orphan_indices])
+                        self.non_fixed_independent_vars = list(
+                            np.array(self.non_fixed_independent_vars)[indep_non_fixed_indices])
                         useful_params = np.setdiff1d(np.arange(self.non_fixed_final_reg_coef_list.shape[1]),
                                                      non_fixed_orphan_indices)
                         self.non_fixed_final_reg_coef_list = self.non_fixed_final_reg_coef_list[:, useful_params]
@@ -519,20 +527,18 @@ class Regularity_Finder:
                     self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list, idx_list, axis=0)
 
             # the number of non_fixed independent and orphan should be less than M
-            violation = False
             while len(self.non_fixed_orphan_vars + self.non_fixed_independent_vars) >= self.problem_args["n_obj"]:
-                violation = True
-                std_dev = np.std(self.X[:, self.non_fixed_vars], axis=0)
+                non_fixed_ll_vars = self.non_fixed_orphan_vars + self.non_fixed_independent_vars
+                std_dev = np.std(self.X[:, non_fixed_ll_vars], axis=0)/(np.array(self.pareto_ub)[non_fixed_ll_vars] - np.array(self.pareto_lb)[non_fixed_ll_vars])
                 min_idx = np.argmin(std_dev)
-                var_num = self.non_fixed_vars[min_idx]
+                var_num = non_fixed_ll_vars[min_idx]
 
                 if var_num in self.non_fixed_orphan_vars:
                     self.non_fixed_orphan_vars.remove(var_num)
-                elif var_num in self.non_fixed_dependent_vars:
-                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list, self.non_fixed_dependent_vars.index(var_num), axis=0)
-                    self.non_fixed_dependent_vars.remove(var_num)
-                else:
-                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list, self.non_fixed_independent_vars.index(var_num), axis=1)
+                elif var_num in self.non_fixed_independent_vars:
+                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list,
+                                                                   self.non_fixed_independent_vars.index(var_num),
+                                                                   axis=1)
                     self.non_fixed_independent_vars.remove(var_num)
 
                 self.fixed_vars.append(var_num)
@@ -543,8 +549,6 @@ class Regularity_Finder:
                 self.fixed_vars.append(self.non_fixed_dependent_vars[0])
                 self.non_fixed_vars.remove(self.non_fixed_dependent_vars[0])
                 self.non_fixed_dependent_vars.remove(self.non_fixed_dependent_vars[0])
-                # if violation:
-                #     self.non_fixed_regularity()
 
         else:
             self.non_fixed_orphan_vars = self.non_fixed_vars
@@ -571,7 +575,6 @@ class Regularity_Finder:
         self.print(f"Dependent Variables: {self.non_fixed_dependent_vars}")
         self.print(f"Independent Variables: {self.non_fixed_independent_vars}")
         self.print(f"Orphan Variables: {self.non_fixed_orphan_vars}")
-
 
     def _non_fixed_regularity_regression(self, non_fixed_dep_vars, non_fixed_indep_vars):
         # function to regress in the non-fixed variables
@@ -610,7 +613,8 @@ class Regularity_Finder:
                 # for every coefficient, fix it as a multiple of the coef_factor
                 mult_factor_1 = int(coef_[j] / self.non_fixed_regularity_coef_factor)
                 mult_factor_2 = mult_factor_1 + 1 if (coef_[j] > 0) else mult_factor_1 - 1
-                mult_factor = mult_factor_1 if abs(mult_factor_1 * self.non_fixed_regularity_coef_factor - coef_[j]) < abs(
+                mult_factor = mult_factor_1 if abs(
+                    mult_factor_1 * self.non_fixed_regularity_coef_factor - coef_[j]) < abs(
                     mult_factor_2 *
                     self.non_fixed_regularity_coef_factor - coef_[j]) \
                     else mult_factor_2
@@ -621,7 +625,8 @@ class Regularity_Finder:
             # round the intercept too
             mult_factor_1 = int(reg.intercept_ / self.non_fixed_regularity_coef_factor)
             mult_factor_2 = mult_factor_1 + 1 if (reg.intercept_ > 0) else mult_factor_1 - 1
-            mult_factor = mult_factor_1 if abs(mult_factor_1 * self.non_fixed_regularity_coef_factor - reg.intercept_) < abs(
+            mult_factor = mult_factor_1 if abs(
+                mult_factor_1 * self.non_fixed_regularity_coef_factor - reg.intercept_) < abs(
                 mult_factor_2 *
                 self.non_fixed_regularity_coef_factor - reg.intercept_) \
                 else mult_factor_2
@@ -701,7 +706,7 @@ class Regularity_Finder:
         # plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
         if self.save_img:
             plt.savefig(
-                f"{config.BASE_PATH}/{self.result_storage}/variable_{i + 1}_histogram.png")
+                f"{config.BASE_PATH}/{self.result_storage}/variable_{i + 1}_histogram.pdf", format="pdf")
         if self.verbose:
             plt.show()
 
@@ -734,15 +739,16 @@ class Regularity_Finder:
         combined_non_fixed_vars = self.non_fixed_independent_vars + self.non_fixed_orphan_vars
 
         # take the corresponding lb and ubs
-        new_problem_args["lb"] = self.lb if len(self.lb) == 1 else [
-            self.lb[i] for i in combined_non_fixed_vars]
-        new_problem_args["ub"] = self.ub if len(self.ub) == 1 else [
-            self.ub[i] for i in combined_non_fixed_vars]
+        new_problem_args["lb"] = self.pareto_lb if len(self.pareto_lb) == 1 else [
+            self.pareto_lb[i] for i in combined_non_fixed_vars]
+        new_problem_args["ub"] = self.pareto_ub if len(self.pareto_ub) == 1 else [
+            self.pareto_ub[i] for i in combined_non_fixed_vars]
 
         # save the mapping of the variables of the smaller problem to the large problem
         new_problem_args["non_fixed_variable_mapper"] = {
             "non_fixed_independent_vars": list(np.arange(len(self.non_fixed_independent_vars))),
-            "non_fixed_orphan_vars": list(np.arange(len(self.non_fixed_independent_vars), len(combined_non_fixed_vars))),
+            "non_fixed_orphan_vars": list(
+                np.arange(len(self.non_fixed_independent_vars), len(combined_non_fixed_vars))),
         }
 
         # set the regularity information so that every time it enforces the regularity on its population
@@ -750,16 +756,16 @@ class Regularity_Finder:
         new_problem_args["fixed_vals"] = self.fixed_vals
         new_problem_args["non_fixed_vars"] = self.non_fixed_vars
         new_problem_args["non_fixed_dependent_vars"] = self.non_fixed_dependent_vars
-        new_problem_args["non_fixed_dependent_lb"] = self.lb if len(self.lb) == 1 else [
-            self.lb[i] for i in self.non_fixed_dependent_vars]
-        new_problem_args["non_fixed_dependent_ub"] = self.ub if len(self.ub) == 1 else [
-            self.ub[i] for i in self.non_fixed_dependent_vars]
+        new_problem_args["non_fixed_dependent_lb"] = self.pareto_lb if len(self.pareto_lb) == 1 else [
+            self.pareto_lb[i] for i in self.non_fixed_dependent_vars]
+        new_problem_args["non_fixed_dependent_ub"] = self.pareto_ub if len(self.pareto_ub) == 1 else [
+            self.pareto_ub[i] for i in self.non_fixed_dependent_vars]
         new_problem_args["non_fixed_independent_vars"] = self.non_fixed_independent_vars
         new_problem_args["non_fixed_orphan_vars"] = self.non_fixed_orphan_vars
-        new_problem_args["non_fixed_orphan_lb"] = self.lb if len(self.lb) == 1 else [
-            self.lb[i] for i in self.non_fixed_orphan_vars]
-        new_problem_args["non_fixed_orphan_ub"] = self.ub if len(self.ub) == 1 else [
-            self.ub[i] for i in self.non_fixed_orphan_vars]
+        new_problem_args["non_fixed_orphan_lb"] = self.pareto_lb if len(self.pareto_lb) == 1 else [
+            self.pareto_lb[i] for i in self.non_fixed_orphan_vars]
+        new_problem_args["non_fixed_orphan_ub"] = self.pareto_ub if len(self.pareto_ub) == 1 else [
+            self.pareto_ub[i] for i in self.non_fixed_orphan_vars]
 
         # regularity_enforcement is True when we are dealing with the smaller problem
         new_problem_args["regularity_enforcement"] = True
@@ -783,24 +789,14 @@ class Regularity_Finder:
             # get the solutions from the smaller problem and map them to the original problem
             new_X = np.zeros((new_res.X.shape[0], self.problem_args["dim"]))
             new_X[:, self.non_fixed_independent_vars] = new_res.X[:, new_problem_args["non_fixed_variable_mapper"][
-                                                                    "non_fixed_independent_vars"]]
+                                                                         "non_fixed_independent_vars"]]
             new_X[:, self.non_fixed_orphan_vars] = new_res.X[:, new_problem_args["non_fixed_variable_mapper"][
-                                                               "non_fixed_orphan_vars"]]
+                                                                    "non_fixed_orphan_vars"]]
             new_X = self._final_regularity_enforcement()(new_X)
 
             # set the X and evaluate the regular population
             self.X = new_X
             self.F = self.evaluate(self.X, self.problem_args)
-
-            # reset the bounds
-            # final_non_fixed_vars = self.non_fixed_orphan_vars + self.non_fixed_independent_vars
-            # self.lb = np.array(self.lb)
-            # self.lb[final_non_fixed_vars] = np.round(np.min(self.X[:, final_non_fixed_vars], axis=0), self.precision)
-            # self.lb = list(self.lb)
-            #
-            # self.ub = np.array(self.ub)
-            # self.ub[final_non_fixed_vars] = np.round(np.max(self.X[:, final_non_fixed_vars], axis=0), self.precision)
-            # self.ub = list(self.ub)
 
         else:
             self.X = None
@@ -832,15 +828,15 @@ class Regularity_Finder:
     def _check_final_regularity(self,
                                 n_points=1000):
         # create a population of random solutions and apply the regularity over them
-        random_X = np.random.uniform(self.lb, self.ub, (n_points, self.problem_args["dim"]))
-        regular_X = self.regularity.apply(random_X, self.lb, self.ub)
+        random_X = np.random.uniform(self.pareto_lb, self.pareto_ub, (n_points, self.problem_args["dim"]))
+        regular_X = self.regularity.apply(random_X)
         regular_F, regular_G = self.evaluate(regular_X, self.problem_args, constr=True)
 
         if regular_G is not None:
             if len(regular_G.shape) == 1:
                 regular_G = regular_G.reshape(-1, 1)
             constrained_idx = list(np.where(
-                (np.sum(regular_G > 0, axis=1) == 0) * np.prod((self.lb <= regular_X) * (regular_X <= self.ub),
+                (np.sum(regular_G > 0, axis=1) == 0) * np.prod((self.pareto_lb <= regular_X) * (regular_X <= self.pareto_ub),
                                                                axis=1))[0])
             regular_X = regular_X[constrained_idx, :]
             regular_F = regular_F[constrained_idx, :]
@@ -855,16 +851,16 @@ class Regularity_Finder:
         if self.problem_args["n_obj"] == 2:
             # for 2-objective problems use rank and crowding survival
             regular_pop = RankAndCrowdingSurvival()._do(self.problem,
-                                                       regular_pop,
-                                                       n_survive=required_pop_size)
+                                                        regular_pop,
+                                                        n_survive=required_pop_size)
             regular_X = regular_pop.get("X")
             regular_F = regular_pop.get("F")
 
         elif self.problem_args["n_obj"] > 2:
             # for >2 objectives use reference direction based survival
             regular_pop = ReferenceDirectionSurvival(self.NSGA_settings["ref_dirs"])._do(self.problem,
-                                                                                        regular_pop,
-                                                                                        n_survive=required_pop_size)
+                                                                                         regular_pop,
+                                                                                         n_survive=required_pop_size)
             regular_X = regular_pop.get("X")
             regular_F = regular_pop.get("F")
 

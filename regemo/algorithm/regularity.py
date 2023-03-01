@@ -47,7 +47,7 @@ class Regularity():
         mask = np.prod(mask, axis=1)
         return mask
 
-    def apply(self, X, lb, ub):
+    def apply(self, X):
         # function to apply the regularity to the population members in X
 
         # for fixed variables, fix them to the repaired mean values
@@ -93,7 +93,7 @@ class Regularity():
 
         # weight of the variables
         fixed_weight = 0.5
-        independent_weight = 6 * self.dim - 11
+        independent_weight = 3 * self.dim
         dependent_weight = 3 * num_independent
         orphan_weight = independent_weight * (self.dim - 2) + 4
 
@@ -115,7 +115,7 @@ class Regularity():
         X = copy.deepcopy(X_apply)
 
         if X is not None:
-            X = self.apply(X, lb, ub)
+            X = self.apply(X)
 
         # display final regularity
         self.print("\n=====================================")
@@ -185,7 +185,7 @@ class Regularity():
         X = copy.deepcopy(X_apply)
 
         if X is not None:
-            X = self.apply(X, lb, ub)
+            X = self.apply(X)
 
         self.print("\\begin{code}{\\textwidth}{1.2in}{codebackground}")
 

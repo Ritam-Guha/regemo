@@ -29,7 +29,7 @@ from matplotlib import cm
 import numpy as np
 import pickle
 
-plt.rcParams.update({'font.size': 15})
+plt.rcParams.update({'font.size': 10})
 
 color_mapping_orig_F = {
     0: "blue",
@@ -150,7 +150,7 @@ class Regularity_Search:
         # plot.title = "Initial Efficient Front"
 
         if self.save_img:
-            plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.png")
+            plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.pdf", format="pdf")
 
         self.orig_X = res["X"]
         self.orig_F = res["F"]
@@ -218,10 +218,10 @@ class Regularity_Search:
                 plot.show()
 
             if self.save_img and plot:
-                plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front.png")
+                plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front.pdf", format="pdf")
 
         # plot the original and regular front
-        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True)
+        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True, fontsize=10)
         plot = plot.add(self.orig_F, color="blue", marker="o", s=60, alpha=0.2, label="Original PO Front")
         if self.regular_F is not None:
             plot = plot.add(self.regular_F, color="red", marker="*", s=50, alpha=0.6, label="Regular Front")
@@ -231,7 +231,7 @@ class Regularity_Search:
 
         if self.save_img:
             plot.save(
-                f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.png", dpi=200)
+                f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.pdf", format="pdf", dpi=200)
 
         # calculate the HV_diff_%
         orig_hv = regularity_enforcement.orig_hv
@@ -245,6 +245,11 @@ class Regularity_Search:
 
         self.print(f"Overall complexity: {self.final_metrics['complexity']}, HV_diff_%: "
                    f"{self.final_metrics['hv_dif_%']}")
+
+        # store the initial population
+        with open(f"{config.BASE_PATH}/{self.result_storage}/initial_population.pickle",
+                  "wb") as file_handle:
+            pickle.dump(res, file_handle)
 
         # store the final population
         final_population = {"X": self.regular_X, "F": self.regular_F}
@@ -264,7 +269,7 @@ class Regularity_Search:
             plot.add(self.regular_X)
 
             if self.save_img:
-                plot.save(f"{config.BASE_PATH}/{self.result_storage}/PCP_final_population.png")
+                plot.save(f"{config.BASE_PATH}/{self.result_storage}/PCP_final_population.pdf", format="pdf")
 
             if self.verbose:
                 plot.show()
@@ -411,7 +416,7 @@ class Regularity_Search:
             clusters.append({"X": cur_cluster_X, "F": cur_cluster_F})
 
         if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_efficient_front.png")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_efficient_front.pdf", format="pdf")
 
         if self.verbose:
             plt.show()
@@ -432,7 +437,7 @@ class Regularity_Search:
         plt.tick_params(axis="y", labelsize=10, labelrotation=20)
 
         if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_pareto_front.png")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_pareto_front.pdf", format="pdf")
 
         if self.verbose:
             plt.show()
@@ -520,7 +525,7 @@ class Regularity_Search:
             clusters.append({"X": cur_cluster_X, "F": cur_cluster_F})
 
         if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/efficient_front_clustering.png")
+            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/efficient_front_clustering.pdf", format="pdf")
 
         if self.verbose:
             plt.show()
@@ -562,7 +567,7 @@ class Regularity_Search:
 if __name__ == "__main__":
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="all", help="Name of the problem")
+    parser.add_argument("--problem_name", default="bnh", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -604,6 +609,6 @@ if __name__ == "__main__":
                                               non_fixed_dependency_percent=algorithm_config["non_fixed_dependency_percent"],
                                               save_img=True,
                                               result_storage=f"{res_storage_dir}",
-                                              verbose=False)
+                                              verbose=True)
 
         regularity_search.run()

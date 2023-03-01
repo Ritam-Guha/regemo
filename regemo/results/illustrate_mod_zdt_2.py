@@ -45,7 +45,7 @@ def draw_rule():
     ax.plot(x1[reg_lin_valid], x2_reg_lin[reg_lin_valid], color="red", label="regular linear rule: $x_2 + 0.5 x_1 = 1$")
     # ax.annotate("$x_2 + 0.6 x_1 = 1.07$", xy=(0.3, 0.6), fontsize=15, rotation=-23, color="red")
     ax.legend(loc="lower left", fontsize=10)
-    fig.savefig("mod_zdt_2d_illustration_x.png", dpi=200)
+    fig.savefig("mod_zdt_2d_illustration_x.pdf", format="pdf")
     fig.show()
 
 
@@ -86,7 +86,7 @@ def draw_efficient_fronts():
     ax.set_xlabel("$F_1$")
     ax.set_ylabel("$F_2$")
     fig.show()
-    fig.savefig("mod_zdt_2d_illustration_f.png", dpi=200)
+    fig.savefig("mod_zdt_2d_illustration_f.pdf", format="pdf")
 
 
 def main():

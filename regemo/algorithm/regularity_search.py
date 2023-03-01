@@ -1,4 +1,5 @@
-from regemo.problems.get_problem import get_problem, problems
+from regemo.problems.get_problem import problems as problem_set
+from regemo.problems.get_problem import get_problem
 from regemo.algorithm.regularity_finder import Regularity_Finder
 from regemo.utils.path_utils import create_dir
 import regemo.config as config
@@ -47,7 +48,7 @@ color_mapping_reg_F = {
 def get_default_args(func):
     """
     :param func: function definition
-    :return: get th default arguments of the function
+    :return: get the default arguments of the function
     """
     signature = inspect.signature(func)
     return {
@@ -63,15 +64,27 @@ class Regularity_Search:
                  problem_args,
                  non_fixed_dependency_percent=0.9,
                  non_fixed_regularity_coef_factor=0.1,
+                 delta=0.05,
                  precision=2,
-                 NSGA_settings=None,
                  n_rand_bins=20,
+                 NSGA_settings=None,
                  save_img=True,
                  result_storage=None,
                  verbose=True,
-                 delta=0.05,
                  seed=0):
-
+        """
+        :param problem_args: parameters for the problem
+        :param non_fixed_dependency_percent: percentage of non-fixed variables to be treated as non-fixed dependent
+        :param non_fixed_regularity_coef_factor: coefficients should be a multiple of this factor
+        :param delta: threshold for identifying fixed variables
+        :param precision: precisions of the floating point numbers
+        :param n_rand_bins: number of bins used to identify random variables
+        :param NSGA_settings: parametric settings for the algorithm
+        :param save_img: whether to save the resulting images
+        :param result_storage: storage place for the results
+        :param verbose: whether to print the console log
+        :param seed: seed for the run
+        """
         super().__init__()
 
         # set problem-specific information
@@ -116,17 +129,10 @@ class Regularity_Search:
 
         np.random.seed(self.seed)
 
-    def save_param_config(self):
-        with open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{self.problem_name}.pickle", "wb") as pkl_handler:
-            pickle.dump(algorithm_config, pkl_handler)
-            pkl_handler.close()
-
-        with open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{self.problem_name}.pickle", "wb") as pkl_handler:
-            pickle.dump(problem_config, pkl_handler)
-            pkl_handler.close()
-
     def run(self):
-        initial_pop_storage = f"{config.BASE_PATH}/results/hierarchical_search/{self.problem_name}/initial_population_{self.problem_name}.pickle"
+        # the main running function
+        initial_pop_storage = f"{config.BASE_PATH}/results/hierarchical_search/{self.problem_name}/" \
+                              f"initial_population_{self.problem_name}.pickle"
 
         if os.path.exists(initial_pop_storage):
             res = pickle.load(open(initial_pop_storage, "rb"))
@@ -147,7 +153,6 @@ class Regularity_Search:
         # plot the figure after nds
         plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
         plot = plot.add(res["F"], color="blue", label="Original PO Front", alpha=0.2, s=60)
-        # plot.title = "Initial Efficient Front"
 
         if self.save_img:
             plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.pdf", format="pdf")
@@ -180,14 +185,14 @@ class Regularity_Search:
                                                    n_rand_bins=self.n_rand_bins,
                                                    delta=self.delta)
 
-        regularity_enforcement.run()
+        regularity_enforcement.run()    # run the regularity enforcement
         self.final_metrics["complexity"] += regularity_enforcement.regularity.calc_process_complexity()
 
         # storage file for every PF
         text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.txt"
         tex_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.tex"
 
-        # display the regularity for every cluster
+        # store the regularity in text and tex files
         regularity_enforcement.regularity.display(self.orig_X,
                                                   self.problem_args["lb"],
                                                   self.problem_args["ub"],
@@ -259,12 +264,8 @@ class Regularity_Search:
 
         # get a pcp plot of the final population
         if self.regular_X is not None:
-            plot = PCP(
-                # title=("Final Regular Population", {'pad': 30}),
-                labels="X"
-            )
+            plot = PCP(labels="X")
             plot.normalize_each_axis = False
-
             plot.set_axis_style(color="grey", alpha=0.5)
             plot.add(self.regular_X)
 
@@ -274,16 +275,8 @@ class Regularity_Search:
             if self.verbose:
                 plot.show()
 
-    def get_edge_points(self,
-                        F):
-        # F = F[~np.sum(F == np.inf, axis=1), :]
-        min_idx = np.argmin(F[:, 0])
-        max_idx = np.argmax(F[:, 0])
-
-        return [F[min_idx, :], F[max_idx, :]]
-
     def run_NSGA(self, problem, NSGA_settings):
-        # run the NSGA2 over the problem
+        # run the NSGA over the problem
         if self.problem_args["n_obj"] == 2:
             self.print("Running NSGA2..")
             algorithm = NSGA2(pop_size=NSGA_settings["pop_size"],
@@ -324,7 +317,9 @@ class Regularity_Search:
 
         return res
 
-    def edge_point_estimation(self, ref_dirs, F):
+    def edge_point_estimation(self,
+                              ref_dirs,
+                              F):
         # calculate the fronts of the population
         fronts, rank = NonDominatedSorting().do(F, return_rank=True)
         non_dominated, last_front = fronts[0], fronts[-1]
@@ -332,9 +327,13 @@ class Regularity_Search:
         # update the hyperplane based boundary estimation
         hyp_norm = HyperplaneNormalization(ref_dirs.shape[1])
         hyp_norm.update(F, nds=non_dominated)
+
+        # update the ideal point and nadir point
         self.ideal_point, self.nadir_point = hyp_norm.ideal_point, hyp_norm.nadir_point
 
-    def check_closest_ref_dirs(self, ref_dirs, F):
+    def check_closest_ref_dirs(self,
+                               ref_dirs,
+                               F):
         # get the closest reference directions for every point in F
         # associate individuals to niches
         niche_of_individuals, dist_to_niche, dist_matrix = associate_to_niches(F, ref_dirs, self.ideal_point,
@@ -564,21 +563,24 @@ class Regularity_Search:
         return mod_print
 
 
-if __name__ == "__main__":
+def main():
+    # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()
     parser.add_argument("--problem_name", default="bnh", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
+        # if you want to run it on a specific problem
         problems = [problem_name]
+    else:
+        # if you want to run it on all the problems in regemo suite
+        problems = problem_set
 
     for problem_name in problems:
-        # for problem_name in problems:
         res_storage_dir = f"results/{problem_name}"
         algorithm_config_storage_dir = config.algorithm_config_path
         problem_config_storage_dir = config.problem_config_path
-        algorithm_config = {}
 
         # create the dirs for storing images and config files
         create_dir(res_storage_dir, delete=True)
@@ -598,6 +600,7 @@ if __name__ == "__main__":
         print(problem_config)
         print(algorithm_config)
 
+        # create a search object
         regularity_search = Regularity_Search(problem_args=problem_config,
                                               seed=seed,
                                               NSGA_settings=algorithm_config["NSGA_settings"],
@@ -606,9 +609,15 @@ if __name__ == "__main__":
                                               precision=algorithm_config["precision"],
                                               n_rand_bins=algorithm_config["n_rand_bins"],
                                               delta=algorithm_config["delta"],
-                                              non_fixed_dependency_percent=algorithm_config["non_fixed_dependency_percent"],
+                                              non_fixed_dependency_percent=algorithm_config[
+                                                  "non_fixed_dependency_percent"],
                                               save_img=True,
                                               result_storage=f"{res_storage_dir}",
                                               verbose=True)
 
+        # run the search object
         regularity_search.run()
+
+
+if __name__ == "__main__":
+    main()

@@ -70,10 +70,9 @@ class Regularity_search_driver:
         self.param_comb = self.find_param_comb()    # recursively find all the hyperparameter configs
         self.create_file_structure()                # create the file structure for storing results
         self.execute_regularity_search()            # execute the reg search wrt the hyperparameter configs
-        self.test_spread()
-        self.plot_complexity_vs_efficiency()
-        self.save_config_df()
-        self.perform_trade_off_analysis()
+        self.plot_complexity_vs_efficiency()        # compute the trade-off between complexity and efficiency
+        self.save_config_df()                       # store the final config results in files
+        self.perform_trade_off_analysis()           # perform analysis on the trade-off of the final results
 
     def find_param_comb(self):
         # driver function to recursively find the list of parameters
@@ -100,8 +99,7 @@ class Regularity_search_driver:
             del cur_list[list_keys[cur_key_idx]]
 
     def execute_regularity_search(self):
-        table_header = ["Id", "Coef_factor", "non_fixed_dependency_percent",
-                        "Complexity", "HV_dif_%"]
+        table_header = ["Id", "coef_factor", "non_fixed_dependency_percent", "complexity", "hv_dif_%"]
         table_data = []
 
         print("=============================================")
@@ -121,8 +119,7 @@ class Regularity_search_driver:
                                        result_storage=(
                                            f"{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i + 1}"),
                                        verbose=self.verbose)
-
-            cur_ps.run()
+            cur_ps.run()    # run the regularity search object
 
             # add the additional information about the param config
             param["ID"] = i + 1
@@ -138,9 +135,7 @@ class Regularity_search_driver:
             print(f"Param Config {i} completed.\n")
             plt.close("all")
 
-        print()
-        print(tabulate(table_data, headers=table_header))
-        print()
+        print(f"\n{tabulate(table_data, headers=table_header)}\n")
 
     def save_param_config(self, param):
         # store the parameter obj to a pickle file
@@ -153,104 +148,7 @@ class Regularity_search_driver:
         for key in param.keys():
             print(key + "= " + str(param[key]), file=text_file)
 
-    def test_spread(self):
-        init_F = pickle.load(open(
-                f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/initial_population_{self.problem_name}.pickle",
-                "rb"))["F"]
-
-        if self.problem_args["n_obj"] == 2:
-            init_extreme_F_1 = np.argmax(init_F[:, 0])
-            init_extreme_F_2 = np.argmax(init_F[:, 1])
-
-            normalized_extreme_F_1 = copy.deepcopy(init_F[init_extreme_F_1, :])
-            normalized_extreme_F_2 = copy.deepcopy(init_F[init_extreme_F_2, :])
-
-            min_F_1 = init_F[init_extreme_F_2, 0]
-            max_F_1 = init_F[init_extreme_F_1, 0]
-
-            min_F_2 = init_F[init_extreme_F_1, 1]
-            max_F_2 = init_F[init_extreme_F_2, 1]
-
-            normalized_extreme_F_1[0] = (normalized_extreme_F_1[0] - min_F_1) / (max_F_1 - min_F_1)
-            normalized_extreme_F_1[1] = (normalized_extreme_F_1[1] - min_F_2) / (max_F_2 - min_F_2)
-            normalized_extreme_F_2[0] = (normalized_extreme_F_2[0] - min_F_1) / (max_F_1 - min_F_1)
-            normalized_extreme_F_2[1] = (normalized_extreme_F_2[1] - min_F_2) / (max_F_2 - min_F_2)
-
-            init_dist = np.sqrt((normalized_extreme_F_1[0] - normalized_extreme_F_2[0])**2 + (normalized_extreme_F_1[1] - normalized_extreme_F_2[1])**2)
-
-        for param_id in range(1, len(self.param_comb)+1):
-            reg_F = pickle.load(open(
-                    f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{param_id}/final_regular_population.pickle",
-                    "rb"))["F"]
-            param = pickle.load(open(
-                    f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{param_id}/param_comb.pkl",
-                    "rb"))
-
-            if self.problem_args["n_obj"] == 2:
-                if reg_F is not None:
-                    reg_extreme_F_1 = np.argmax(reg_F[:, 0])
-                    reg_extreme_F_2 = np.argmax(reg_F[:, 1])
-
-                    normalized_extreme_F_1 = copy.deepcopy(reg_F[reg_extreme_F_1, :])
-                    normalized_extreme_F_2 = copy.deepcopy(reg_F[reg_extreme_F_2, :])
-
-                    normalized_extreme_F_1[0] = (normalized_extreme_F_1[0] - min_F_1) / (max_F_1 - min_F_1)
-                    normalized_extreme_F_1[1] = (normalized_extreme_F_1[1] - min_F_2) / (max_F_2 - min_F_2)
-                    normalized_extreme_F_2[0] = (normalized_extreme_F_2[0] - min_F_1) / (max_F_1 - min_F_1)
-                    normalized_extreme_F_2[1] = (normalized_extreme_F_2[1] - min_F_2) / (max_F_2 - min_F_2)
-
-                    reg_dist = np.sqrt((normalized_extreme_F_1[0] - normalized_extreme_F_2[0]) ** 2 + (
-                                normalized_extreme_F_1[1] - normalized_extreme_F_2[1]) ** 2)
-
-                    if reg_dist/init_dist < 0.5:
-                        param["hv_dif_%"] = np.inf
-
-            elif self.problem_args["n_obj"] == 3:
-                pass
-
-            self.param_comb[param_id - 1] = param
-
-            pickle.dump(param, open(
-                    f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{param_id}/param_comb.pkl",
-                    "wb"))
-
     def plot_complexity_vs_efficiency(self):
-        ####### fixing code. remove after fixed ####
-        num_comb = len(self.param_comb)
-        self.param_comb = []
-        orig_F = pickle.load(open(
-                f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/initial_population_{self.problem_name}.pickle",
-                "rb"))["F"]
-
-        norm_F_lb = np.min(orig_F, axis=0)
-        norm_F_ub = np.max(orig_F, axis=0)
-        hv = get_performance_indicator("hv", ref_point=2 * np.ones(self.problem_args["n_obj"]))
-        norm_orig_F = (orig_F - norm_F_lb)/(norm_F_ub - norm_F_lb)
-        orig_hv = hv.do(norm_orig_F)
-        fixed_var_cost = 0.5
-        non_fixed_independent_cost = 3 * self.problem_args["dim"]
-        non_fixed_orphan_cost = non_fixed_independent_cost * (self.problem_args["dim"] - 2) + 4
-
-        for i in range(num_comb):
-            cur_comb = pickle.load(open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{i+1}/param_comb.pkl", "rb"))
-            cur_reg_F = pickle.load(open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{i+1}/final_regular_population.pickle", "rb"))["F"]
-            reg = pickle.load(open(
-                f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_{i+1}/regularity_principle.pickle",
-                "rb"))
-            non_fixed_dependent_cost = 3 * len(reg["non_fixed_independent_vars"])
-            cur_complexity = fixed_var_cost * len(reg["fixed_vars"]) + non_fixed_dependent_cost * len(reg["non_fixed_dependent_vars"]) + non_fixed_independent_cost * len(reg["non_fixed_independent_vars"]) + non_fixed_orphan_cost * len(reg["non_fixed_orphan_vars"])
-
-            if cur_reg_F is not None:
-                cur_norm_reg_F = (cur_reg_F - norm_F_lb)/(norm_F_ub - norm_F_lb)
-                reg_hv = hv.do(cur_norm_reg_F)
-                cur_comb["hv_dif_%"] = np.abs(reg_hv - orig_hv)/orig_hv * 100
-            else:
-                cur_comb["hv_dif_%"] = np.inf
-
-            cur_comb["complexity"] = cur_complexity
-            self.param_comb.append(cur_comb)
-        ####### fixing code. remove after fixed ####
-
         # plot the complexity vs efficiency curve
         fig = plt.figure()
         for param in self.param_comb:
@@ -258,16 +156,14 @@ class Regularity_search_driver:
 
         plt.xlabel("complexity")
         plt.ylabel("hv_dif_%")
-        # plt.title("HV_dif_% vs Complexity")
         fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/param_comb_trade_off.pdf", format="pdf")
 
     @staticmethod
     def knee_point_estimation(pf, w_loss=1, w_gain=1):
-        # function to estimate the knee point from a pareto front
+        # function to estimate the highest trade-off point from a pareto front
         num_solutions = np.array(pf).shape[0]
         R = np.zeros(num_solutions)
         trade_off_vals = np.zeros(num_solutions)
-
         pf_norm = (pf - np.min(pf, axis=0)) / (np.max(pf, axis=0) - (np.min(pf, axis=0)) + 1e-6)
 
         for i in range(num_solutions - 1):
@@ -292,7 +188,6 @@ class Regularity_search_driver:
             pf[i, 0] = comb["complexity"]
             pf[i, 1] = comb["hv_dif_%"]
 
-        num_solutions = np.array(pf).shape[0]
         sorted_idx = np.argsort(pf[:, 0])
         self.pf_param_comb = [self.pf_param_comb[i] for i in sorted_idx]
         pf = pf[sorted_idx, :]  # sort the pareto front in increasing order of first objective
@@ -305,42 +200,18 @@ class Regularity_search_driver:
         self.knee_point_ID = self.pf_param_comb[knee_point_index]["ID"]
 
         # get the pareto front under the threshold
-        thres_idx = [i for i in range(pf.shape[0]) if pf[i, 1] <= threshold_percentage]
-        pf_thres = pf[thres_idx, :]
-        self.pf_param_comb_thres = [self.pf_param_comb[idx] for idx in thres_idx]
+        threshold_idx = [i for i in range(pf.shape[0]) if pf[i, 1] <= threshold_percentage]
+        pf_threshold = pf[threshold_idx, :]
+        self.pf_param_comb_threshold = [self.pf_param_comb[idx] for idx in threshold_idx]
 
-        # if not self.convexity_front:
-        # in case of concave pareto front, the preferred choice is
-        # the one on the right extreme having the lowest hv_dif
-        # return self.pf_param_comb[-1]["ID"]
-        # else:
-        # in case of convex pareto front
-        if len(thres_idx) == 0:
+        if len(threshold_idx) == 0:
             return self.pf_param_comb[-1]["ID"]
         elif pf[knee_point_index, 1] <= threshold_percentage:
             # the preferred point is the knee point, if it is within 2% error
             return self.knee_point_ID
-        elif pf_thres.shape[0] > 0:
-            knee_point_index_thres = self.knee_point_estimation(pf_thres)
-            return self.pf_param_comb_thres[knee_point_index_thres]["ID"]
-        # else:
-        #     pf_norm = (pf - np.min(pf, axis=0)) / (np.max(pf, axis=0) - (np.min(pf, axis=0)) + 1e-6)
-            # pf_norm = copy.deepcopy(pf)
-            # N = self.problem_args["dim"]
-            # max_complexity = (6*N - 11)*(N-2) + 4
-            # min_complexity = 0.5 * N
-            # pf_norm[:, 0] = (pf_norm[:, 0] - min_complexity)/(max_complexity - min_complexity)
-            # best_idx = pf_norm.shape[0] - 1
-            # for i in range(1, pf.shape[0]):
-            #     gain = pf_norm[best_idx, 0] - pf_norm[best_idx-1, 0]
-            #     loss = pf_norm[best_idx-1, 1] - pf_norm[best_idx, 1]
-            #
-            #     if pf[best_idx-1, 1] <= threshold_percentage and gain > loss:
-            #         best_idx = best_idx-1
-            #     else:
-            #         break
-            #
-            # return self.pf_param_comb[best_idx]["ID"]
+        elif pf_threshold.shape[0] > 0:
+            knee_point_index_threshold = self.knee_point_estimation(pf_threshold)
+            return self.pf_param_comb_threshold[knee_point_index_threshold]["ID"]
 
     def perform_trade_off_analysis(self):
         pf_df = pd.read_excel(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/configurations.xlsx",
@@ -405,7 +276,8 @@ class Regularity_search_driver:
         y_title = "hv_dif_%"
         hover_data = list(self.param_comb[0].keys())
         pf_df = self.convert_pf_regularity_to_pd(self.pf_param_comb)
-        pickle.dump(self.preferred_ID, open(f"{config.BASE_PATH}/results/hierarchical_search/{problem_name}/preferred_id.pickle", "wb"))
+        pickle.dump(self.preferred_ID, open(f"{config.BASE_PATH}/results/hierarchical_search/{self.problem_name}/"
+                                            f"preferred_id.pickle", "wb"))
 
         # save the interactive pf config
         custom_color_mapping = {"preferred": "green", "knee": "red", "normal": "blue"}
@@ -427,18 +299,12 @@ class Regularity_search_driver:
             type_wise_partition[key] = pf_df[pf_df["type"] == key][["complexity", "hv_dif_%"]].values
 
         fig, ax = plt.subplots(figsize=(10, 8))
-        min_complexity = np.min(F[:, 0])
-        max_complexity = np.max(F[:, 0])
         for key in list(custom_color_mapping.keys()):
             ax.scatter(type_wise_partition[key][:, 0], type_wise_partition[key][:, 1], c=custom_color_mapping[key],
                        label=key, s=80)
-
-        # ax.plot((min_complexity, max_complexity), (thresholded_percentage, thresholded_percentage), "-", color="black")
-
         ax.set_xlabel("complexity")
         ax.set_ylabel("hv difference (in %)")
         ax.legend(loc="upper right")
-
         fig.show()
         fig.savefig(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_name}/config_pf_plot.pdf", format="pdf")
 

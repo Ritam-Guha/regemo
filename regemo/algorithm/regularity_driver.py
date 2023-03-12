@@ -112,6 +112,7 @@ class Regularity_search_driver:
             cur_ps = Regularity_Search(problem_args=self.problem_args,
                                        non_fixed_regularity_coef_factor=param["non_fixed_regularity_coef_factor"],
                                        non_fixed_dependency_percent=param["non_fixed_dependency_percent"],
+                                       non_fixed_regularity_degree=param["non_fixed_regularity_degree"],
                                        n_rand_bins=param["n_rand_bins"],
                                        delta=param["delta"],
                                        seed=self.seed,
@@ -402,7 +403,8 @@ def main():
         exec_args = {"non_fixed_regularity_coef_factor": [0.1, 0.3, 0.5],
                      "non_fixed_dependency_percent": [0.1, 0.3, 0.5, 0.7],
                      "delta": [0.05, 0.1, 0.2],
-                     "n_rand_bins": [3, 4, 5, 10]}
+                     "n_rand_bins": [3, 4, 5, 10],
+                     "non_fixed_regularity_degree": [1, 2, 3]}
 
         # create the driver object
         driver = Regularity_search_driver(problem_args=problem_config,

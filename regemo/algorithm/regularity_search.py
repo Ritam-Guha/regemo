@@ -64,6 +64,7 @@ class Regularity_Search:
                  problem_args,
                  non_fixed_dependency_percent=0.9,
                  non_fixed_regularity_coef_factor=0.1,
+                 non_fixed_regularity_degree=1,
                  delta=0.05,
                  precision=2,
                  n_rand_bins=20,
@@ -94,6 +95,7 @@ class Regularity_Search:
         self.seed = seed
         self.non_fixed_dependency_percent = non_fixed_dependency_percent
         self.non_fixed_regularity_coef_factor = non_fixed_regularity_coef_factor
+        self.non_fixed_regularity_degree = non_fixed_regularity_degree
         self.NSGA_settings = NSGA_settings
         self.n_rand_bins = n_rand_bins
         self.delta = delta
@@ -176,6 +178,7 @@ class Regularity_Search:
                                                    problem_args=self.problem_args,
                                                    non_fixed_dependency_percent=self.non_fixed_dependency_percent,
                                                    non_fixed_regularity_coef_factor=self.non_fixed_regularity_coef_factor,
+                                                   non_fixed_regularity_degree=self.non_fixed_regularity_degree,
                                                    precision=self.precision,
                                                    NSGA_settings=new_NSGA_settings,
                                                    seed=self.seed,
@@ -191,6 +194,7 @@ class Regularity_Search:
         # storage file for every PF
         text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.txt"
         tex_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.tex"
+        tex_storage_long = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_long.tex"
 
         # store the regularity in text and tex files
         regularity_enforcement.regularity.display(self.orig_X,
@@ -202,6 +206,11 @@ class Regularity_Search:
                                                       self.problem_args["lb"],
                                                       self.problem_args["ub"],
                                                       save_file=tex_storage)
+
+        regularity_enforcement.regularity.display_tex_long(self.orig_X,
+                                                           self.problem_args["lb"],
+                                                           self.problem_args["ub"],
+                                                           save_file=tex_storage_long)
         self.print("Final Metrics")
         self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
         self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
@@ -567,7 +576,7 @@ def main():
     # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="bnh", help="Name of the problem")
+    parser.add_argument("--problem_name", default="crashworthiness", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -611,6 +620,8 @@ def main():
                                               delta=algorithm_config["delta"],
                                               non_fixed_dependency_percent=algorithm_config[
                                                   "non_fixed_dependency_percent"],
+                                              non_fixed_regularity_degree=algorithm_config[
+                                                  "non_fixed_regularity_degree"],
                                               save_img=True,
                                               result_storage=f"{res_storage_dir}",
                                               verbose=True)

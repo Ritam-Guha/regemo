@@ -412,6 +412,26 @@ class Regularity_Finder:
 
         self.F = self.evaluate(self.X, self.problem_args)
 
+    def _identify_unused_vars(self,
+                              coef_list):
+        # identify unused dependent and independent variables
+        coef_arr = np.array(coef_list)
+        coef_mask = abs(coef_arr) > 0
+        unused_dep = np.sum(coef_mask, axis=1) == 0
+        unused_indep_degree = np.sum(coef_mask, axis=0) == 0
+        unused_cases_indep = [0] * len(self.non_fixed_independent_vars)
+
+        for i, degree_list in enumerate(self.non_fixed_degree_list):
+            if unused_indep_degree[i]:
+                for j, degree in enumerate(degree_list):
+                    if degree >= 1:
+                        unused_cases_indep[j] += 1
+
+        unused_dep_idx = np.where(unused_dep)[0]
+        unused_indep_idx = np.where(np.array(unused_cases_indep) == len(self.non_fixed_dependent_vars))[0]
+        return unused_dep_idx, unused_indep_idx
+
+
     def non_fixed_regularity(self):
         if len(self.non_fixed_vars) > 1:
             # enforce regularity in non-fixed variables
@@ -420,6 +440,7 @@ class Regularity_Finder:
             sum_corr_var = np.array(np.sum(abs(corr_var), axis=1) - 1)
             self.non_fixed_vars = list(np.array(self.non_fixed_vars)[np.argsort(-sum_corr_var)])
             num_dependent_vars = int(np.floor(self.non_fixed_dependency_percent * len(self.non_fixed_vars)))
+            num_independent_vars = len(self.non_fixed_vars) - num_dependent_vars
 
             if num_dependent_vars == 0:
                 self.non_fixed_dependent_vars = []
@@ -476,11 +497,40 @@ class Regularity_Finder:
 
                 # Do a final check to see if there is any non-fixed variable which is unused
                 # in the equations. Those variables are called orphan variables
-                # if self.non_fixed_dependent_vars:
-                #     temp_coef_list = np.array(self.non_fixed_final_reg_coef_list[:, 0:-1])
-                #     non_fixed_indep_var_unutilized = np.prod(temp_coef_list == 0, axis=0)
-                #     non_fixed_orphan_indices = list(np.where(non_fixed_indep_var_unutilized != 0)[0])
-                #
+                if self.non_fixed_dependent_vars:
+                    temp_coef_list = np.array(self.non_fixed_final_reg_coef_list[:, 0:-1])
+                    unused_dep_idx, unused_indep_idx = self._identify_unused_vars(temp_coef_list)
+                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list,
+                                                                   unused_dep_idx, axis=0)
+                    for dep_idx in unused_dep_idx:
+                        unused_dep_var = self.non_fixed_dependent_vars.pop(dep_idx)
+                        self.fixed_vars.append(unused_dep_var)
+
+                    rem_degree_list = []
+                    for k, degree_list in enumerate(self.non_fixed_degree_list):
+                        for indep_idx in unused_indep_idx:
+                            if degree_list[indep_idx] > 0:
+                                rem_degree_list.append(k)
+                                continue
+
+                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list,
+                                                                   rem_degree_list, axis=1)
+
+                    self.non_fixed_degree_list = list(np.delete(np.array(self.non_fixed_degree_list),
+                                                          rem_degree_list,
+                                                          axis=0))
+
+                    self.non_fixed_degree_list = list(np.delete(np.array(self.non_fixed_degree_list),
+                                                                unused_indep_idx,
+                                                                axis=1))
+
+                    for degree_list in self.non_fixed_degree_list:
+                        degree_list = list(degree_list)
+
+                    for indep_idx_i in range(len(unused_indep_idx)):
+                        indep_var = self.non_fixed_independent_vars.pop(len(unused_indep_idx) - indep_idx_i - 1)
+                        self.non_fixed_orphan_vars.append(indep_var)
+
                 #     if non_fixed_orphan_indices:
                 #         indep_non_fixed_indices = np.setdiff1d(np.arange(len(self.non_fixed_independent_vars)),
                 #                                                non_fixed_orphan_indices)
@@ -510,30 +560,11 @@ class Regularity_Finder:
                 #             self.non_fixed_vars.remove(dep_var)
                 #     self.non_fixed_dependent_vars = dep_vars
                 #     self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list, idx_list, axis=0)
-
-            # the number of non_fixed independent and orphan should be less than M
-            while len(self.non_fixed_orphan_vars + self.non_fixed_independent_vars) >= self.problem_args["n_obj"]:
-                non_fixed_ll_vars = self.non_fixed_orphan_vars + self.non_fixed_independent_vars
-                std_dev = np.std(self.X[:, non_fixed_ll_vars], axis=0)/(np.array(self.pareto_ub)[non_fixed_ll_vars] - np.array(self.pareto_lb)[non_fixed_ll_vars])
-                min_idx = np.argmin(std_dev)
-                var_num = non_fixed_ll_vars[min_idx]
-
-                if var_num in self.non_fixed_orphan_vars:
-                    self.non_fixed_orphan_vars.remove(var_num)
-                elif var_num in self.non_fixed_independent_vars:
-                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list,
-                                                                   self.non_fixed_independent_vars.index(var_num),
-                                                                   axis=1)
-                    self.non_fixed_independent_vars.remove(var_num)
-
-                self.fixed_vars.append(var_num)
-                if var_num in self.non_fixed_vars:
-                    self.non_fixed_vars.remove(var_num)
-
-            if len(self.non_fixed_dependent_vars) == 1 and len(self.non_fixed_independent_vars) == 0:
-                self.fixed_vars.append(self.non_fixed_dependent_vars[0])
-                self.non_fixed_vars.remove(self.non_fixed_dependent_vars[0])
-                self.non_fixed_dependent_vars.remove(self.non_fixed_dependent_vars[0])
+                #
+                # if len(self.non_fixed_dependent_vars) == 1 and len(self.non_fixed_independent_vars) == 0:
+                #     self.fixed_vars.append(self.non_fixed_dependent_vars[0])
+                #     self.non_fixed_vars.remove(self.non_fixed_dependent_vars[0])
+                #     self.non_fixed_dependent_vars.remove(self.non_fixed_dependent_vars[0])
 
         else:
             self.non_fixed_orphan_vars = self.non_fixed_vars
@@ -572,12 +603,13 @@ class Regularity_Finder:
         # return the full list
         return full_list
 
-    def _non_fixed_regularity_regression(self, non_fixed_dep_vars, non_fixed_indep_vars, max_degree=2):
+    def _non_fixed_regularity_regression(self, non_fixed_dep_vars, non_fixed_indep_vars):
         # get the degree list for non-linear regression
         self.non_fixed_degree_list = self._create_list_degrees(max_degree=self.non_fixed_regularity_degree,
                                                                num_vars=len(non_fixed_indep_vars))
         # remove the all 0 degree list
-        self.non_fixed_degree_list.remove(self.non_fixed_degree_list[0])
+        if self.non_fixed_degree_list is not None:
+            self.non_fixed_degree_list.remove(self.non_fixed_degree_list[0])
 
         # function to regress in the non-fixed variables
         x = self.X[:, non_fixed_indep_vars]

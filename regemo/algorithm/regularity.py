@@ -316,15 +316,19 @@ class Regularity():
             if const_list:
                 self.print("\\codeline{\\codedef{Fixed Variables}:}")
                 for i, idx in enumerate(const_list):
-                    if i % 4 == 0:
+                    if len(const_list) == 1:
                         self.print("\\codeline{\\codetab $", end="")
-                        if len(const_list) == 1:
+                        self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + "$}")
+
+                    elif i % 4 == 0:
+                        self.print("\\codeline{\\codetab $", end="")
+                        if i == len(const_list) - 1:
                             self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + "$}")
                         else:
                             self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + ", ", end="")
                     else:
                         if (i + 1) % 4 == 0:
-                            self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + "$}")
+                            self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + ",$}")
                         else:
                             self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + ", ", end="")
         else:

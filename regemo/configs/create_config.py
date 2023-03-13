@@ -10,7 +10,7 @@ import pickle
 from pymoo.factory import get_reference_directions
 
 # problems = ["car_side_impact", "conceptual_marine_design", "rocket_injector_design", "dtlz5"]
-problems = ["c2dtlz2"]
+problems = ["osy"]
 
 
 def create_config(problem_name):
@@ -59,11 +59,11 @@ def create_config(problem_name):
         else:
             problem_config = pickle.load(open(f"{config.BASE_PATH}/{problem_config_storage_dir}/{problem_name}.pickle", "rb"))
             algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
-            algorithm_config["non_fixed_regularity_coef_factor"] = 0.1
-            algorithm_config["non_fixed_dependency_percent"] = 0.1
-            algorithm_config["non_fixed_regularity_degree"] = 1
+            algorithm_config["non_fixed_regularity_coef_factor"] = 0.5
+            algorithm_config["non_fixed_dependency_percent"] = 0.5
+            algorithm_config["non_fixed_regularity_degree"] = 2
             # algorithm_config["delta"] = 0.05
-            algorithm_config["n_rand_bins"] = 4
+            algorithm_config["n_rand_bins"] = 3
             # del algorithm_config["clustering_config"]
             # del algorithm_config["rand_regularity_MSE_threshold"]
             # del algorithm_config["non_rand_regularity_MSE_threshold"]

@@ -427,8 +427,10 @@ class Regularity_Finder:
                     if degree >= 1:
                         unused_cases_indep[j] += 1
 
-        unused_dep_idx = np.where(unused_dep)[0]
-        unused_indep_idx = np.where(np.array(unused_cases_indep) == len(self.non_fixed_dependent_vars))[0]
+        max_involvement = len(self.non_fixed_degree_list) - len(np.where(np.array(self.non_fixed_degree_list)[:,
+                                                                         0] == 0)[0])
+        unused_dep_idx = list(np.where(unused_dep)[0])
+        unused_indep_idx = list(np.where(np.array(unused_cases_indep) == max_involvement)[0])
         return unused_dep_idx, unused_indep_idx
 
 
@@ -505,24 +507,25 @@ class Regularity_Finder:
                     for dep_idx in unused_dep_idx:
                         unused_dep_var = self.non_fixed_dependent_vars.pop(dep_idx)
                         self.fixed_vars.append(unused_dep_var)
+                        self.non_fixed_vars.remove(unused_dep_var)
 
                     rem_degree_list = []
                     for k, degree_list in enumerate(self.non_fixed_degree_list):
                         for indep_idx in unused_indep_idx:
                             if degree_list[indep_idx] > 0:
                                 rem_degree_list.append(k)
-                                continue
+                                break
 
                     self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list,
                                                                    rem_degree_list, axis=1)
 
                     self.non_fixed_degree_list = list(np.delete(np.array(self.non_fixed_degree_list),
-                                                          rem_degree_list,
-                                                          axis=0))
-
-                    self.non_fixed_degree_list = list(np.delete(np.array(self.non_fixed_degree_list),
                                                                 unused_indep_idx,
                                                                 axis=1))
+
+                    self.non_fixed_degree_list = list(np.delete(np.array(self.non_fixed_degree_list),
+                                                          rem_degree_list,
+                                                          axis=0))
 
                     for degree_list in self.non_fixed_degree_list:
                         degree_list = list(degree_list)

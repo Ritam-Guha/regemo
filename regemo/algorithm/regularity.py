@@ -327,7 +327,9 @@ class Regularity():
                         else:
                             self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + ", ", end="")
                     else:
-                        if (i + 1) % 4 == 0:
+                        if i == len(const_list) - 1:
+                            self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + "$}")
+                        elif (i + 1) % 4 == 0:
                             self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + ",$}")
                         else:
                             self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + ", ", end="")

@@ -502,13 +502,18 @@ class Regularity_Finder:
                 if self.non_fixed_dependent_vars:
                     temp_coef_list = np.array(self.non_fixed_final_reg_coef_list[:, 0:-1])
                     unused_dep_idx, unused_indep_idx = self._identify_unused_vars(temp_coef_list)
+                    unused_dep_idx = sorted(unused_dep_idx, reverse=True)
+                    unused_indep_idx = sorted(unused_indep_idx, reverse=True)
                     self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list,
                                                                    unused_dep_idx, axis=0)
+
+                    # unused dependent variables become fixed variables
                     for dep_idx in unused_dep_idx:
                         unused_dep_var = self.non_fixed_dependent_vars.pop(dep_idx)
                         self.fixed_vars.append(unused_dep_var)
                         self.non_fixed_vars.remove(unused_dep_var)
 
+                    # unused independent variables become non-fixed orphan variables
                     rem_degree_list = []
                     for k, degree_list in enumerate(self.non_fixed_degree_list):
                         for indep_idx in unused_indep_idx:
@@ -524,14 +529,14 @@ class Regularity_Finder:
                                                                 axis=1))
 
                     self.non_fixed_degree_list = list(np.delete(np.array(self.non_fixed_degree_list),
-                                                          rem_degree_list,
-                                                          axis=0))
+                                                      rem_degree_list,
+                                                      axis=0))
 
                     for degree_list in self.non_fixed_degree_list:
                         degree_list = list(degree_list)
 
-                    for indep_idx_i in range(len(unused_indep_idx)):
-                        indep_var = self.non_fixed_independent_vars.pop(len(unused_indep_idx) - indep_idx_i - 1)
+                    for indep_idx in unused_indep_idx:
+                        indep_var = self.non_fixed_independent_vars.pop(indep_idx)
                         self.non_fixed_orphan_vars.append(indep_var)
 
                 #     if non_fixed_orphan_indices:
@@ -577,13 +582,11 @@ class Regularity_Finder:
         self.print(f"Independent Variables: {self.non_fixed_independent_vars}")
         self.print(f"Orphan Variables: {self.non_fixed_orphan_vars}")
 
-
     def _create_list_degrees(self,
                              max_degree=3,
                              num_vars=3,
                              cur_list=None,
                              full_list=None):
-
         if full_list is None:
             full_list = []
         if cur_list is None:
@@ -619,10 +622,22 @@ class Regularity_Finder:
         reg_X = copy.deepcopy(self.X)
 
         # storing data for tabular visualization
+        def create_str_degree(list_degree):
+            list_strings = []
+            for degrees in list_degree:
+                cur_str = ""
+                for degree_idx in range(len(degrees)):
+                    cur_str += "x_" + str(self.non_fixed_independent_vars[degree_idx]) + "^" + str(degrees[
+                        degree_idx])
+                list_strings.append(cur_str)
+
+            return list_strings
+
+        list_string_headers = create_str_degree(self.non_fixed_degree_list)
         orig_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 4 + len(self.non_fixed_degree_list)))
         regularity_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 4 + len(self.non_fixed_degree_list)))
-        orig_headers = ["Index"] + [str(idx) for idx in non_fixed_indep_vars] + ["Intercept"] + ["HV dif"] + ["MSE"]
-        regular_headers = ["Index"] + [str(idx) + "'" for idx in non_fixed_indep_vars] + ["Intercept"] + ["HV dif"] + [
+        orig_headers = ["Index"] + list_string_headers + ["Intercept"] + ["HV dif"] + ["MSE"]
+        regular_headers = ["Index"] + list_string_headers + ["Intercept"] + ["HV dif"] + [
             "MSE"]
 
         if self.non_fixed_regularity_degree > 1:

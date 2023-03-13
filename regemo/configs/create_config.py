@@ -61,9 +61,9 @@ def create_config(problem_name):
             algorithm_config = pickle.load(open(f"{config.BASE_PATH}/{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
             algorithm_config["non_fixed_regularity_coef_factor"] = 0.1
             algorithm_config["non_fixed_dependency_percent"] = 0.5
-            algorithm_config["delta"] = 0.1
-            algorithm_config["n_rand_bins"] = 4
-            algorithm_config["non_fixed_regularity_degree"] = 2
+            algorithm_config["delta"] = 0.05
+            algorithm_config["n_rand_bins"] = 5
+            algorithm_config["non_fixed_regularity_degree"] = 1
             # algorithm_config["non_fixed_dependency_percent"] = 0.1
             # algorithm_config["non_rand_regularity_degree"] = non_rand_regularity_degree
             # algorithm_config["rand_regularity_coef_factor"] = rand_regularity_coef_factor

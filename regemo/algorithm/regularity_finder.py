@@ -622,18 +622,19 @@ class Regularity_Finder:
         reg_X = copy.deepcopy(self.X)
 
         # storing data for tabular visualization
-        def create_str_degree(list_degree):
+        def create_str_degree(non_fixed_indep_vars,
+                              list_degree):
             list_strings = []
             for degrees in list_degree:
                 cur_str = ""
                 for degree_idx in range(len(degrees)):
-                    cur_str += "x_" + str(self.non_fixed_independent_vars[degree_idx]) + "^" + str(degrees[
+                    cur_str += "x_" + str(non_fixed_indep_vars[degree_idx]) + "^" + str(degrees[
                         degree_idx])
                 list_strings.append(cur_str)
 
             return list_strings
 
-        list_string_headers = create_str_degree(self.non_fixed_degree_list)
+        list_string_headers = create_str_degree(non_fixed_indep_vars, self.non_fixed_degree_list)
         orig_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 4 + len(self.non_fixed_degree_list)))
         regularity_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 4 + len(self.non_fixed_degree_list)))
         orig_headers = ["Index"] + list_string_headers + ["Intercept"] + ["HV dif"] + ["MSE"]

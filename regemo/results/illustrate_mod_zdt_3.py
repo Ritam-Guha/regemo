@@ -59,12 +59,15 @@ def draw_rule():
     x3 = - (0.9 * x2) - (0.6 * x1) + 1.2
     ax.plot_surface(x1, x2, x3, color="red", alpha=0.3, label="original rule: $x_1 + 0.5x_2 + x_3 = 1.23$")
     fake2Dline_1 = mpl.lines.Line2D([0], [0], linestyle="none", c='b', marker='o')
-    fake2Dline_2 = mpl.lines.Line2D([0], [0], linestyle="none", c='g', marker='o')
+    # fake2Dline_2 = mpl.lines.Line2D([0], [0], linestyle="none", c='g', marker='o')
     fake2Dline_3 = mpl.lines.Line2D([3], [3], linestyle="none", c='r', marker='o')
-    ax.legend([fake2Dline_1, fake2Dline_2, fake2Dline_3], ['original rule: $x_1^2 + x_2^2 + x_3^2 = 1$',
-                                                           f"regular non-linear rule: $x_1 = {np.round(fit.coef_[0], 2)} x_2 + {np.round(fit.coef_[1], 2)} x_3$ \n${np.round(fit.coef_[2], 2)} x_2^2 {np.round(fit.coef_[3], 2)} x_3^2 + {np.round(fit.intercept_, 2)} x_2 x_3 + {np.round(fit.intercept_, 2)}$",
-                                                           "regular linear rule: $0.6x_1 + 0.9x_2 + x_3 = -1.2$"], numpoints=1, fontsize=15)
-    fig.savefig("mod_zdt_3d_illustration_x.pdf", format="pdf")
+    ax.legend([fake2Dline_1,
+               # fake2Dline_2,
+               fake2Dline_3],
+              ['original rule: $x_1^2 + x_2^2 + x_3^2 = 1$',
+                # f"regular non-linear rule: $x_1 = {np.round(fit.coef_[0], 2)} x_2 + {np.round(fit.coef_[1], 2)} x_3$ \n${np.round(fit.coef_[2], 2)} x_2^2 {np.round(fit.coef_[3], 2)} x_3^2 + {np.round(fit.intercept_, 2)} x_2 x_3 + {np.round(fit.intercept_, 2)}$",
+               "regular linear rule: $0.6x_1 + 0.9x_2 + x_3 = -1.2$"], numpoints=1, fontsize=15)
+    fig.savefig("mod_zdt_3d_illustration_x.png")
 
 
 def draw_efficient_fronts():
@@ -99,7 +102,7 @@ def draw_efficient_fronts():
     # fronts = NonDominatedSorting().do(F_reg_non_lin)
     # plot = plot.add(F_reg_non_lin[fronts[0]], color="green", label="regular non-linear efficient front", alpha=0.6, s=60)
     plot.show()
-    plot.save("mod_zdt_3d_illustration_f.pdf", format="pdf")
+    plot.save("mod_zdt_3d_illustration_f.png")
 
 
 def main():

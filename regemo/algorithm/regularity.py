@@ -82,24 +82,34 @@ class Regularity():
         return new_X
 
     def calc_process_complexity(self):
-        # calcuate the complexity of a particular regularity configuration
-
+        # calculate the complexity of a particular regularity configuration
         # number of fixed, independent, dependent and orphan variables
         num_fixed = len(self.fixed_vars)
         num_independent = len(self.non_fixed_independent_vars)
         num_dependent = len(self.non_fixed_dependent_vars)
         num_orphan = len(self.non_fixed_orphan_vars)
 
+        sum_degree = 0
+        for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
+            max_degree = 0
+            for j, list_degree in enumerate(self.non_fixed_degree_list):
+                if self.non_fixed_final_reg_coef_list[i][j] != 0:
+                    cur_degree = 0
+                    for idx, degree in enumerate(list_degree):
+                        if degree != 0:
+                            cur_degree += degree
+                    max_degree = max(max_degree, cur_degree)
+
+            sum_degree += max_degree
+
         # weight of the variables
         fixed_weight = 0.5
-        independent_weight = 3 * self.dim
+        # independent_weight = 3 * self.dim
         dependent_weight = 3 * num_independent
-        orphan_weight = independent_weight * (self.dim - 2) + 4
+        orphan_weight = 3 * self.dim    # here we are considering 3 to be the max_degree
 
         # compute the complexity
-        complexity = (fixed_weight * num_fixed) + (independent_weight * num_independent) + (dependent_weight *
-                                                                                            num_dependent) + (
-                             orphan_weight * num_orphan)
+        complexity = (fixed_weight * num_fixed) + sum_degree + (orphan_weight * num_orphan) + self.dim
 
         return complexity
 

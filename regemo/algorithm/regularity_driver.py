@@ -17,6 +17,8 @@ from tabulate import tabulate
 import sys
 import argparse
 import plotly.express as px
+import multiprocessing
+import time
 
 plt.rcParams.update({'font.size': 15})
 
@@ -83,6 +85,8 @@ class Regularity_search_driver:
 
         list_param_comb = []
         self._rec_list(self.exec_list, list_keys, 0, {}, list_param_comb)
+        for i, param in enumerate(list_param_comb):
+            param["ID"] = i+1
         return list_param_comb
 
     def _rec_list(self, params, list_keys, cur_key_idx, cur_list, list_param_comb):
@@ -98,6 +102,27 @@ class Regularity_search_driver:
             self._rec_list(params, list_keys, cur_key_idx + 1, cur_list.copy(), list_param_comb)
             del cur_list[list_keys[cur_key_idx]]
 
+    def parallel_regularity_search(self,
+                                   param):
+        cur_rs = Regularity_Search(problem_args=self.problem_args,
+                                   non_fixed_regularity_coef_factor=param["non_fixed_regularity_coef_factor"],
+                                   non_fixed_dependency_percent=param["non_fixed_dependency_percent"],
+                                   non_fixed_regularity_degree=param["non_fixed_regularity_degree"],
+                                   n_rand_bins=param["n_rand_bins"],
+                                   delta=param["delta"],
+                                   seed=self.seed,
+                                   NSGA_settings=self.algorithm_args["NSGA_settings"],
+                                   result_storage=(
+                                       f"{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{param['ID']}"),
+                                   verbose=self.verbose)
+        cur_rs.run()
+        pickle.dump(param, open(
+            f"{config.BASE_PATH}/{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{param['ID']}"
+            f"/param_comb.pickle", "wb"))
+        pickle.dump(cur_rs.final_metrics, open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{param['ID']}"
+                                f"/final_metrics.pickle", "wb"))
+        print(f"param ID {param['ID']} done...")
+
     def execute_regularity_search(self):
         table_header = ["Id", "coef_factor", "non_fixed_dependency_percent", "complexity", "hv_dif_%"]
         table_data = []
@@ -106,26 +131,21 @@ class Regularity_search_driver:
         print(f"              {self.problem_name}           ")
         print("=============================================")
         # execute the process for every regularity combination
+        self.parallel_regularity_search(self.param_comb[0])
+        num_cores = multiprocessing.cpu_count() - 20
+        pool = multiprocessing.Pool(processes=num_cores)
+        pool.map(self.parallel_regularity_search, self.param_comb[1:])
 
         for i, param in enumerate(self.param_comb):
+            param = pickle.load(open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i+1}/param_comb.pickle", "rb"))
             print(f"Config ID: {i}, Algorithm Config: {param}")
-            cur_ps = Regularity_Search(problem_args=self.problem_args,
-                                       non_fixed_regularity_coef_factor=param["non_fixed_regularity_coef_factor"],
-                                       non_fixed_dependency_percent=param["non_fixed_dependency_percent"],
-                                       non_fixed_regularity_degree=param["non_fixed_regularity_degree"],
-                                       n_rand_bins=param["n_rand_bins"],
-                                       delta=param["delta"],
-                                       seed=self.seed,
-                                       NSGA_settings=self.algorithm_args["NSGA_settings"],
-                                       result_storage=(
-                                           f"{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i + 1}"),
-                                       verbose=self.verbose)
-            cur_ps.run()    # run the regularity search object
+            final_metrics = pickle.load(open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{param['ID']}"
+                                f"/final_metrics.pickle", "rb"))
 
             # add the additional information about the param config
             param["ID"] = i + 1
-            param["complexity"] = cur_ps.final_metrics["complexity"]
-            param["hv_dif_%"] = cur_ps.final_metrics["hv_dif_%"]
+            param["complexity"] = final_metrics["complexity"]
+            param["hv_dif_%"] = final_metrics["hv_dif_%"]
 
             table_data.append([param["ID"], param["non_fixed_regularity_coef_factor"],
                                param["non_fixed_dependency_percent"],
@@ -133,6 +153,7 @@ class Regularity_search_driver:
 
             # save the param config
             self.save_param_config(param)
+            self.param_comb[i] = param
             print(f"Param Config {i} completed.\n")
             plt.close("all")
 
@@ -141,7 +162,7 @@ class Regularity_search_driver:
     def save_param_config(self, param):
         # store the parameter obj to a pickle file
         final_folder_path = f"{self.root_dir}/{self.problem_name}/param_comb_{param['ID']}"
-        with open(f"{config.BASE_PATH}/{final_folder_path}/param_comb.pkl", "wb") as pkl_handle:
+        with open(f"{config.BASE_PATH}/{final_folder_path}/param_comb.pickle", "wb") as pkl_handle:
             pickle.dump(param, pkl_handle)
 
         # store the parameter config in a text file for easier visualization
@@ -414,7 +435,10 @@ def main():
                                           verbose=False)
 
         # run the driver object
+        start_time = time.time()
         driver.run()
+        end_time = time.time()
+        print(f"Time required: {end_time - start_time} s")
 
 
 if __name__ == "__main__":

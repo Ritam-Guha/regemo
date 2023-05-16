@@ -122,10 +122,10 @@ def get_problem(problem_name,
                                  xl=problem_args['lb'],
                                  xu=problem_args['ub'])
 
-            def _evaluate(self, 
-                          X, 
-                          out, 
-                          *args, 
+            def _evaluate(self,
+                          X,
+                          out,
+                          *args,
                           **kwargs):
 
                 if "regularity_enforcement" in problem_args.keys() and problem_args["regularity_enforcement"]:
@@ -134,14 +134,14 @@ def get_problem(problem_name,
                     new_dim = problem_args["dim"] + len(problem_args["fixed_vars"]) + len(problem_args[
                                                                                                  "non_fixed_dependent_vars"])
                     new_X = np.zeros((X.shape[0], new_dim))
-                    
+
                     # placing the fixed values in the new population
                     new_X[:, problem_args["non_fixed_independent_vars"]] = X[:, problem_args["non_fixed_variable_mapper"][
                                                                                "non_fixed_independent_vars"]]
                     new_X[:, problem_args["non_fixed_orphan_vars"]] = X[:, problem_args["non_fixed_variable_mapper"][
                                                                             "non_fixed_orphan_vars"]]
                     new_X = problem_args["regularity_enforcement_process"](new_X)
-                    
+
                     # setting the new problem arguments
                     new_problem_args = copy.deepcopy(problem_args)
                     new_problem_args["dim"] = new_dim

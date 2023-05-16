@@ -216,6 +216,7 @@ class Regularity_Search:
         self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
         self.print("\n======================================\n")
 
+
         # get the X and F after regularity enforcement
         self.regular_X = regularity_enforcement.X
         self.regular_F = regularity_enforcement.F
@@ -283,6 +284,12 @@ class Regularity_Search:
 
             if self.verbose:
                 plot.show()
+
+        with open(f"{config.BASE_PATH}/{self.result_storage}/final_metrics.txt", "w") as f:
+            f.write(f"HV_dif_%: {self.final_metrics['hv_dif_%']}\n")
+            f.write(f"complexity: {self.final_metrics['complexity']}")
+        print(f"hv_diff_%; {self.final_metrics['hv_dif_%']}")
+        print(f"complexity: {self.final_metrics['complexity']}")
 
     def run_NSGA(self, problem, NSGA_settings):
         # run the NSGA over the problem
@@ -576,7 +583,7 @@ def main():
     # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="dtlz2", help="Name of the problem")
+    parser.add_argument("--problem_name", default="crashworthiness", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -624,7 +631,7 @@ def main():
                                                   "non_fixed_regularity_degree"],
                                               save_img=True,
                                               result_storage=f"{res_storage_dir}",
-                                              verbose=True)
+                                              verbose=False)
 
         # run the search object
         regularity_search.run()

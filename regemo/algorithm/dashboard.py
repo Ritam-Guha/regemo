@@ -1,41 +1,28 @@
 import regemo.config as config
 from regemo.problems.get_problem import problems
+from regemo.configs.create_config import create_config
+from regemo.algorithm.regularity_search import main as reg_search_main
 
 import dash
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
 
-import plotly.express as px
-
 import pickle
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from pdf2image import convert_from_path
 
 app = dash.Dash(__name__)
-
-
-# def convert_pdf_to_image(path):
-#     images = convert_from_path(path)
-#     for i in range(len(images)):
-#         images[i].save(f"/home/ritz/projects/coin_lab/Research_Directions/EC/regemo/regemo/results/crashworthiness/regularity_pf_long.jpg", 'JPEG')
-#
-#
-# def convert_image_to_go_obj(image_path):
-
-
 
 
 @app.callback(
     Output('original_scatter_plot', 'figure'),
     [Input('dropdown_problem', 'value')]
 )
-def create_original_scatter_plots(selected_value):
+def create_original_scatter_plot(problem_name):
     data_orig = pickle.load(
         open(
-            f"{config.BASE_PATH}/results/hierarchical_search/{selected_value}/initial_population_{selected_value}.pickle",
+            f"{config.BASE_PATH}/results/hierarchical_search/{problem_name}/initial_population_{problem_name}.pickle",
             "rb"))
     df_orig_F = pd.DataFrame(data_orig["F"], columns=[f"F{i}" for i in range(data_orig["F"].shape[1])])
 
@@ -60,10 +47,10 @@ def create_original_scatter_plots(selected_value):
     Output('original_pcp', 'figure'),
     [Input('dropdown_problem', 'value')]
 )
-def create_original_scatter_plots(selected_value):
+def create_original_pcp(problem_name):
     data_orig = pickle.load(
         open(
-            f"{config.BASE_PATH}/results/hierarchical_search/{selected_value}/initial_population_{selected_value}.pickle",
+            f"{config.BASE_PATH}/results/hierarchical_search/{problem_name}/initial_population_{problem_name}.pickle",
             "rb"))
     df_orig_X = pd.DataFrame(data_orig["X"], columns=[f"X{i}" for i in range(data_orig["X"].shape[1])])
 
@@ -81,9 +68,9 @@ def create_original_scatter_plots(selected_value):
     Output('regular_scatter_plot', 'figure'),
     [Input('dropdown_problem', 'value')]
 )
-def create_reg_scatter_plots(selected_value):
+def create_reg_scatter_plot(problem_name):
     data_reg = pickle.load(
-        open(f"{config.BASE_PATH}/results/{selected_value}/final_regular_population.pickle", "rb"))
+        open(f"{config.BASE_PATH}/results/{problem_name}/final_regular_population.pickle", "rb"))
     df_reg_F = pd.DataFrame(data_reg["F"], columns=[f"F{i}" for i in range(data_reg["F"].shape[1])])
 
     # Original Front
@@ -107,9 +94,9 @@ def create_reg_scatter_plots(selected_value):
     Output('regular_pcp', 'figure'),
     [Input('dropdown_problem', 'value')]
 )
-def create_reg_scatter_plots(selected_value):
+def create_reg_pcp(problem_name):
     data_reg = pickle.load(
-        open(f"{config.BASE_PATH}/results/{selected_value}/final_regular_population.pickle", "rb"))
+        open(f"{config.BASE_PATH}/results/{problem_name}/final_regular_population.pickle", "rb"))
     df_reg_X = pd.DataFrame(data_reg["X"], columns=[f"X{i}" for i in range(data_reg["X"].shape[1])])
 
     # PCP
@@ -122,23 +109,32 @@ def create_reg_scatter_plots(selected_value):
     return fig_pcp
 
 
-# @app.callback(
-#     Output('regular_pcp', 'figure'),
-#     [Input('dropdown_problem', 'value')]
-# )
-# def create_reg_scatter_plots(selected_value):
-#     data_reg = pickle.load(
-#         open(f"{config.BASE_PATH}/results/{selected_value}/final_regular_population.pickle", "rb"))
-#     df_reg_X = pd.DataFrame(data_reg["X"], columns=[f"X{i}" for i in range(data_reg["X"].shape[1])])
-#
-#     # PCP
-#     fig_pcp = go.Figure(data=go.Parcoords(
-#         line=dict(color="blue"),
-#         dimensions=list([dict(label=f'X{i}',
-#                               values=df_reg_X[f'X{i}']) for i in range(df_reg_X.shape[1])])))
-#     fig_pcp.update_layout(title="Parallel Coordinate Plot for the Regular Front", template="plotly_dark")
-#
-#     return fig_pcp
+@app.callback(
+    # [dash.dependencies.Output('regular_scatter_plot', 'figure'),
+    #  dash.dependencies.Output('regular_pcp', 'figure')],
+    dash.dependencies.Output('output', 'value'),
+    [Input('dropdown_problem', 'value'),
+     dash.dependencies.Input('start-button', 'n_clicks'),
+     dash.dependencies.Input('coef', 'value'),
+     dash.dependencies.Input('dep_percent', 'value'),
+     dash.dependencies.Input('delta', 'value'),
+     dash.dependencies.Input('rand_bins', 'value'),
+     dash.dependencies.Input('degree', 'value')]
+)
+def start_process(problem_name, n_clicks, coef, dep_percent, delta, rand_bins, degree):
+    if n_clicks > 0:
+        # Perform your process here 
+        create_config(problem_name=problem_name,
+                      non_fixed_regularity_coef_factor=coef,
+                      non_fixed_dependency_percent=dep_percent,
+                      delta=delta,
+                      n_rand_bins=rand_bins,
+                      non_fixed_regularity_degree=degree)
+
+        reg_search_main(problem_name=problem_name)
+
+    else:
+        return None
 
 
 def main():
@@ -154,7 +150,8 @@ def main():
     }
     app.layout = html.Div(style={'backgroundColor': 'black', 'color': 'white', 'height': '100vh'},
                           children=[
-                              html.H1(children='RegEMO Dashboard'),
+                              html.Header(html.H1('RegEMO Dashboard', className='header-title'),
+                                          className='app-header'),
                               dcc.Dropdown(
                                   id='dropdown_problem',
                                   options=[{'label': prob, 'value': prob} for prob in problems],
@@ -166,6 +163,26 @@ def main():
                               html.Div(children=[
                                   dcc.Graph(id='original_scatter_plot', style={'display': 'inline-block'}),
                                   dcc.Graph(id='original_pcp', style={'display': 'inline-block'})
+                              ]),
+                              html.Header(html.H2('Regularity Corner', className='header-title'),
+                                          className='app-header'),
+                              html.Div(children=[
+                                  dcc.Input(id="coef",
+                                            type="text",
+                                            placeholder="Coefficient Multiplier"),
+                                  dcc.Input(id="dep_percent",
+                                            type="text",
+                                            placeholder="Dependency Percentage"),
+                                  dcc.Input(id="delta",
+                                            type="text",
+                                            placeholder="Delta"),
+                                  dcc.Input(id="rand_bins",
+                                            type="text",
+                                            placeholder="Number of random bins"),
+                                  dcc.Input(id="degree",
+                                            type="text",
+                                            placeholder="Degree"),
+                                  html.Button('Start Regularity Search', id='start-button', n_clicks=0),
                               ]),
                               html.Div(children=[
                                   dcc.Graph(id='regular_scatter_plot', style={'display': 'inline-block'}),

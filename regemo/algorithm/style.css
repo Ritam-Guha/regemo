@@ -1,0 +1,12 @@
+.app-header {
+    background-color: #212529;
+    padding: 20px;
+    color: white;
+    text-align: center;
+}
+
+.header-title {
+    font-size: 50px;
+    font-weight: bold;
+    margin: 0;
+}

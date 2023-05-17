@@ -13,12 +13,12 @@ from pymoo.factory import get_reference_directions
 problems = ["crashworthiness"]
 
 
-def create_config(problem_name):
-    non_fixed_regularity_coef_factor = 0.1
-    non_fixed_dependency_percent = 0.5
-    delta = 0.05
-    n_rand_bins = 5
-    non_fixed_regularity_degree = 1
+def create_config(problem_name,
+                  non_fixed_regularity_coef_factor=0.1,
+                  non_fixed_dependency_percent=0.5,
+                  delta=0.05,
+                  n_rand_bins=5,
+                  non_fixed_regularity_degree=1):
 
     use_existing_config = True
     save_config = True

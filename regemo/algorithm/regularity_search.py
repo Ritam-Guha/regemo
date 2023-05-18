@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
 import pickle
+import subprocess
 
 plt.rcParams.update({'font.size': 10})
 
@@ -211,6 +212,10 @@ class Regularity_Search:
                                                            self.problem_args["lb"],
                                                            self.problem_args["ub"],
                                                            save_file=tex_storage_long)
+
+        subprocess.run(['pdflatex', '-output-directory',
+                        f'{config.BASE_PATH}/{self.result_storage}/',
+                        tex_storage_long])
         self.print("Final Metrics")
         self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
         self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
@@ -579,7 +584,7 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="crashworthiness"):
+def main(problem_name="bnh"):
     # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()

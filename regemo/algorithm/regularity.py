@@ -91,22 +91,23 @@ class Regularity():
 
         sum_degree = 0
         for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
-            max_degree = 0
+            # max_degree = 0
             for j, list_degree in enumerate(self.non_fixed_degree_list):
                 if self.non_fixed_final_reg_coef_list[i][j] != 0:
                     cur_degree = 0
                     for idx, degree in enumerate(list_degree):
                         if degree != 0:
                             cur_degree += degree
-                    max_degree = max(max_degree, cur_degree)
+                    # max_degree = max(max_degree, cur_degree)
+                    sum_degree += cur_degree
 
-            sum_degree += max_degree
+            # sum_degree += max_degree
 
         # weight of the variables
         fixed_weight = 0.5
         # independent_weight = 3 * self.dim
         dependent_weight = 3 * num_independent
-        orphan_weight = 3 * self.dim    # here we are considering 3 to be the max_degree
+        orphan_weight = ((self.dim ** 4) + (5 * (self.dim ** 3)) + (6 * (self.dim ** 2)))/2    # here we are considering 3 to be the max_degree
 
         # compute the complexity
         complexity = (fixed_weight * num_fixed) + sum_degree + (orphan_weight * num_orphan) + self.dim

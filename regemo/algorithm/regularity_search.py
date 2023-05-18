@@ -1,3 +1,5 @@
+import pandas as pd
+
 from regemo.problems.get_problem import problems as problem_set
 from regemo.problems.get_problem import get_problem
 from regemo.algorithm.regularity_finder import Regularity_Finder
@@ -24,6 +26,8 @@ import os
 import sys
 from hdbscan.hdbscan_ import HDBSCAN
 from pymoo.visualization.pcp import PCP
+import plotly.express as px
+import plotly.io as pio
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -245,6 +249,24 @@ class Regularity_Search:
         plot = plot.add(self.orig_F, color="blue", marker="o", s=60, alpha=0.2, label="Original PO Front")
         if self.regular_F is not None:
             plot = plot.add(self.regular_F, color="red", marker="*", s=50, alpha=0.6, label="Regular Front")
+
+        front_df_reg = pd.DataFrame()
+        for i in range(self.regular_F.shape[1]):
+            front_df_reg[f"F_{i}"] = self.regular_F[:, i]
+        front_df_reg["type"] = "regular"
+        front_df_orig = pd.DataFrame()
+        for i in range(self.orig_F.shape[1]):
+            front_df_orig[f"F_{i}"] = self.orig_F[:, i]
+        front_df_orig["type"] = "original"
+        front_df = pd.concat((front_df_reg, front_df_orig))
+
+        if self.orig_F.shape[1] == 2:
+            fig = px.scatter(front_df, x="F_0", y="F_1", color="type")
+        elif self.orig_F.shape[1] == 3:
+            fig = px.scatter_3d(front_df, x="F_0", y="F_1", z="F_2", color="type")
+
+        pio.write_html(fig, file=f'{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.html')
+
 
         if self.verbose:
             plot.show()
@@ -584,7 +606,7 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="bnh"):
+def main(problem_name="crashworthiness"):
     # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()

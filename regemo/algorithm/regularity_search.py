@@ -1,5 +1,3 @@
-import pandas as pd
-
 from regemo.problems.get_problem import problems as problem_set
 from regemo.problems.get_problem import get_problem
 from regemo.algorithm.regularity_finder import Regularity_Finder
@@ -26,14 +24,11 @@ import os
 import sys
 from hdbscan.hdbscan_ import HDBSCAN
 from pymoo.visualization.pcp import PCP
-import plotly.express as px
-import plotly.io as pio
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
 import pickle
-import subprocess
 
 plt.rcParams.update({'font.size': 10})
 
@@ -69,7 +64,6 @@ class Regularity_Search:
                  problem_args,
                  non_fixed_dependency_percent=0.9,
                  non_fixed_regularity_coef_factor=0.1,
-                 non_fixed_regularity_degree=1,
                  delta=0.05,
                  precision=2,
                  n_rand_bins=20,
@@ -100,7 +94,6 @@ class Regularity_Search:
         self.seed = seed
         self.non_fixed_dependency_percent = non_fixed_dependency_percent
         self.non_fixed_regularity_coef_factor = non_fixed_regularity_coef_factor
-        self.non_fixed_regularity_degree = non_fixed_regularity_degree
         self.NSGA_settings = NSGA_settings
         self.n_rand_bins = n_rand_bins
         self.delta = delta
@@ -158,7 +151,7 @@ class Regularity_Search:
             self.edge_point_estimation(self.NSGA_settings["ref_dirs"], res["F"])
 
         # plot the figure after nds
-        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
+        plot = Scatter(labels="f", legend=True, angle=self.visualization_angle)
         plot = plot.add(res["F"], color="blue", label="Original PO Front", alpha=0.2, s=60)
 
         if self.save_img:
@@ -183,7 +176,6 @@ class Regularity_Search:
                                                    problem_args=self.problem_args,
                                                    non_fixed_dependency_percent=self.non_fixed_dependency_percent,
                                                    non_fixed_regularity_coef_factor=self.non_fixed_regularity_coef_factor,
-                                                   non_fixed_regularity_degree=self.non_fixed_regularity_degree,
                                                    precision=self.precision,
                                                    NSGA_settings=new_NSGA_settings,
                                                    seed=self.seed,
@@ -199,7 +191,6 @@ class Regularity_Search:
         # storage file for every PF
         text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.txt"
         tex_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.tex"
-        tex_storage_long = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_long.tex"
 
         # store the regularity in text and tex files
         regularity_enforcement.regularity.display(self.orig_X,
@@ -211,20 +202,10 @@ class Regularity_Search:
                                                       self.problem_args["lb"],
                                                       self.problem_args["ub"],
                                                       save_file=tex_storage)
-
-        regularity_enforcement.regularity.display_tex_long(self.orig_X,
-                                                           self.problem_args["lb"],
-                                                           self.problem_args["ub"],
-                                                           save_file=tex_storage_long)
-
-        subprocess.run(['pdflatex', '-output-directory',
-                        f'{config.BASE_PATH}/{self.result_storage}/',
-                        tex_storage_long])
         self.print("Final Metrics")
         self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
         self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
         self.print("\n======================================\n")
-
 
         # get the X and F after regularity enforcement
         self.regular_X = regularity_enforcement.X
@@ -235,7 +216,7 @@ class Regularity_Search:
 
         # plot the regular front
         if self.regular_F is not None:
-            plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
+            plot = Scatter(labels="f", legend=True, angle=self.visualization_angle)
             plot = plot.add(self.regular_F, color="red", marker="*", s=60, alpha=0.6, label="Regular Efficient Front")
 
             if self.verbose and plot:
@@ -245,28 +226,12 @@ class Regularity_Search:
                 plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front.pdf", format="pdf")
 
         # plot the original and regular front
-        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True, fontsize=10)
+        plot = Scatter(labels="f", legend=True, angle=self.visualization_angle, tight_layout=True, fontsize=25)
         plot = plot.add(self.orig_F, color="blue", marker="o", s=60, alpha=0.2, label="Original PO Front")
         if self.regular_F is not None:
             plot = plot.add(self.regular_F, color="red", marker="*", s=50, alpha=0.6, label="Regular Front")
 
-        front_df_reg = pd.DataFrame()
-        for i in range(self.regular_F.shape[1]):
-            front_df_reg[f"F_{i}"] = self.regular_F[:, i]
-        front_df_reg["type"] = "regular"
-        front_df_orig = pd.DataFrame()
-        for i in range(self.orig_F.shape[1]):
-            front_df_orig[f"F_{i}"] = self.orig_F[:, i]
-        front_df_orig["type"] = "original"
-        front_df = pd.concat((front_df_reg, front_df_orig))
-
-        if self.orig_F.shape[1] == 2:
-            fig = px.scatter(front_df, x="F_0", y="F_1", color="type")
-        elif self.orig_F.shape[1] == 3:
-            fig = px.scatter_3d(front_df, x="F_0", y="F_1", z="F_2", color="type")
-
-        pio.write_html(fig, file=f'{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.html')
-
+        plot.legend = (plot.legend, {"fontsize": 20})
 
         if self.verbose:
             plot.show()
@@ -311,12 +276,6 @@ class Regularity_Search:
 
             if self.verbose:
                 plot.show()
-
-        with open(f"{config.BASE_PATH}/{self.result_storage}/final_metrics.txt", "w") as f:
-            f.write(f"HV_dif_%: {self.final_metrics['hv_dif_%']}\n")
-            f.write(f"complexity: {self.final_metrics['complexity']}")
-        print(f"hv_diff_%; {self.final_metrics['hv_dif_%']}")
-        print(f"complexity: {self.final_metrics['complexity']}")
 
     def run_NSGA(self, problem, NSGA_settings):
         # run the NSGA over the problem
@@ -606,11 +565,11 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="crashworthiness"):
+def main():
     # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default=problem_name, help="Name of the problem")
+    parser.add_argument("--problem_name", default="all", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -654,8 +613,6 @@ def main(problem_name="crashworthiness"):
                                               delta=algorithm_config["delta"],
                                               non_fixed_dependency_percent=algorithm_config[
                                                   "non_fixed_dependency_percent"],
-                                              non_fixed_regularity_degree=algorithm_config[
-                                                  "non_fixed_regularity_degree"],
                                               save_img=True,
                                               result_storage=f"{res_storage_dir}",
                                               verbose=False)

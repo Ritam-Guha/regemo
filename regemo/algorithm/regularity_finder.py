@@ -545,7 +545,7 @@ class Regularity_Finder:
         else:
             self.non_fixed_orphan_vars = self.non_fixed_vars
 
-        # display the dependent a   nd independent variables
+        # display the dependent and independent variables
         self.print(f"Dependent Variables: {self.non_fixed_dependent_vars}")
         self.print(f"Independent Variables: {self.non_fixed_independent_vars}")
         self.print(f"Orphan Variables: {self.non_fixed_orphan_vars}")

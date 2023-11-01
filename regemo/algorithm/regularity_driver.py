@@ -132,7 +132,7 @@ class Regularity_search_driver:
         print("=============================================")
         # execute the process for every regularity combination
         self.parallel_regularity_search(self.param_comb[0])
-        num_cores = multiprocessing.cpu_count() - 20
+        num_cores = multiprocessing.cpu_count() - 6
         pool = multiprocessing.Pool(processes=num_cores)
         pool.map(self.parallel_regularity_search, self.param_comb[1:])
 
@@ -390,7 +390,7 @@ def main():
     # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="c2dtlz2", help="Name of the problem")
+    parser.add_argument("--problem_name", default="conceptual_marine_design", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -421,11 +421,11 @@ def main():
         problem_config["problem_name"] = problem_name
 
         # mention the possible values for the hyperparameters
-        exec_args = {"non_fixed_regularity_coef_factor": [0.1, 0.3, 0.5],
-                     "non_fixed_dependency_percent": [0.1, 0.3, 0.5, 0.7],
-                     "delta": [0.05, 0.1, 0.2],
-                     "n_rand_bins": [3, 4, 5, 10],
-                     "non_fixed_regularity_degree": [1, 2, 3]}
+        exec_args = {"non_fixed_regularity_coef_factor": [0.1],
+                     "non_fixed_dependency_percent": [0.1],
+                     "delta": [0.05],
+                     "n_rand_bins": [3],
+                     "non_fixed_regularity_degree": [1, 2]}
 
         # create the driver object
         driver = Regularity_search_driver(problem_args=problem_config,

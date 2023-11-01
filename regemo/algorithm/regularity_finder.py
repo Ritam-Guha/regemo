@@ -459,8 +459,8 @@ class Regularity_Finder:
                 # so check the regularities and deviations from original front and then
                 # decide on the independent and dependent variable clusters
                 self.print("As there are two non-fixed variables, both of them are eligible to become dependent or "
-                           "independent "
-                           "variable.\nSo, we are checking the pareto front deviation for both the configurations and then "
+                           "independent variable.\n"
+                           "So, we are checking the pareto front deviation for both the configurations and then "
                            "we'll decide which configuration to select")
 
                 self.print("Config 1")
@@ -545,7 +545,7 @@ class Regularity_Finder:
         else:
             self.non_fixed_orphan_vars = self.non_fixed_vars
 
-        # display the dependent and independent variables
+        # display the dependent a   nd independent variables
         self.print(f"Dependent Variables: {self.non_fixed_dependent_vars}")
         self.print(f"Independent Variables: {self.non_fixed_independent_vars}")
         self.print(f"Orphan Variables: {self.non_fixed_orphan_vars}")

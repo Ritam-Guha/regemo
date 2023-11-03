@@ -8,6 +8,7 @@ import sys
 import time
 import warnings
 import datetime
+import regemo.config as config
 
 import h5py
 import matplotlib.pyplot as plt
@@ -17,10 +18,10 @@ from pymoo.factory import get_sampling, get_crossover, get_mutation, get_termina
 from pymoo.optimize import minimize
 from pymoo.util.display import MultiObjectiveDisplay
 
-from truss.truss_problem_general import TrussProblemGeneral
-from utils.logutils import setup_logging
-import utils.record_data_legacy as rec
-from utils.general import get_knee
+from regemo.problems.scalable_truss_impl.truss.truss_problem_general import TrussProblemGeneral
+from regemo.problems.scalable_truss_impl.utils.logutils import setup_logging
+import regemo.problems.scalable_truss_impl.utils.record_data_legacy as rec
+from regemo.problems.scalable_truss_impl.utils.general import get_knee
 
 time_now = datetime.datetime.now()
 results_parent_dir = 'output'
@@ -125,7 +126,7 @@ if __name__ == '__main__':
         folder_str += '_symm'
     folder_str += f'_{cmd_args.popsize}pop_{cmd_args.ngen}gen_{repair_str}_{time_now.strftime("%Y%m%d_%H%M%S")}'
 
-    random_seed_list = np.loadtxt('random_seed_list')
+    random_seed_list = np.loadtxt(f'{config.BASE_PATH}/problems/scalable_truss_imp/random_seed_list')
     starting_run = 1  # If some runs have already completed beforehand, we can start from a later point
     for i in range(starting_run - 1, cmd_args.nruns):
         plt.close('all')

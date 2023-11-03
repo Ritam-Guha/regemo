@@ -2,7 +2,7 @@ import warnings
 
 import numpy as np
 
-from ..utils.draw_truss import draw_truss
+from regemo.problems.scalable_truss_impl.utils.draw_truss import draw_truss
 
 
 def gen_truss(n_shape_nodes=19, member_radius=0.015, member_length_xyz=np.array([4, 4, 4]), density=7121.4,

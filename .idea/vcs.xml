@@ -4,10 +4,7 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/paper/emo/regemo-paper-emo" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/paper/ieee/regemo-ieee" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/paper/ieee/regemo-paper-ieee" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/paper/ieee/regemo-paper-ieee/regemo-paper_draft" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/paper/regemo-paper" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/paper/regemo-paper-IEEE" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/paper/regemo-paper-emo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/paper/regemo-paper-IEEE-2" vcs="Git" />
   </component>
 </project>

@@ -126,7 +126,7 @@ if __name__ == '__main__':
         folder_str += '_symm'
     folder_str += f'_{cmd_args.popsize}pop_{cmd_args.ngen}gen_{repair_str}_{time_now.strftime("%Y%m%d_%H%M%S")}'
 
-    random_seed_list = np.loadtxt(f'{config.BASE_PATH}/problems/scalable_truss_imp/random_seed_list')
+    random_seed_list = np.loadtxt(f'{config.BASE_PATH}/problems/scalable_truss_impl/random_seed_list')
     starting_run = 1  # If some runs have already completed beforehand, we can start from a later point
     for i in range(starting_run - 1, cmd_args.nruns):
         plt.close('all')

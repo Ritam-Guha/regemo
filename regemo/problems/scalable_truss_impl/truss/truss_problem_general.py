@@ -16,9 +16,14 @@ class TrussProblemGeneral(Problem):
     """Generalizes the pymoo truss optimization problem. All node coordinates and beam sizes can be potentially
     considered decision variables."""
 
-    def __init__(self, n_shape_var=10, shape_var_mode='l', n_cores=mp.cpu_count() // 4,
-                 repair_inequality=False, repair_interval=1,
-                 repair_power=False, u=None, symmetry=('xz', 'yz')):
+    def __init__(self, n_shape_var=10,
+                 shape_var_mode='l',
+                 n_cores=mp.cpu_count() // 4,
+                 repair_inequality=False,
+                 repair_interval=1,
+                 repair_power=False,
+                 u=None,
+                 symmetry=('xz', 'yz')):
         self.obj_label = ('Weight (kg)', 'Compliance (m/N)')
         # Truss material properties
         self.density = 7121.4  # kg/m3
@@ -74,7 +79,7 @@ class TrussProblemGeneral(Problem):
             self.n_size_var += len(self.member_groups['cross_xy'][0]) // 2 * 2
         else:
             # No symmetry
-            print("No symmetry conditions supplied. Using full truss formulation.")
+            # print("No symmetry conditions supplied. Using full truss formulation.")
             # Set shape vars
             self.n_shape_var = n_shape_var
             self.coordinates, self.connectivity, self.fixed_nodes, self.load_nodes, self.member_groups \
@@ -89,8 +94,8 @@ class TrussProblemGeneral(Problem):
         self.fixed_nodes = self.fixed_nodes.reshape(-1, 1)
         self.load_nodes = self.load_nodes.reshape(-1, 1)
 
-        print(f"No. of shape vars = {self.n_shape_var}")
-        print(self.force)
+        # print(f"No. of shape vars = {self.n_shape_var}")
+        # print(self.force)
 
         n_var = self.n_shape_var + self.n_size_var
 
@@ -143,7 +148,7 @@ class TrussProblemGeneral(Problem):
         # TODO: Make n_constr a user parameter
         super().__init__(n_var=n_var, n_obj=2, n_constr=2, xl=xl, xu=xu)
 
-        print(f"Number of constraints = {self.n_constr}")
+        # print(f"Number of constraints = {self.n_constr}")
 
     @staticmethod
     def set_conectivity_matrix(connectivity, r, member_groups, symmetry):
@@ -325,8 +330,8 @@ class TrussProblemGeneral(Problem):
 
         if self.n_cores > 1:
             pool = mp.Pool(self.n_cores)
-            logging.debug(f"Multiprocessing pool opened. CPU count = {mp.cpu_count()}, Pool Size = {self.n_cores}")
-            print(f"Multiprocessing pool opened. CPU count = {mp.cpu_count()}, Pool Size = {self.n_cores}")
+            # logging.debug(f"Multiprocessing pool opened. CPU count = {mp.cpu_count()}, Pool Size = {self.n_cores}")
+            # print(f"Multiprocessing pool opened. CPU count = {mp.cpu_count()}, Pool Size = {self.n_cores}")
 
             # Call apply_async() for asynchronous evaluation of each population member
             result_objects = [pool.apply_async(TrussProblemGeneral.calc_obj,

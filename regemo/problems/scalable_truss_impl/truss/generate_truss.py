@@ -5,8 +5,13 @@ import numpy as np
 from regemo.problems.scalable_truss_impl.utils.draw_truss import draw_truss
 
 
-def gen_truss(n_shape_nodes=19, member_radius=0.015, member_length_xyz=np.array([4, 4, 4]), density=7121.4,
-              elastic_modulus=200e9, yield_stress=248.2e6, force=np.array([0, 0, -5000])):
+def gen_truss(n_shape_nodes=19,
+              member_radius=0.015,
+              member_length_xyz=np.array([4, 4, 4]),
+              density=7121.4,
+              elastic_modulus=200e9,
+              yield_stress=248.2e6,
+              force=np.array([0, 0, -5000])):
     """Generate trusses of the type given in ISCSO 2019"""
     if n_shape_nodes % 2 == 0:
         warnings.warn(f"Number of shape nodes (={n_shape_nodes}) should be odd")
@@ -177,19 +182,19 @@ def gen_truss(n_shape_nodes=19, member_radius=0.015, member_length_xyz=np.array(
 
 
 if __name__ == '__main__':
-    coordinates, connectivity, fixed_nodes, load_nodes, member_groups = gen_truss(n_shape_nodes=7)
+    coordinates, connectivity, fixed_nodes, load_nodes, member_groups = gen_truss(n_shape_nodes=19)
     truss_fig, truss_ax = draw_truss(coordinates, connectivity, fixed_nodes, load_nodes,
                                      suppress_axis=False, grid=True)
     truss_ax.view_init(azim=0, elev=0)
 
-    truss_fig, truss_ax = draw_truss(coordinates, connectivity, fixed_nodes, load_nodes,
-                                     suppress_axis=False, grid=True)
-    truss_ax.view_init(azim=-130, elev=15)
-
-    truss_fig, truss_ax = draw_truss(coordinates, connectivity, fixed_nodes, load_nodes,
-                                     suppress_axis=False, grid=True, highlight_group=True, force_arrows=False)
-    truss_ax.view_init(azim=-130, elev=15)
-
-    truss_fig, truss_ax = draw_truss(coordinates, connectivity, fixed_nodes, load_nodes,
-                                     suppress_axis=False, grid=True, highlight_group=True, force_arrows=True)
-    truss_ax.view_init(azim=-130, elev=15)
+    # truss_fig, truss_ax = draw_truss(coordinates, connectivity, fixed_nodes, load_nodes,
+    #                                  suppress_axis=False, grid=True)
+    # truss_ax.view_init(azim=-130, elev=15)
+    #
+    # truss_fig, truss_ax = draw_truss(coordinates, connectivity, fixed_nodes, load_nodes,
+    #                                  suppress_axis=False, grid=True, highlight_group=True, force_arrows=False)
+    # truss_ax.view_init(azim=-130, elev=15)
+    #
+    # truss_fig, truss_ax = draw_truss(coordinates, connectivity, fixed_nodes, load_nodes,
+    #                                  suppress_axis=False, grid=True, highlight_group=True, force_arrows=True)
+    # truss_ax.view_init(azim=-130, elev=15)

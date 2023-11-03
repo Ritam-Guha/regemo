@@ -607,13 +607,15 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="all"):
+def main(problem_name="scalable_truss_19",
+         **kwargs):
     # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()
     parser.add_argument("--problem_name", default=problem_name, help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
+
     if problem_name != "all":
         # if you want to run it on a specific problem
         problems = [problem_name]

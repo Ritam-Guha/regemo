@@ -12,10 +12,9 @@ def evaluate(X,
     :return: evaluation metrics
     """
     problem_class = TrussProblemGeneral(n_shape_var=19,
-                                        n_cores=1,
+                                        n_cores=32,
                                         repair_inequality=False,
                                         repair_power=False,
-                                        repair_interval=10,
                                         symmetry=())
     out = {}
 

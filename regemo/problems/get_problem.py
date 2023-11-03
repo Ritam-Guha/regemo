@@ -6,7 +6,6 @@ from regemo.problems import dtlz5
 from regemo.problems import dtlz7
 from regemo.problems import mod_zdt
 from regemo.problems import osy
-from regemo.problems import scalable_truss
 from regemo.problems import srn
 from regemo.problems import two_member_truss
 from regemo.problems import welded_beam_design
@@ -27,6 +26,7 @@ from regemo.problems import car_cab_design
 from regemo.problems import zdt_mod_2d
 from regemo.problems import zdt_mod_3d
 from regemo.problems import tnk
+from regemo.problems import scalable_truss_19, scalable_truss_39, scalable_truss_59
 
 
 from pymoo.core.problem import Problem
@@ -67,7 +67,6 @@ evaluation_mapper = {
     "dtlz7": dtlz7.evaluate,
     "mod_zdt": mod_zdt.evaluate,
     "osy": osy.evaluate,
-    "scalable_truss": scalable_truss.evaluate,
     "srn": srn.evaluate,
     "two_member_truss": two_member_truss.evaluate,
     "welded_beam_design": welded_beam_design.evaluate,
@@ -87,7 +86,10 @@ evaluation_mapper = {
     "car_cab_design": car_cab_design.evaluate,
     "zdt_mod_2d": zdt_mod_2d.evaluate,
     "zdt_mod_3d": zdt_mod_3d.evaluate,
-    "tnk": tnk.evaluate
+    "tnk": tnk.evaluate,
+    "scalable_truss_19": scalable_truss_19.evaluate,
+    "scalable_truss_39": scalable_truss_39.evaluate,
+    "scalable_truss_59": scalable_truss_59.evaluate
 }
 
 

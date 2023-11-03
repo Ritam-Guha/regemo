@@ -137,13 +137,14 @@ def draw_truss(node_coordinates, element_connectivity, fixed_nodes, load_nodes, 
                fontsize=17
                )
     # ax1.legend([plt.arrow()], ["arr"])
-    fig1.tight_layout()
+    # fig1.tight_layout()
+    fig1.show()
 
     return fig1, ax1
 
 
 if __name__ == '__main__':
-    from truss.generate_truss import gen_truss
+    from regemo.problems.scalable_truss_impl.truss.generate_truss import gen_truss
     # coordinates, connectivity, fixed_nodes, load_nodes = gen_truss()
     # draw_truss(coordinates, connectivity, fixed_nodes, load_nodes)
     #

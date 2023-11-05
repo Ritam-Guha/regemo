@@ -25,6 +25,7 @@ from matplotlib import pyplot as plt
 from scipy.stats import binned_statistic
 import pandas as pd
 import pickle
+import time
 
 plt.rcParams.update({'font.size': 15})
 
@@ -115,6 +116,7 @@ class Regularity_Finder:
         self.print = verboseprint(self.verbose)
         self.regularity = None
         self.final_metrics = {}
+        self.module_timing_storage = open(f"{config.BASE_PATH}/{self.result_storage}/module_timing.txt", "w")
 
         np.random.seed(self.seed)
 
@@ -157,9 +159,13 @@ class Regularity_Finder:
         self.orig_hv = self.hv.do(self.norm_orig_F)
 
         # dividing variables into fixed and non-fixed
+        start_time = time.time()
         self.non_fixed_vars, self.fixed_vars = self.find_regularity_clusters()
+        end_time = time.time()
+        self.module_timing_storage.write(f"partitioning fixed and non-fixed: {end_time - start_time}\n")
 
         # regularity enforcement in non-fixed variables
+        start_time = time.time()
         if len(self.non_fixed_vars) > 0:
             self.print("\n================================================")
             self.print("Searching for regularity inside non-fixed variables...")
@@ -168,7 +174,10 @@ class Regularity_Finder:
             if self.non_fixed_dependent_vars:
                 self.print("The regularity is that the slopes of the projection of the variables with respect to the "
                            "index variable are always multiples of " + str(self.non_fixed_regularity_coef_factor))
+        end_time = time.time()
+        self.module_timing_storage.write(f"non-fixed regularity finding: {end_time - start_time}\n")
 
+        start_time = time.time()
         if len(self.fixed_vars) > 0:
             # regularity enforcement in fixed variables
             self.print("================================================")
@@ -182,6 +191,9 @@ class Regularity_Finder:
 
         else:
             self.print("[INFO] The process is stopping as there's no fixed variables")
+        end_time = time.time()
+        self.module_timing_storage.write(f"fixed regularity finding: {end_time - start_time}\n")
+        self.module_timing_storage.close()
 
         # save the regularity to a regularity object
         self.regularity = Regularity(dim=self.problem_args["dim"],

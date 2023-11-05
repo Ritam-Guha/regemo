@@ -607,7 +607,7 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="scalable_truss_19",
+def main(problem_name="bnh",
          **kwargs):
     # collect arguments for the problem
     seed = config.seed

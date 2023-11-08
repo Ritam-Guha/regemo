@@ -26,8 +26,15 @@ from scipy.stats import binned_statistic
 import pandas as pd
 import pickle
 import time
+from numpy import dot
+from numpy.linalg import norm
 
 plt.rcParams.update({'font.size': 15})
+
+
+def cosine_similarity(var_1, var_2):
+    sim = dot(var_1, var_2) / (norm(var_1) * norm(var_2))
+    return sim
 
 
 class Regularity_Finder:
@@ -449,61 +456,82 @@ class Regularity_Finder:
         if len(self.non_fixed_vars) > 1:
             # enforce regularity in non-fixed variables
             # sort the non-fixed variables according to decreasing order of correlation sum
-            corr_var = pd.DataFrame(self.X[:, self.non_fixed_vars]).corr()
-            sum_corr_var = np.array(np.sum(abs(corr_var), axis=1) - 1)
-            self.non_fixed_vars = list(np.array(self.non_fixed_vars)[np.argsort(-sum_corr_var)])
-            num_dependent_vars = int(np.floor(self.non_fixed_dependency_percent * len(self.non_fixed_vars)))
-            num_independent_vars = len(self.non_fixed_vars) - num_dependent_vars
+            # corr_var = pd.DataFrame(self.X[:, self.non_fixed_vars]).corr()
+            # sum_corr_var = np.array(np.sum(abs(corr_var), axis=1) - 1)
+            # self.non_fixed_vars = list(np.array(self.non_fixed_vars)[np.argsort(-sum_corr_var)])
+            # num_dependent_vars = int(np.floor(self.non_fixed_dependency_percent * len(self.non_fixed_vars)))
+            # num_independent_vars = len(self.non_fixed_vars) - num_dependent_vars
+            num_independent_vars = self.problem_args["n_obj"]-1
+            self.non_fixed_dependent_vars = []
+            self.non_fixed_independent_vars = []
+
+            coef_var = np.std(self.X[:, self.non_fixed_vars], axis=0)/np.mean(self.X[:, self.non_fixed_vars], axis=0)
+            max_coef_var_idx = np.argmax(coef_var)
+            self.non_fixed_independent_vars.append(self.non_fixed_vars[max_coef_var_idx])
+
+            while len(self.non_fixed_independent_vars) < num_independent_vars:
+                list_uncat_vars = list(set(self.non_fixed_vars) - set(self.non_fixed_independent_vars))
+                cosine_sim_vals = np.zeros(len(list_uncat_vars))
+
+                for indep_var in self.non_fixed_independent_vars:
+                    for j, var in enumerate(list_uncat_vars):
+                        cosine_sim_vals[j] += cosine_similarity(self.X[:, indep_var], self.X[:, var])
+
+                min_cosine_sim_var_idx = np.argmin(cosine_sim_vals)
+                new_independent_var = list_uncat_vars[min_cosine_sim_var_idx]
+                self.non_fixed_independent_vars.append(new_independent_var)
+
+            self.non_fixed_dependent_vars = list(set(self.non_fixed_vars) - set(self.non_fixed_independent_vars))
 
             # if number of independent variables more than M-1, adjust
-            if num_independent_vars >= self.problem_args["n_obj"]:
-                num_dependent_vars += num_independent_vars - self.problem_args["n_obj"] + 1
-                num_independent_vars = self.problem_args["n_obj"] - 1
+            # if num_independent_vars >= self.problem_args["n_obj"]:
+            #     num_dependent_vars += num_independent_vars - self.problem_args["n_obj"] + 1
+            #     num_independent_vars = self.problem_args["n_obj"] - 1
 
-            if num_dependent_vars == 0:
-                self.non_fixed_dependent_vars = []
-                self.non_fixed_independent_vars = []
-                self.non_fixed_orphan_vars = copy.deepcopy(self.non_fixed_vars)
-
-            # figure out the dependent and independent variables from the set of non-fixed variables
-            elif len(self.non_fixed_vars) == 2:
-                # if there are two variables, both of them will have the same PCC sum
-                # so check the regularities and deviations from original front and then
-                # decide on the independent and dependent variable clusters
-                self.print("As there are two non-fixed variables, both of them are eligible to become dependent or "
-                           "independent variable.\n"
-                           "So, we are checking the pareto front deviation for both the configurations and then "
-                           "we'll decide which configuration to select")
-
-                self.print("Config 1")
-                reg_X_1, _ = self._non_fixed_regularity_regression([self.non_fixed_vars[0]], [self.non_fixed_vars[1]])
-                self.print("Config 2")
-                reg_X_2, _ = self._non_fixed_regularity_regression([self.non_fixed_vars[1]], [self.non_fixed_vars[0]])
-
-                X_1 = np.clip(reg_X_1, self.lb, self.ub)
-                X_2 = np.clip(reg_X_2, self.lb, self.ub)
-
-                F_1 = self.evaluate(X_1, self.problem_args)
-                F_2 = self.evaluate(X_2, self.problem_args)
-
-                hv_1 = self.hv.do(self.orig_F) - self.hv.do(F_1)
-                hv_2 = self.hv.do(self.orig_F) - self.hv.do(F_2)
-
-                # the one leading to lower hyper-volume deviation should be the better alternative
-                if hv_1 < hv_2:
-                    self.print("Config 1 is better than Config 2")
-                    self.non_fixed_independent_vars = [self.non_fixed_vars[1]]
-                    self.non_fixed_dependent_vars = [self.non_fixed_vars[0]]
-                else:
-                    self.print("Config 2 is better than Config 1")
-                    self.non_fixed_independent_vars = [self.non_fixed_vars[0]]
-                    self.non_fixed_dependent_vars = [self.non_fixed_vars[1]]
-
-            else:
-                # when there are more variables in the cluster than dependency requirement
-                # select the first few variables as dependent and rest as dependent
-                self.non_fixed_dependent_vars = self.non_fixed_vars[0:num_dependent_vars]
-                self.non_fixed_independent_vars = self.non_fixed_vars[num_dependent_vars:]
+            # if num_dependent_vars == 0:
+            #     self.non_fixed_dependent_vars = []
+            #     self.non_fixed_independent_vars = []
+            #     self.non_fixed_orphan_vars = copy.deepcopy(self.non_fixed_vars)
+            #
+            # # figure out the dependent and independent variables from the set of non-fixed variables
+            # elif len(self.non_fixed_vars) == 2:
+            #     # if there are two variables, both of them will have the same PCC sum
+            #     # so check the regularities and deviations from original front and then
+            #     # decide on the independent and dependent variable clusters
+            #     self.print("As there are two non-fixed variables, both of them are eligible to become dependent or "
+            #                "independent variable.\n"
+            #                "So, we are checking the pareto front deviation for both the configurations and then "
+            #                "we'll decide which configuration to select")
+            #
+            #     self.print("Config 1")
+            #     reg_X_1, _ = self._non_fixed_regularity_regression([self.non_fixed_vars[0]], [self.non_fixed_vars[1]])
+            #     self.print("Config 2")
+            #     reg_X_2, _ = self._non_fixed_regularity_regression([self.non_fixed_vars[1]], [self.non_fixed_vars[0]])
+            #
+            #     X_1 = np.clip(reg_X_1, self.lb, self.ub)
+            #     X_2 = np.clip(reg_X_2, self.lb, self.ub)
+            #
+            #     F_1 = self.evaluate(X_1, self.problem_args)
+            #     F_2 = self.evaluate(X_2, self.problem_args)
+            #
+            #     hv_1 = self.hv.do(self.orig_F) - self.hv.do(F_1)
+            #     hv_2 = self.hv.do(self.orig_F) - self.hv.do(F_2)
+            #
+            #     # the one leading to lower hyper-volume deviation should be the better alternative
+            #     if hv_1 < hv_2:
+            #         self.print("Config 1 is better than Config 2")
+            #         self.non_fixed_independent_vars = [self.non_fixed_vars[1]]
+            #         self.non_fixed_dependent_vars = [self.non_fixed_vars[0]]
+            #     else:
+            #         self.print("Config 2 is better than Config 1")
+            #         self.non_fixed_independent_vars = [self.non_fixed_vars[0]]
+            #         self.non_fixed_dependent_vars = [self.non_fixed_vars[1]]
+            #
+            # else:
+            #     # when there are more variables in the cluster than dependency requirement
+            #     # select the first few variables as dependent and rest as dependent
+            #     self.non_fixed_dependent_vars = self.non_fixed_vars[0:num_dependent_vars]
+            #     self.non_fixed_independent_vars = self.non_fixed_vars[num_dependent_vars:]
 
             if len(self.non_fixed_dependent_vars) > 0:
                 # get the regressed regularity (for non-fixed variables we are using degree of 1)
@@ -511,7 +539,7 @@ class Regularity_Finder:
                                                                                         self.non_fixed_independent_vars)
                 reg_X = np.clip(reg_X, self.lb, self.ub)
                 reg_F = self.evaluate(reg_X, self.problem_args)
-                self.non_fixed_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:-2]
+                self.non_fixed_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:]
 
                 # Do a final check to see if there is any non-fixed variable which is unused
                 # in the equations. Those variables are called orphan variables
@@ -619,8 +647,8 @@ class Regularity_Finder:
             return list_strings
 
         list_string_headers = create_str_degree(non_fixed_indep_vars, self.non_fixed_degree_list)
-        orig_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 4 + len(self.non_fixed_degree_list)))
-        regularity_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 4 + len(self.non_fixed_degree_list)))
+        orig_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 1 + len(self.non_fixed_degree_list)))
+        regularity_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 1 + len(self.non_fixed_degree_list)))
         orig_headers = ["Index"] + list_string_headers + ["Intercept"] + ["HV dif"] + ["MSE"]
         regular_headers = ["Index"] + list_string_headers + ["Intercept"] + ["HV dif"] + [
             "MSE"]
@@ -649,12 +677,12 @@ class Regularity_Finder:
 
             # for table formation
             orig_reg_coef_data[id, 0] = i
-            orig_reg_coef_data[id, -3] = reg.intercept_
+            orig_reg_coef_data[id, -1] = reg.intercept_
             new_hv = self.hv.do(
                 self._normalize(self.evaluate(temp_X, self.problem_args), self.norm_F_lb, self.norm_F_ub))
-            orig_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv) / self.orig_hv) * 100, self.precision)
-            orig_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)
-            orig_reg_coef_data[id, 1:-3] = coef_.copy()
+            # orig_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv) / self.orig_hv) * 100, self.precision)
+            # orig_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)
+            orig_reg_coef_data[id, 1:-1] = coef_.copy()
 
             # for every coefficient, try to find the closest value which
             # is a multiple of coefficient factor provided by the user
@@ -690,17 +718,17 @@ class Regularity_Finder:
 
             # for table formation
             regularity_reg_coef_data[id, 0] = i
-            regularity_reg_coef_data[id, -3] = reg.intercept_
-            new_hv = self.hv.do(
-                self._normalize(self.evaluate(temp_X, self.problem_args), self.norm_F_lb, self.norm_F_ub))
-            regularity_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv) / self.orig_hv) * 100, self.precision)
-            regularity_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)
-            regularity_reg_coef_data[id, 1:-3] = reg.coef_.copy()
+            regularity_reg_coef_data[id, -1] = reg.intercept_
+            # new_hv = self.hv.do(
+            #     self._normalize(self.evaluate(temp_X, self.problem_args), self.norm_F_lb, self.norm_F_ub))
+            # regularity_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv) / self.orig_hv) * 100, self.precision)
+            # regularity_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)
+            regularity_reg_coef_data[id, 1:-1] = reg.coef_.copy()
 
-            self.print()
-            self.print(tabulate(orig_reg_coef_data, headers=orig_headers))
-            self.print()
-            self.print(tabulate(regularity_reg_coef_data, headers=regular_headers))
+        self.print()
+        self.print(tabulate(orig_reg_coef_data, headers=orig_headers))
+        self.print()
+        self.print(tabulate(regularity_reg_coef_data, headers=regular_headers))
 
         return reg_X, regularity_reg_coef_data
 

@@ -1,3 +1,5 @@
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m regemo.algorithm.regularity_driver --problem_name bnh
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m regemo.algorithm.regularity_driver --problem_name scalable_truss_19
 #python3 -m regemo.algorithm.regularity_driver --problem_name crashworthiness
 #python3 -m regemo.algorithm.regularity_driver --problem_name c2dtlz2
 #python3 -m regemo.algorithm.regularity_driver --problem_name dtlz2
@@ -23,4 +25,3 @@
 #python3 -m regemo.algorithm.regularity_driver --problem_name rocket_injector_design
 #python3 -m regemo.algorithm.regularity_driver --problem_name car_side_impact
 
-python3 -m regemo.algorithm.regularity_search --problem_name scalable_truss_19

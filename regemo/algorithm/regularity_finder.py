@@ -9,12 +9,16 @@ from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 from pymoo.core.population import pop_from_array_or_individual
 from pymoo.algorithms.moo.nsga2 import RankAndCrowdingSurvival
 from pymoo.algorithms.moo.nsga3 import ReferenceDirectionSurvival
-from pymoo.factory import get_sampling, get_crossover, get_mutation, get_termination, get_performance_indicator
+from pymoo.operators.sampling.rnd import FloatRandomSampling
+from pymoo.operators.mutation.pm import PolynomialMutation
+from pymoo.operators.crossover.sbx import SBX
 from pymoo.optimize import minimize
 from pymoo.visualization.scatter import Scatter
+from pymoo.indicators.igd_plus import IGDPlus
+from pymoo.indicators.hv import HV
+from pymoo.termination import get_termination
 
-from sklearn.linear_model import Ridge as linreg
-from sklearn.metrics import mean_squared_error as MSE
+from sklearn.linear_model import LinearRegression as linreg
 
 import copy
 import sys
@@ -23,11 +27,12 @@ from tabulate import tabulate
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import binned_statistic
-import pandas as pd
 import pickle
 import time
 from numpy import dot
 from numpy.linalg import norm
+import multiprocessing
+from functools import partial
 
 plt.rcParams.update({'font.size': 15})
 
@@ -42,14 +47,13 @@ class Regularity_Finder:
                  X,
                  F,
                  problem_args,
-                 non_fixed_dependency_percent=0.9,
-                 non_fixed_regularity_coef_factor=0.1,
+                 num_non_fixed_independent_vars=1,
                  non_fixed_regularity_degree=1,
                  delta=0.05,
                  precision=2,
                  n_rand_bins=20,
                  NSGA_settings=None,
-                 save_img=True,
+                 save=True,
                  result_storage="/.",
                  verbose=True,
                  seed=0):
@@ -57,14 +61,12 @@ class Regularity_Finder:
         :param X: original PO solutions in X-space
         :param F: original PO solution in F-space
         :param problem_args: parameters to the problem
-        :param non_fixed_dependency_percent: percentage of non-fixed variables to be treated as non-fixed dependent
-        :param non_fixed_regularity_coef_factor: coefficients should be a multiple of this factor
         :param delta: threshold for identifying fixed variables
         :param non_fixed_regularity_degree: degree for non-fixed variables
         :param precision: precisions of the floating point numbers
         :param n_rand_bins: number of bins used to identify random variables
         :param NSGA_settings: parametric settings for the algorithm
-        :param save_img: whether to save the resulting images
+        :param save: whether to save the resulting images
         :param result_storage: storage place for the results
         :param verbose: whether to print the console log
         :param seed: seed for the run
@@ -79,8 +81,8 @@ class Regularity_Finder:
         self.problem_args = problem_args
         self.seed = seed
         self.n_rand_bins = n_rand_bins
-        self.non_fixed_dependency_percent = non_fixed_dependency_percent
-        self.non_fixed_regularity_coef_factor = non_fixed_regularity_coef_factor
+        self.num_non_fixed_independent_vars = num_non_fixed_independent_vars
+        self.non_fixed_regularity_coefficient_factor = 10.0 ** (-precision)
         self.delta = delta
         self.non_fixed_regularity_degree = non_fixed_regularity_degree
         self.NSGA_settings = NSGA_settings
@@ -109,7 +111,7 @@ class Regularity_Finder:
         self.lb = list(np.array(problem_args["lb"], dtype=float))
         self.pareto_lb = None
         self.pareto_ub = None
-        self.non_fixed_final_reg_coef_list = []
+        self.non_fixed_reg_coefficient_list = []
         self.non_fixed_dependent_vars = []
         self.non_fixed_independent_vars = []
         self.non_fixed_orphan_vars = []
@@ -118,12 +120,13 @@ class Regularity_Finder:
         self.igd_plus = None
         self.hv = None
         self.precision = precision
-        self.save_img = save_img
+        self.save = save
         self.verbose = verbose
         self.print = verboseprint(self.verbose)
         self.regularity = None
         self.final_metrics = {}
-        self.module_timing_storage = open(f"{config.BASE_PATH}/{self.result_storage}/module_timing.txt", "w")
+        if self.save:
+            self.module_timing_storage = open(f"{config.BASE_PATH}/{self.result_storage}/module_timing.txt", "w")
 
         np.random.seed(self.seed)
 
@@ -156,20 +159,21 @@ class Regularity_Finder:
         self.pareto_ub = np.round(np.max(self.orig_X, axis=0), self.precision)
 
         # set the performance indicators
-        self.igd_plus = get_performance_indicator("igd+", self.orig_F)
-        self.hv = get_performance_indicator("hv", ref_point=2 * np.ones(self.problem_args["n_obj"]))
+        self.igd_plus = IGDPlus(self.orig_F)
+        self.hv = HV(ref_point=2 * np.ones(self.problem_args["n_obj"]))
 
         # set the initial metrics
         self.norm_F_lb = np.min(self.orig_F, axis=0)
         self.norm_F_ub = np.max(self.orig_F, axis=0)
         self.norm_orig_F = self._normalize(self.orig_F, self.norm_F_lb, self.norm_F_ub)
-        self.orig_hv = self.hv.do(self.norm_orig_F)
+        self.orig_hv = self.hv(self.norm_orig_F)
 
         # dividing variables into fixed and non-fixed
         start_time = time.time()
         self.non_fixed_vars, self.fixed_vars = self.find_regularity_clusters()
         end_time = time.time()
-        self.module_timing_storage.write(f"partitioning fixed and non-fixed: {end_time - start_time}\n")
+        if self.save:
+            self.module_timing_storage.write(f"partitioning fixed and non-fixed: {end_time - start_time}\n")
 
         # regularity enforcement in non-fixed variables
         start_time = time.time()
@@ -180,9 +184,11 @@ class Regularity_Finder:
             self.non_fixed_regularity()
             if self.non_fixed_dependent_vars:
                 self.print("The regularity is that the slopes of the projection of the variables with respect to the "
-                           "index variable are always multiples of " + str(self.non_fixed_regularity_coef_factor))
+                           "index variable are always multiples of " + str(
+                    self.non_fixed_regularity_coefficient_factor))
         end_time = time.time()
-        self.module_timing_storage.write(f"non-fixed regularity finding: {end_time - start_time}\n")
+        if self.save:
+            self.module_timing_storage.write(f"non-fixed regularity finding: {end_time - start_time}\n")
 
         start_time = time.time()
         if len(self.fixed_vars) > 0:
@@ -193,14 +199,13 @@ class Regularity_Finder:
             self.fixed_regularity()
             self.print("The regularity is that all the population members are having the same values for the fixed "
                        "variables")
-            # after the fixed values are found, save those values in fixed_vals
-            self.fixed_vals = list(self.X[0, self.fixed_vars])
 
         else:
             self.print("[INFO] The process is stopping as there's no fixed variables")
         end_time = time.time()
-        self.module_timing_storage.write(f"fixed regularity finding: {end_time - start_time}\n")
-        self.module_timing_storage.close()
+        if self.save:
+            self.module_timing_storage.write(f"fixed regularity finding: {end_time - start_time}\n")
+            self.module_timing_storage.close()
 
         # save the regularity to a regularity object
         self.regularity = Regularity(dim=self.problem_args["dim"],
@@ -212,7 +217,7 @@ class Regularity_Finder:
                                      non_fixed_dependent_vars=self.non_fixed_dependent_vars,
                                      non_fixed_independent_vars=self.non_fixed_independent_vars,
                                      non_fixed_orphan_vars=self.non_fixed_orphan_vars,
-                                     non_fixed_final_reg_coef_list=self.non_fixed_final_reg_coef_list,
+                                     non_fixed_reg_coefficient_list=self.non_fixed_reg_coefficient_list,
                                      non_fixed_degree_list=self.non_fixed_degree_list,
                                      problem_configs=self.problem_args,
                                      precision=self.precision)
@@ -223,45 +228,28 @@ class Regularity_Finder:
         self.X = self.regularity.apply(self.X)
         self.F = self.evaluate(self.X, problem_args=self.problem_args)
 
-        # plot the regular front
-        plot = Scatter(labels="F", legend=True, angle=self.problem_args["visualization_angle"])
-        plot = plot.add(self.orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
-        plot = plot.add(self.F, color="red", marker="*", s=40, label="Regular Efficient Front")
-
-        # plot.title = "Regular Efficient Front (Before Re-optimization)"
-
-        if self.verbose:
-            plot.show()
-
-        if self.save_img:
+        if self.save:
+            # plot the regular front
+            plot = Scatter(labels="F", legend=False, angle=self.problem_args["visualization_angle"])
+            plot = plot.add(self.orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
+            plot = plot.add(self.F, color="red", marker="*", s=40, label="Regular Efficient Front")
+            # plot.title = "Regular Efficient Front (Before Re-optimization)"
             plot.save(
                 f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front_pre_reopt.pdf", format="pdf")
+
+            if self.verbose:
+                plot.show()
 
         # Re-optimization
         if len(self.non_fixed_vars) > 0:
             self.print("\nRe-optimizing the population after regularity enforcement...")
             self.re_optimize()
 
-            # save the regularity to a regularity object
-            self.regularity = Regularity(dim=self.problem_args["dim"],
-                                         lb=self.pareto_lb,
-                                         ub=self.pareto_ub,
-                                         fixed_vars=self.fixed_vars,
-                                         fixed_vals=self.fixed_vals,
-                                         non_fixed_vars=self.non_fixed_vars,
-                                         non_fixed_dependent_vars=self.non_fixed_dependent_vars,
-                                         non_fixed_independent_vars=self.non_fixed_independent_vars,
-                                         non_fixed_orphan_vars=self.non_fixed_orphan_vars,
-                                         non_fixed_final_reg_coef_list=self.non_fixed_final_reg_coef_list,
-                                         non_fixed_degree_list=self.non_fixed_degree_list,
-                                         problem_configs=self.problem_args,
-                                         precision=self.precision)
-
             if self.X is not None:
-                pickle.dump(
-                    (len(self.non_fixed_independent_vars) + len(self.non_fixed_orphan_vars), self.problem_args["dim"]),
-                    open(f"{config.BASE_PATH}/{self.result_storage}/non_fixed_var_count.pickle",
-                         "wb"))
+                # only keep the non-dominated solutions
+                survived_pop = list(NonDominatedSorting().do(self.F)[0])
+                self.X = self.X[survived_pop, :]
+                self.F = self.F[survived_pop, :]
 
                 # final metric calculation
                 self.norm_F = self._normalize(self.F, self.norm_F_lb, self.norm_F_ub)
@@ -269,22 +257,14 @@ class Regularity_Finder:
                     self.norm_F = self.norm_F.reshape(1, -1)
 
                 # save the final metrics
-                self.regularity_hv = self.hv.do(self.norm_F)
+                self.regularity_hv = self.hv(self.norm_F)
 
                 if self.regularity_hv == 0:
                     # when it converges to 1 point
                     self.final_metrics["hv_dif_%"] = np.inf
                 else:
                     self.final_metrics["hv_dif_%"] = ((abs(self.orig_hv - self.regularity_hv)) / self.orig_hv) * 100
-                self.final_metrics["igd_plus"] = self.igd_plus.do(self.F)
-
-                self.print(f"Final IGD+ value: {'{:.2e}'.format(self.final_metrics['igd_plus'])}")
-                self.print(f"Hyper-volume difference: "f"{'{:.2e}'.format(self.final_metrics['hv_dif_%'])}")
-
-                # only keep the non-dominated solutions
-                survived_pop = list(NonDominatedSorting().do(self.F)[0])
-                self.X = self.X[survived_pop, :]
-                self.F = self.F[survived_pop, :]
+                self.final_metrics["igd_plus"] = self.igd_plus(self.F)
 
                 # display two random population members
                 self.print("\n Example of two population members:")
@@ -300,13 +280,13 @@ class Regularity_Finder:
                 self.print()
 
                 # check the applicability of the final regularity principle
-                self.proxy_regular_X, self.proxy_regular_F = self._check_final_regularity(n_points=10000)
+                # self.proxy_regular_X, self.proxy_regular_F = self._check_final_regularity(n_points=10000)
 
                 regularity_principle = {
                     "non_fixed_independent_vars": self.regularity.non_fixed_independent_vars,
                     "non_fixed_dependent_vars": self.regularity.non_fixed_dependent_vars,
                     "non_fixed_orphan_vars": self.regularity.non_fixed_orphan_vars,
-                    "coef_list": self.regularity.non_fixed_final_reg_coef_list,
+                    "coef_list": self.regularity.non_fixed_reg_coefficient_list,
                     "lb": self.regularity.lb,
                     "ub": self.regularity.ub,
                     "fixed_vars": self.regularity.fixed_vars,
@@ -315,9 +295,10 @@ class Regularity_Finder:
                 }
 
                 # save regularity principle
-                pickle.dump(regularity_principle,
-                            open(f"{config.BASE_PATH}/{self.result_storage}/regularity_principle.pickle",
-                                 "wb"))
+                if self.save:
+                    pickle.dump(regularity_principle,
+                                open(f"{config.BASE_PATH}/{self.result_storage}/regularity_principle.pickle",
+                                     "wb"))
 
             else:
                 self.proxy_regular_F = None
@@ -333,6 +314,7 @@ class Regularity_Finder:
             self.final_metrics["hv_dif_%"] = np.inf
             self.final_metrics["igd_plus"] = 0
 
+        self.final_metrics["complexity"] = self.regularity.calc_process_complexity()
         self.print("done")
 
     def run_NSGA(self, problem, NSGA_settings):
@@ -342,10 +324,10 @@ class Regularity_Finder:
             self.print("Running NSGA2..")
             algorithm = NSGA2(pop_size=NSGA_settings["pop_size"],
                               n_offsprings=NSGA_settings["n_offsprings"],
-                              sampling=get_sampling("real_random"),
-                              crossover=get_crossover("real_sbx", prob=NSGA_settings["sbx_prob"],
-                                                      eta=NSGA_settings["sbx_eta"]),
-                              mutation=get_mutation("real_pm", eta=NSGA_settings["mut_eta"]),
+                              sampling=FloatRandomSampling(),
+                              crossover=SBX(prob=NSGA_settings["sbx_prob"],
+                                            eta=NSGA_settings["sbx_eta"]),
+                              mutation=PolynomialMutation(eta=NSGA_settings["mut_eta"]),
                               seed=self.seed,
                               eliminate_duplicate=True,
                               verbose=self.verbose)
@@ -354,10 +336,10 @@ class Regularity_Finder:
             # for working with many-objective problems, use NSGA3
             algorithm = NSGA3(pop_size=NSGA_settings["pop_size"],
                               n_offsprings=NSGA_settings["n_offsprings"],
-                              sampling=get_sampling("real_random"),
-                              crossover=get_crossover("real_sbx", prob=NSGA_settings["sbx_prob"],
-                                                      eta=NSGA_settings["sbx_eta"]),
-                              mutation=get_mutation("real_pm", eta=NSGA_settings["mut_eta"]),
+                              sampling=FloatRandomSampling(),
+                              crossover=SBX(prob=NSGA_settings["sbx_prob"],
+                                            eta=NSGA_settings["sbx_eta"]),
+                              mutation=PolynomialMutation(eta=NSGA_settings["mut_eta"]),
                               ref_dirs=NSGA_settings["ref_dirs"],
                               seed=self.seed,
                               eliminate_duplicate=True,
@@ -377,54 +359,61 @@ class Regularity_Finder:
                        algorithm,
                        termination,
                        seed=self.seed,
-                       verbose=False,
+                       verbose=self.verbose,
                        save_history=True)
 
+        hist_f = []
+        for algo in res.history:
+            feas = np.where(algo.opt.get("feasible"))[0]
+            hist_f.append(algo.opt.get("F")[feas])
+
+        if self.save:
+            pickle.dump(hist_f, open(f"{config.BASE_PATH}/{self.result_storage}/regular_convergence_history.pickle",
+                                     "wb"))
         return res
 
     def find_regularity_clusters(self):
         # define the way to find the regularity features
         non_fixed_vars = []
-        fixed_clusters = []
 
         # stage 1 - remove non-fixed variables
         num_features = self.X.shape[1]
         pop_spread = (np.max(self.X, axis=0) - np.min(self.X, axis=0)) / (np.array(self.ub) - np.array(self.lb))
-        remaining_cluster_list = list(np.arange(num_features))
+        fixed_vars = list(np.arange(num_features))
 
-        # plot the deviations of variables across population
-        fig = plt.figure(figsize=(8, 5))
-        dim = self.X.shape[1]
+        if self.save:
+            # plot the deviations of variables across population
+            fig = plt.figure(figsize=(25, 5))
+            dim = self.X.shape[1]
+            norm_spread = (self.X - np.array(self.problem_args["lb"])) / (
+                    np.array(self.problem_args["ub"]) - np.array(self.problem_args["lb"]))
 
-        for i in range(self.X.shape[0]):
-            plt.scatter(np.arange(dim), self.X[i, :])
+            for i in range(self.X.shape[0]):
+                plt.scatter(np.arange(dim), norm_spread[i, :])
 
-        plt.xticks(np.arange(dim), labels=[f"$x_{i + 1} ({str(round(spread, 3))})$" for i, spread in enumerate(
-            pop_spread)])
-        plt.xlabel("Variables (Corresponding Spread)", fontsize=15)
+            plt.xticks(np.arange(dim), labels=[f"$x_{i + 1} ({str(round(spread, 3))})$" for i, spread in enumerate(
+                pop_spread)])
+            plt.xlabel("Variables (Corresponding Spread)", fontsize=15)
 
-        plt.tick_params(axis="x", labelsize=10, labelrotation=40)
-        plt.tick_params(axis="y", labelsize=10, labelrotation=20)
-
-        if self.verbose:
-            plt.show()
-
-        if self.save_img:
+            plt.tick_params(axis="x", labelsize=6, labelrotation=90)
+            plt.tick_params(axis="y", labelsize=10, labelrotation=20)
             fig.savefig(
-                f"{config.BASE_PATH}/{self.result_storage}/variable_spread_pf.pdf", format="pdf")
+                f"{config.BASE_PATH}/{self.result_storage}/variable_spread_pf.pdf", format="pdf", bbox_inches="tight")
+
+            if self.verbose:
+                fig.show()
 
         # find out the non-fixed variables
         for i in range(self.X.shape[1]):
             if self._is_random(self.X[:, i], i, self.lb[i], self.ub[i], self.delta)[0]:
                 non_fixed_vars.append(i)
-                remaining_cluster_list.remove(i)
+                fixed_vars.remove(i)
 
-        fixed_cluster = remaining_cluster_list
-        return non_fixed_vars, fixed_cluster
+        return non_fixed_vars, fixed_vars
 
     def fixed_regularity(self):
         # find the regular population
-        self.X = self._non_regularity_repair(self.X)
+        self.X = self._fixed_regularity_repair(self.X)
 
         if len(self.X.shape) == 1:
             self.X = self.X.reshape(1, self.X.shape[0])
@@ -455,101 +444,45 @@ class Regularity_Finder:
     def non_fixed_regularity(self):
         if len(self.non_fixed_vars) > 1:
             # enforce regularity in non-fixed variables
-            # sort the non-fixed variables according to decreasing order of correlation sum
-            # corr_var = pd.DataFrame(self.X[:, self.non_fixed_vars]).corr()
-            # sum_corr_var = np.array(np.sum(abs(corr_var), axis=1) - 1)
-            # self.non_fixed_vars = list(np.array(self.non_fixed_vars)[np.argsort(-sum_corr_var)])
-            # num_dependent_vars = int(np.floor(self.non_fixed_dependency_percent * len(self.non_fixed_vars)))
-            # num_independent_vars = len(self.non_fixed_vars) - num_dependent_vars
-            num_independent_vars = self.problem_args["n_obj"]-1
+            # num_independent_vars = min(self.problem_args["n_obj"] - 1, len(self.non_fixed_vars) - 1)
+            num_independent_vars = self.num_non_fixed_independent_vars
             self.non_fixed_dependent_vars = []
             self.non_fixed_independent_vars = []
 
-            coef_var = np.std(self.X[:, self.non_fixed_vars], axis=0)/np.mean(self.X[:, self.non_fixed_vars], axis=0)
-            max_coef_var_idx = np.argmax(coef_var)
-            self.non_fixed_independent_vars.append(self.non_fixed_vars[max_coef_var_idx])
+            coefficient_var = np.std(self.X[:, self.non_fixed_vars], axis=0) / np.mean(self.X[:, self.non_fixed_vars],
+                                                                                       axis=0)
+            max_coefficient_var_idx = np.argmax(coefficient_var)
+            self.non_fixed_independent_vars.append(self.non_fixed_vars[max_coefficient_var_idx])
 
             while len(self.non_fixed_independent_vars) < num_independent_vars:
-                list_uncat_vars = list(set(self.non_fixed_vars) - set(self.non_fixed_independent_vars))
-                cosine_sim_vals = np.zeros(len(list_uncat_vars))
+                list_uncategorized_vars = list(set(self.non_fixed_vars) - set(self.non_fixed_independent_vars))
+                cosine_sim_vals = np.zeros(len(list_uncategorized_vars))
 
-                for indep_var in self.non_fixed_independent_vars:
-                    for j, var in enumerate(list_uncat_vars):
-                        cosine_sim_vals[j] += cosine_similarity(self.X[:, indep_var], self.X[:, var])
+                for independent_var in self.non_fixed_independent_vars:
+                    for j, var in enumerate(list_uncategorized_vars):
+                        cosine_sim_vals[j] += cosine_similarity(self.X[:, independent_var], self.X[:, var])
 
                 min_cosine_sim_var_idx = np.argmin(cosine_sim_vals)
-                new_independent_var = list_uncat_vars[min_cosine_sim_var_idx]
+                new_independent_var = list_uncategorized_vars[min_cosine_sim_var_idx]
                 self.non_fixed_independent_vars.append(new_independent_var)
 
             self.non_fixed_dependent_vars = list(set(self.non_fixed_vars) - set(self.non_fixed_independent_vars))
 
-            # if number of independent variables more than M-1, adjust
-            # if num_independent_vars >= self.problem_args["n_obj"]:
-            #     num_dependent_vars += num_independent_vars - self.problem_args["n_obj"] + 1
-            #     num_independent_vars = self.problem_args["n_obj"] - 1
-
-            # if num_dependent_vars == 0:
-            #     self.non_fixed_dependent_vars = []
-            #     self.non_fixed_independent_vars = []
-            #     self.non_fixed_orphan_vars = copy.deepcopy(self.non_fixed_vars)
-            #
-            # # figure out the dependent and independent variables from the set of non-fixed variables
-            # elif len(self.non_fixed_vars) == 2:
-            #     # if there are two variables, both of them will have the same PCC sum
-            #     # so check the regularities and deviations from original front and then
-            #     # decide on the independent and dependent variable clusters
-            #     self.print("As there are two non-fixed variables, both of them are eligible to become dependent or "
-            #                "independent variable.\n"
-            #                "So, we are checking the pareto front deviation for both the configurations and then "
-            #                "we'll decide which configuration to select")
-            #
-            #     self.print("Config 1")
-            #     reg_X_1, _ = self._non_fixed_regularity_regression([self.non_fixed_vars[0]], [self.non_fixed_vars[1]])
-            #     self.print("Config 2")
-            #     reg_X_2, _ = self._non_fixed_regularity_regression([self.non_fixed_vars[1]], [self.non_fixed_vars[0]])
-            #
-            #     X_1 = np.clip(reg_X_1, self.lb, self.ub)
-            #     X_2 = np.clip(reg_X_2, self.lb, self.ub)
-            #
-            #     F_1 = self.evaluate(X_1, self.problem_args)
-            #     F_2 = self.evaluate(X_2, self.problem_args)
-            #
-            #     hv_1 = self.hv.do(self.orig_F) - self.hv.do(F_1)
-            #     hv_2 = self.hv.do(self.orig_F) - self.hv.do(F_2)
-            #
-            #     # the one leading to lower hyper-volume deviation should be the better alternative
-            #     if hv_1 < hv_2:
-            #         self.print("Config 1 is better than Config 2")
-            #         self.non_fixed_independent_vars = [self.non_fixed_vars[1]]
-            #         self.non_fixed_dependent_vars = [self.non_fixed_vars[0]]
-            #     else:
-            #         self.print("Config 2 is better than Config 1")
-            #         self.non_fixed_independent_vars = [self.non_fixed_vars[0]]
-            #         self.non_fixed_dependent_vars = [self.non_fixed_vars[1]]
-            #
-            # else:
-            #     # when there are more variables in the cluster than dependency requirement
-            #     # select the first few variables as dependent and rest as dependent
-            #     self.non_fixed_dependent_vars = self.non_fixed_vars[0:num_dependent_vars]
-            #     self.non_fixed_independent_vars = self.non_fixed_vars[num_dependent_vars:]
-
             if len(self.non_fixed_dependent_vars) > 0:
                 # get the regressed regularity (for non-fixed variables we are using degree of 1)
-                reg_X, regularity_reg_coef_data = self._non_fixed_regularity_regression(self.non_fixed_dependent_vars,
-                                                                                        self.non_fixed_independent_vars)
-                reg_X = np.clip(reg_X, self.lb, self.ub)
-                reg_F = self.evaluate(reg_X, self.problem_args)
-                self.non_fixed_final_reg_coef_list = np.array(regularity_reg_coef_data)[:, 1:]
+                reg_X, reg_coefficient_data = self._non_fixed_regularity_regression(self.non_fixed_dependent_vars,
+                                                                                    self.non_fixed_independent_vars)
+                self.non_fixed_reg_coefficient_list = np.array(reg_coefficient_data)[:, 1:]
 
                 # Do a final check to see if there is any non-fixed variable which is unused
                 # in the equations. Those variables are called orphan variables
                 if self.non_fixed_dependent_vars:
-                    temp_coef_list = np.array(self.non_fixed_final_reg_coef_list[:, 0:-1])
-                    unused_dep_idx, unused_indep_idx = self._identify_unused_vars(temp_coef_list)
+                    temp_coefficient_list = np.array(self.non_fixed_reg_coefficient_list[:, 0:-1])
+                    unused_dep_idx, unused_indep_idx = self._identify_unused_vars(temp_coefficient_list)
                     unused_dep_idx = sorted(unused_dep_idx, reverse=True)
                     unused_indep_idx = sorted(unused_indep_idx, reverse=True)
-                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list,
-                                                                   unused_dep_idx, axis=0)
+                    self.non_fixed_reg_coefficient_list = np.delete(self.non_fixed_reg_coefficient_list,
+                                                                    unused_dep_idx, axis=0)
 
                     # unused dependent variables become fixed variables
                     for dep_idx in unused_dep_idx:
@@ -565,8 +498,8 @@ class Regularity_Finder:
                                 rem_degree_list.append(k)
                                 break
 
-                    self.non_fixed_final_reg_coef_list = np.delete(self.non_fixed_final_reg_coef_list,
-                                                                   rem_degree_list, axis=1)
+                    self.non_fixed_reg_coefficient_list = np.delete(self.non_fixed_reg_coefficient_list,
+                                                                    rem_degree_list, axis=1)
 
                     self.non_fixed_degree_list = list(np.delete(np.array(self.non_fixed_degree_list),
                                                                 unused_indep_idx,
@@ -589,10 +522,6 @@ class Regularity_Finder:
         self.print(f"Dependent Variables: {self.non_fixed_dependent_vars}")
         self.print(f"Independent Variables: {self.non_fixed_independent_vars}")
         self.print(f"Orphan Variables: {self.non_fixed_orphan_vars}")
-
-        # self.non_fixed_orphan_vars = self.non_fixed_dependent_vars + self.non_fixed_independent_vars
-        # self.non_fixed_dependent_vars = []
-        # self.non_fixed_independent_vars = []
 
     def _create_list_degrees(self,
                              max_degree=3,
@@ -621,6 +550,45 @@ class Regularity_Finder:
         # return the full list
         return full_list
 
+    @staticmethod
+    def _parallel_regression_fitting(X,
+                                     non_fixed_regularity_coefficient_factor,
+                                     precision,
+                                     independent_vals,
+                                     i):
+        # for every dependent variable
+        # we are finding the coefficients wrt the independent variables
+        y = X[:, i].reshape(-1, 1)
+        reg = linreg().fit(independent_vals, y)
+        coef_ = reg.coef_[0]
+
+        # for every coefficient, try to find the closest value which
+        # is a multiple of coefficient factor provided by the user
+        for j in range(len(coef_)):
+            # for every coefficient, fix it as a multiple of the coef_factor
+            mult_factor_1 = int(coef_[j] / non_fixed_regularity_coefficient_factor)
+            mult_factor_2 = mult_factor_1 + 1 if (coef_[j] > 0) else mult_factor_1 - 1
+            mult_factor = mult_factor_1 if abs(
+                mult_factor_1 * non_fixed_regularity_coefficient_factor - coef_[j]) < abs(
+                mult_factor_2 *
+                non_fixed_regularity_coefficient_factor - coef_[j]) \
+                else mult_factor_2
+
+            # round it of to the user provided precision
+            reg.coef_[0, j] = round(non_fixed_regularity_coefficient_factor * mult_factor, precision)
+
+        # round the intercept too
+        mult_factor_1 = int(reg.intercept_ / non_fixed_regularity_coefficient_factor)
+        mult_factor_2 = mult_factor_1 + 1 if (reg.intercept_ > 0) else mult_factor_1 - 1
+        mult_factor = mult_factor_1 if abs(
+            mult_factor_1 * non_fixed_regularity_coefficient_factor - reg.intercept_) < abs(
+            mult_factor_2 *
+            non_fixed_regularity_coefficient_factor - reg.intercept_) \
+            else mult_factor_2
+
+        reg.intercept_ = round(non_fixed_regularity_coefficient_factor * mult_factor, precision)
+        return reg
+
     def _non_fixed_regularity_regression(self, non_fixed_dep_vars, non_fixed_indep_vars):
         # get the degree list for non-linear regression
         self.non_fixed_degree_list = self._create_list_degrees(max_degree=self.non_fixed_regularity_degree,
@@ -629,30 +597,30 @@ class Regularity_Finder:
         if self.non_fixed_degree_list is not None:
             self.non_fixed_degree_list.remove(self.non_fixed_degree_list[0])
 
+        # normalize X
+        self.X = self._normalize(self.X, self.lb, self.ub)
+
         # function to regress in the non-fixed variables
         x = self.X[:, non_fixed_indep_vars]
         reg_X = copy.deepcopy(self.X)
 
         # storing data for tabular visualization
-        def create_str_degree(non_fixed_indep_vars,
+        def create_str_degree(non_fixed_independent_vars,
                               list_degree):
             list_strings = []
             for degrees in list_degree:
                 cur_str = ""
                 for degree_idx in range(len(degrees)):
-                    cur_str += "x_" + str(non_fixed_indep_vars[degree_idx]) + "^" + str(degrees[
-                                                                                            degree_idx])
+                    cur_str += "x_" + str(non_fixed_independent_vars[degree_idx]) + "^" + str(degrees[degree_idx])
                 list_strings.append(cur_str)
 
             return list_strings
 
         list_string_headers = create_str_degree(non_fixed_indep_vars, self.non_fixed_degree_list)
-        orig_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 1 + len(self.non_fixed_degree_list)))
-        regularity_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 1 + len(self.non_fixed_degree_list)))
-        orig_headers = ["Index"] + list_string_headers + ["Intercept"] + ["HV dif"] + ["MSE"]
-        regular_headers = ["Index"] + list_string_headers + ["Intercept"] + ["HV dif"] + [
-            "MSE"]
+        regularity_reg_coef_data = np.zeros((len(non_fixed_dep_vars), 2 + len(self.non_fixed_degree_list)))
+        regular_headers = ["Index"] + list_string_headers + ["Intercept"] + ["HV dif"] + ["MSE"]
 
+        # create the terms for different degrees
         if self.non_fixed_regularity_degree > 1:
             x_updated = None
             for degree_list in self.non_fixed_degree_list:
@@ -664,75 +632,39 @@ class Regularity_Finder:
 
             x = x_updated
 
-        for id, i in enumerate(non_fixed_dep_vars):
-            # for every dependent variable
-            # we are finding the coefficients wrt the independent variables
-            y = self.X[:, i].reshape(-1, 1)
+        # parallelize the regression fitting
+        num_cores = 10
+        pool = multiprocessing.Pool(processes=num_cores)
+        mod_parallel_regression_fitting = partial(self._parallel_regression_fitting,
+                                                  self.X,
+                                                  self.non_fixed_regularity_coefficient_factor,
+                                                  self.precision,
+                                                  x)
+        res = pool.map(mod_parallel_regression_fitting, non_fixed_dep_vars)
+        pool.close()
+        pool.join()
 
-            reg = linreg().fit(x, y)
-            coef_ = reg.coef_[0]
-            reg_X[:, i] = reg.predict(x)[:, 0]
-            temp_X = copy.deepcopy(self.X)
-            temp_X[:, i] = reg.predict(x)[:, 0]
-
-            # for table formation
-            orig_reg_coef_data[id, 0] = i
-            orig_reg_coef_data[id, -1] = reg.intercept_
-            new_hv = self.hv.do(
-                self._normalize(self.evaluate(temp_X, self.problem_args), self.norm_F_lb, self.norm_F_ub))
-            # orig_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv) / self.orig_hv) * 100, self.precision)
-            # orig_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)
-            orig_reg_coef_data[id, 1:-1] = coef_.copy()
-
-            # for every coefficient, try to find the closest value which
-            # is a multiple of coefficient factor provided by the user
-            for j in range(len(coef_)):
-                # for every coefficient, fix it as a multiple of the coef_factor
-                mult_factor_1 = int(coef_[j] / self.non_fixed_regularity_coef_factor)
-                mult_factor_2 = mult_factor_1 + 1 if (coef_[j] > 0) else mult_factor_1 - 1
-                mult_factor = mult_factor_1 if abs(
-                    mult_factor_1 * self.non_fixed_regularity_coef_factor - coef_[j]) < abs(
-                    mult_factor_2 *
-                    self.non_fixed_regularity_coef_factor - coef_[j]) \
-                    else mult_factor_2
-
-                # round it of to the user provided precision
-                reg.coef_[0, j] = round(self.non_fixed_regularity_coef_factor * mult_factor, self.precision)
-
-            # round the intercept too
-            mult_factor_1 = int(reg.intercept_ / self.non_fixed_regularity_coef_factor)
-            mult_factor_2 = mult_factor_1 + 1 if (reg.intercept_ > 0) else mult_factor_1 - 1
-            mult_factor = mult_factor_1 if abs(
-                mult_factor_1 * self.non_fixed_regularity_coef_factor - reg.intercept_) < abs(
-                mult_factor_2 *
-                self.non_fixed_regularity_coef_factor - reg.intercept_) \
-                else mult_factor_2
-
-            reg.intercept_ = round(self.non_fixed_regularity_coef_factor * mult_factor, self.precision)
-
+        for i, dep_var in enumerate(non_fixed_dep_vars):
             # final regressed version
-            reg_X[:, i] = reg.predict(x)[:, 0]
-
-            temp_X = copy.deepcopy(self.X)
-            temp_X[:, i] = reg.predict(x)[:, 0]
+            reg = res[i]
+            reg_X[:, dep_var] = reg.predict(x)[:, 0]
 
             # for table formation
-            regularity_reg_coef_data[id, 0] = i
-            regularity_reg_coef_data[id, -1] = reg.intercept_
-            # new_hv = self.hv.do(
-            #     self._normalize(self.evaluate(temp_X, self.problem_args), self.norm_F_lb, self.norm_F_ub))
-            # regularity_reg_coef_data[id, -2] = round((abs(self.orig_hv - new_hv) / self.orig_hv) * 100, self.precision)
-            # regularity_reg_coef_data[id, -1] = round(MSE(self.X, temp_X), self.precision)
-            regularity_reg_coef_data[id, 1:-1] = reg.coef_.copy()
+            regularity_reg_coef_data[i, 0] = i
+            regularity_reg_coef_data[i, -1] = reg.intercept_
+            regularity_reg_coef_data[i, 1:-1] = reg.coef_.copy()
 
-        self.print()
-        self.print(tabulate(orig_reg_coef_data, headers=orig_headers))
+        # denormalize X
+        self.X = self._denormalize(self.X, self.lb, self.ub)
+        reg_X = self._denormalize(reg_X, self.lb, self.ub)
+
         self.print()
         self.print(tabulate(regularity_reg_coef_data, headers=regular_headers))
 
         return reg_X, regularity_reg_coef_data
 
-    def _normalize(self, x, lb, ub):
+    @staticmethod
+    def _normalize(x, lb, ub):
         # function to normalize x between 0 and 1
         new_x = copy.deepcopy(x)
 
@@ -742,13 +674,14 @@ class Regularity_Finder:
         for i in range(new_x.shape[1]):
             new_x[:, i] = (new_x[:, i] - lb[i]) / (ub[i] - lb[i])
 
-        if new_x.shape[0] == 1:
-            # converting a single array back to a 1D array
-            new_x = new_x[0, :]
+        # if new_x.shape[0] == 1:
+        # converting a single array back to a 1D array
+        # new_x = new_x[0, :]
 
         return new_x
 
-    def _denormalize(self, x, lb, ub):
+    @staticmethod
+    def _denormalize(x, lb, ub):
         # function to denormalize a value between 0 and 1
         # to a value between lb and ub
         new_x = copy.deepcopy(x)
@@ -776,30 +709,31 @@ class Regularity_Finder:
         bins_filled = np.sum(bin_counts >= 1)
         filled_fraction = bins_filled / n_bins
 
-        fig = plt.figure()
-        n, bins, patches = plt.hist(x, range=(lb, ub), bins=n_bins, edgecolor='black', linewidth=1.2)
-        ticks = [patch.get_x() + patch.get_width() / 2 for patch in patches]
-        plt.xticks(ticks, range(n_bins))
-        # plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
-        if self.save_img:
+        if self.save:
+            fig = plt.figure()
+            n, bins, patches = plt.hist(x, range=(lb, ub), bins=n_bins, edgecolor='black', linewidth=1.2)
+            ticks = [patch.get_x() + patch.get_width() / 2 for patch in patches]
+            plt.xticks(ticks, range(n_bins))
+            # plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
             plt.savefig(
                 f"{config.BASE_PATH}/{self.result_storage}/variable_{i + 1}_histogram.pdf", format="pdf")
-        if self.verbose:
-            plt.show()
+            if self.verbose:
+                fig.show()
 
         if filled_fraction >= 0.5:
             return True, filled_fraction
         else:
             return False, filled_fraction
 
-    def _non_regularity_repair(self, X_apply):
+    def _fixed_regularity_repair(self, X_apply):
         X_copy = copy.deepcopy(X_apply)
         self.fixed_vals = np.round(np.mean(X_apply[:, self.fixed_vars], axis=0), self.precision)
         X_copy[:, self.fixed_vars] = self.fixed_vals
 
         return X_copy
 
-    def _find_precision(self, num):
+    @staticmethod
+    def _find_precision(num):
         # function to find precision of a floating point number
         num_str = str(num)
         return max(len(num_str) - num_str.find(".") - 1, 0)
@@ -848,7 +782,7 @@ class Regularity_Finder:
         new_problem_args["regularity_enforcement_process"] = self._final_regularity_enforcement()
 
         # add constraints on the bounds of the dependent variables
-        # following the regularitys may take some of them out of bounds
+        # following the regularity may take some of them out of bounds
         new_problem_args["n_constr"] = self.problem_args["n_constr"] + (len(self.non_fixed_dependent_vars) * 2)
 
         # get the smaller problem
@@ -884,20 +818,25 @@ class Regularity_Finder:
         def _regularity_enforcement(X):
             # enforce the final regularity to any vector of same size
             new_X = copy.deepcopy(X)
-
-            # for fixed variables fix them to the found values
-            new_X[:, self.fixed_vars] = self.fixed_vals
+            new_X = self._normalize(new_X, self.lb, self.ub)
 
             # for non-fixed variables use the equation found in the process
             if self.non_fixed_dependent_vars and self.non_fixed_independent_vars:
                 for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
                     new_X[:, dep_idx] = 0
                     for j, list_degree in enumerate(self.non_fixed_degree_list):
-                        new_X[:, dep_idx] += self.non_fixed_final_reg_coef_list[i][j] * \
-                                             np.sum(np.power(new_X[:, self.non_fixed_independent_vars],
-                                                             np.array(list_degree)), axis=1)
+                        new_X[:, dep_idx] += self.non_fixed_reg_coefficient_list[i][j] * \
+                                             np.sum(
+                                                 np.power(new_X[:, self.non_fixed_independent_vars],
+                                                          np.array(list_degree)),
+                                                 axis=1)
 
-                    new_X[:, dep_idx] += self.non_fixed_final_reg_coef_list[i][-1]
+                    new_X[:, dep_idx] += self.non_fixed_reg_coefficient_list[i][-1]
+
+            new_X = self._denormalize(new_X, self.lb, self.ub)
+
+            # for fixed variables fix them to the found values
+            new_X[:, self.fixed_vars] = self.fixed_vals
 
             return new_X
 

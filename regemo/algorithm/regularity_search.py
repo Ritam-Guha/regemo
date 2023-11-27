@@ -5,17 +5,17 @@ from regemo.utils.path_utils import create_dir
 import regemo.config as config
 from regemo.algorithm.nsga3 import NSGA3
 
-from sklearn.preprocessing import normalize
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.algorithms.moo.nsga3 import HyperplaneNormalization
 from pymoo.algorithms.moo.nsga3 import associate_to_niches
 from pymoo.visualization.scatter import Scatter
-from pymoo.factory import get_sampling, get_crossover, get_mutation, get_termination, get_performance_indicator
+from pymoo.factory import get_termination
 from pymoo.optimize import minimize
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
+from pymoo.visualization.radviz import Radviz
+from pymoo.operators.sampling.rnd import FloatRandomSampling
+from pymoo.operators.mutation.pm import PolynomialMutation
+from pymoo.operators.crossover.sbx import SBX
 
 import inspect
 import argparse
@@ -36,7 +36,7 @@ import pandas as pd
 # from pdflatex import PDFLaTeX
 
 
-plt.rcParams.update({'font.size': 10})
+# plt.rcParams.update({'font.size': 10})
 
 color_mapping_orig_F = {
     0: "blue",
@@ -68,26 +68,23 @@ class Regularity_Search:
     # upper level class for regularity enforcement
     def __init__(self,
                  problem_args,
-                 non_fixed_dependency_percent=0.9,
-                 non_fixed_regularity_coef_factor=0.1,
+                 num_non_fixed_independent_vars=1,
                  non_fixed_regularity_degree=1,
                  delta=0.05,
                  precision=2,
                  n_rand_bins=20,
                  NSGA_settings=None,
-                 save_img=True,
+                 save=True,
                  result_storage=None,
                  verbose=True,
                  seed=0):
         """
         :param problem_args: parameters for the problem
-        :param non_fixed_dependency_percent: percentage of non-fixed variables to be treated as non-fixed dependent
-        :param non_fixed_regularity_coef_factor: coefficients should be a multiple of this factor
         :param delta: threshold for identifying fixed variables
         :param precision: precisions of the floating point numbers
         :param n_rand_bins: number of bins used to identify random variables
         :param NSGA_settings: parametric settings for the algorithm
-        :param save_img: whether to save the resulting images
+        :param save: whether to save the resulting images
         :param result_storage: storage place for the results
         :param verbose: whether to print the console log
         :param seed: seed for the run
@@ -99,8 +96,7 @@ class Regularity_Search:
         self.problem_name = problem_args["name"]
         self.problem_args = problem_args
         self.seed = seed
-        self.non_fixed_dependency_percent = non_fixed_dependency_percent
-        self.non_fixed_regularity_coef_factor = non_fixed_regularity_coef_factor
+        self.num_non_fixed_independent_vars = num_non_fixed_independent_vars
         self.non_fixed_regularity_degree = non_fixed_regularity_degree
         self.NSGA_settings = NSGA_settings
         self.n_rand_bins = n_rand_bins
@@ -121,7 +117,7 @@ class Regularity_Search:
         self.combined_F = None
         self.result_storage = result_storage
         self.precision = precision
-        self.save_img = save_img
+        self.save = save
         self.verbose = verbose
         self.print = self.verboseprint()
         self.visualization_angle = self.problem_args["visualization_angle"]
@@ -132,14 +128,15 @@ class Regularity_Search:
         self.hv = None
         self.final_metrics = {
             "complexity": 0,
-            "hv_dif_%": 0
+            "hv_dif_%": 0,
+            "igd_lus": 0
         }
 
         np.random.seed(self.seed)
 
     def run(self):
         # the main running function
-        initial_pop_storage = f"{config.BASE_PATH}/results/hierarchical_search/{self.problem_name}/" \
+        initial_pop_storage = f"{config.BASE_PATH}/results/initial_populations/" \
                               f"initial_population_{self.problem_name}.pickle"
 
         if os.path.exists(initial_pop_storage):
@@ -158,11 +155,10 @@ class Regularity_Search:
         if self.problem_args["n_obj"] > 2:
             self.edge_point_estimation(self.NSGA_settings["ref_dirs"], res["F"])
 
-        # plot the figure after nds
-        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
-        plot = plot.add(res["F"], color="blue", label="Original PO Front", alpha=0.2, s=60)
-
-        if self.save_img:
+        if self.save:
+            # plot the figure after nds
+            plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
+            plot = plot.add(res["F"], color="blue", label="Original PO Front", alpha=0.2, s=60)
             plot.save(f"{config.BASE_PATH}/{self.result_storage}/initial_efficient_front.pdf", format="pdf")
 
         self.orig_X = res["X"]
@@ -182,13 +178,12 @@ class Regularity_Search:
         regularity_enforcement = Regularity_Finder(X=self.orig_X,
                                                    F=self.orig_F,
                                                    problem_args=self.problem_args,
-                                                   non_fixed_dependency_percent=self.non_fixed_dependency_percent,
-                                                   non_fixed_regularity_coef_factor=self.non_fixed_regularity_coef_factor,
+                                                   num_non_fixed_independent_vars=self.num_non_fixed_independent_vars,
                                                    non_fixed_regularity_degree=self.non_fixed_regularity_degree,
                                                    precision=self.precision,
                                                    NSGA_settings=new_NSGA_settings,
                                                    seed=self.seed,
-                                                   save_img=self.save_img,
+                                                   save=self.save,
                                                    result_storage=self.result_storage,
                                                    verbose=self.verbose,
                                                    n_rand_bins=self.n_rand_bins,
@@ -196,169 +191,179 @@ class Regularity_Search:
 
         regularity_enforcement.run()    # run the regularity enforcement
         self.final_metrics["complexity"] += regularity_enforcement.regularity.calc_process_complexity()
+        self.final_metrics["igd_plus"] = regularity_enforcement.final_metrics["igd_plus"]
+        self.final_metrics["hv_dif_%"] = regularity_enforcement.final_metrics["hv_dif_%"]
 
         # storage file for every PF
-        text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.txt"
-        tex_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.tex"
-        tex_storage_long = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_long.tex"
+        if self.save:
+            text_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.txt"
+            tex_storage = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf.tex"
+            tex_storage_long = f"{config.BASE_PATH}/{self.result_storage}/regularity_pf_long.tex"
 
-        # store the regularity in text and tex files
-        regularity_enforcement.regularity.display(self.orig_X,
-                                                  self.problem_args["lb"],
-                                                  self.problem_args["ub"],
-                                                  save_file=text_storage)
-
-        regularity_enforcement.regularity.display_tex(self.orig_X,
+            # store the regularity in text and tex files
+            regularity_enforcement.regularity.display(self.orig_X,
                                                       self.problem_args["lb"],
                                                       self.problem_args["ub"],
-                                                      save_file=tex_storage)
+                                                      save_file=text_storage)
 
-        regularity_enforcement.regularity.display_tex_long(self.orig_X,
-                                                           self.problem_args["lb"],
-                                                           self.problem_args["ub"],
-                                                           save_file=tex_storage_long)
+            regularity_enforcement.regularity.display_tex(self.orig_X,
+                                                          self.problem_args["lb"],
+                                                          self.problem_args["ub"],
+                                                          save_file=tex_storage)
 
-        subprocess.run(['pdflatex', '-output-directory',
-                        f'{config.BASE_PATH}/{self.result_storage}/',
-                        tex_storage_long])
-        self.print("Final Metrics")
-        self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
-        self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
+            regularity_enforcement.regularity.display_tex_long(self.orig_X,
+                                                               self.problem_args["lb"],
+                                                               self.problem_args["ub"],
+                                                               save_file=tex_storage_long)
+
+        # subprocess.run(['pdflatex', '-output-directory',
+        #                 f'{config.BASE_PATH}/{self.result_storage}/',
+        #                 tex_storage_long])
+
+        # self.print("Final Metrics")
+        # self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
+        # self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")
         self.print("\n======================================\n")
 
-
-        # get the X and F after regularity enforcement
-        self.regular_X = regularity_enforcement.X
-        self.regular_F = regularity_enforcement.F
-
-        # save the objects
-        self.regularity_obj = regularity_enforcement
-
         # plot the regular front
-        if self.regular_F is not None:
-            plot = Scatter(labels="F", legend=True, angle=self.visualization_angle)
-            plot = plot.add(self.regular_F, color="red", marker="*", s=60, alpha=0.6, label="Regular Efficient Front")
+        if self.save:
+            # get the X and F after regularity enforcement
+            self.regular_X = regularity_enforcement.X
+            self.regular_F = regularity_enforcement.F
 
-            if self.verbose and plot:
-                plot.show()
+            # save the objects
+            self.regularity_obj = regularity_enforcement
 
-            if self.save_img and plot:
+            if self.regular_F is not None:
+                plot = Scatter(labels="F", legend=False, angle=self.visualization_angle)
+                plot = plot.add(self.regular_F, color="red", marker="*", s=60, alpha=0.6,
+                                label="Regular Efficient Front")
                 plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front.pdf", format="pdf")
 
+                if self.verbose and plot:
+                    plot.show()
+
         # plot the original and regular front
-        plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True, fontsize=10)
-        plot = plot.add(self.orig_F, color="blue", marker="o", s=60, alpha=0.2, label="Original PO Front")
-        if self.regular_F is not None:
-            plot = plot.add(self.regular_F, color="red", marker="*", s=50, alpha=0.6, label="Regular Front")
+            plot = Scatter(labels="F", legend=False, angle=self.visualization_angle, tight_layout=True, fontsize=5)
+            plot = plot.add(self.orig_F, color="blue", marker="o", s=60, alpha=0.2, label="Original PO Front")
+            if self.regular_F is not None:
+                plot = plot.add(self.regular_F, color="red", marker="*", s=50, alpha=0.6, label="Regular Front")
 
-            front_df_reg = pd.DataFrame()
-            for i in range(self.regular_F.shape[1]):
-                front_df_reg[f"F_{i}"] = self.regular_F[:, i]
-            front_df_reg["type"] = "regular"
-            front_df_orig = pd.DataFrame()
-            for i in range(self.orig_F.shape[1]):
-                front_df_orig[f"F_{i}"] = self.orig_F[:, i]
-            front_df_orig["type"] = "original"
-            front_df = pd.concat((front_df_reg, front_df_orig))
+                front_df_reg = pd.DataFrame()
+                for i in range(self.regular_F.shape[1]):
+                    front_df_reg[f"F_{i}"] = self.regular_F[:, i]
+                front_df_reg["type"] = "regular"
+                front_df_orig = pd.DataFrame()
+                for i in range(self.orig_F.shape[1]):
+                    front_df_orig[f"F_{i}"] = self.orig_F[:, i]
+                front_df_orig["type"] = "original"
+                front_df = pd.concat((front_df_reg, front_df_orig))
 
-            if self.orig_F.shape[1] == 2:
-                fig = px.scatter(front_df, x="F_0", y="F_1", color="type")
-            elif self.orig_F.shape[1] == 3:
-                fig = px.scatter_3d(front_df, x="F_0", y="F_1", z="F_2", color="type")
+                fig = None
+                if self.orig_F.shape[1] == 2:
+                    fig = px.scatter(front_df, x="F_0", y="F_1", color="type")
+                elif self.orig_F.shape[1] == 3:
+                    fig = px.scatter_3d(front_df, x="F_0", y="F_1", z="F_2", color="type")
+                else:
+                    # [NOTE] plot high-dimensional points
+                    plot = Radviz(legend=(True, {'loc': "upper left", 'bbox_to_anchor': (-0.1, 1.08, 0, 0)}))
+                    plot.set_axis_style(color="black", alpha=1.0)
+                    plot.add(self.orig_F, color="blue", s=40, label="Original PF")
+                    plot.add(self.regular_F, color="red", s=40, marker="*", label="Regular PF")
+                    plot.show()
 
-            pio.write_html(fig, file=f'{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.html')
+                if fig:
+                    pio.write_html(fig, file=f'{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.html')
+                plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.pdf", format="pdf", dpi=200)
 
+                if self.verbose:
+                    plot.show()
 
-        if self.verbose:
-            plot.show()
+            with open(f"{config.BASE_PATH}/{self.result_storage}/initial_population.pickle",
+                      "wb") as file_handle:
+                pickle.dump(res, file_handle)
 
-        if self.save_img:
-            plot.save(
-                f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.pdf", format="pdf", dpi=200)
+            # store the final population
+            final_population = {"X": self.regular_X, "F": self.regular_F}
+            with open(f"{config.BASE_PATH}/{self.result_storage}/final_regular_population.pickle",
+                      "wb") as file_handle:
+                pickle.dump(final_population, file_handle)
 
-        # calculate the HV_diff_%
-        orig_hv = regularity_enforcement.orig_hv
-        new_hv = regularity_enforcement.regularity_hv
-
-        if new_hv > 0:
-            self.final_metrics["hv_dif_%"] = ((abs(orig_hv - new_hv)) / orig_hv) * 100
-        else:
-            # when it converges to 1 point
-            self.final_metrics["hv_dif_%"] = np.inf
-
-        self.print(f"Overall complexity: {self.final_metrics['complexity']}, HV_diff_%: "
-                   f"{self.final_metrics['hv_dif_%']}")
-
-        # store the initial population
-        with open(f"{config.BASE_PATH}/{self.result_storage}/initial_population.pickle",
-                  "wb") as file_handle:
-            pickle.dump(res, file_handle)
-
-        # store the final population
-        final_population = {"X": self.regular_X, "F": self.regular_F}
-        with open(f"{config.BASE_PATH}/{self.result_storage}/final_regular_population.pickle",
-                  "wb") as file_handle:
-            pickle.dump(final_population, file_handle)
-
-        # get a pcp plot of the final population
-        if self.regular_X is not None:
-            plot = PCP(labels="X")
-            plot.normalize_each_axis = False
-            plot.set_axis_style(color="grey", alpha=0.5)
-            plot.add(self.regular_X)
-
-            if self.save_img:
+            # get a pcp plot of the final population
+            if self.regular_X is not None:
+                plot = PCP(labels="X")
+                plot.normalize_each_axis = False
+                plot.set_axis_style(color="grey", alpha=0.5)
+                plot.add(self.regular_X)
                 plot.save(f"{config.BASE_PATH}/{self.result_storage}/PCP_final_population.pdf", format="pdf")
 
-            if self.verbose:
-                plot.show()
+                if self.verbose:
+                    plot.show()
 
-        with open(f"{config.BASE_PATH}/{self.result_storage}/final_metrics.txt", "w") as f:
-            f.write(f"HV_dif_%: {self.final_metrics['hv_dif_%']}\n")
-            f.write(f"complexity: {self.final_metrics['complexity']}")
-        print(f"hv_diff_%; {self.final_metrics['hv_dif_%']}")
-        print(f"complexity: {self.final_metrics['complexity']}")
+            with open(f"{config.BASE_PATH}/{self.result_storage}/final_metrics.txt", "w") as f:
+                f.write(f"HV_dif_%: {self.final_metrics['hv_dif_%']}\n")
+                f.write(f"complexity: {self.final_metrics['complexity']}\n")
+                f.write(f"IGD+: {self.final_metrics['igd_plus']}")
+
+        self.print(f"hv_diff_%: {self.final_metrics['hv_dif_%']}")
+        self.print(f"IGD+: {self.final_metrics['igd_plus']}")
+        self.print(f"complexity: {self.final_metrics['complexity']}")
+
+        return self.final_metrics["complexity"], self.final_metrics["hv_dif_%"]
 
     def run_NSGA(self, problem, NSGA_settings):
-        # run the NSGA over the problem
+        # run the NSGA2 over the problem
         if self.problem_args["n_obj"] == 2:
+            # if we are dealing with a 2-objective problem, use NSGA2
             self.print("Running NSGA2..")
             algorithm = NSGA2(pop_size=NSGA_settings["pop_size"],
                               n_offsprings=NSGA_settings["n_offsprings"],
-                              sampling=get_sampling("real_random"),
-                              crossover=get_crossover("real_sbx", prob=NSGA_settings["sbx_prob"],
-                                                      eta=NSGA_settings["sbx_eta"]),
-                              mutation=get_mutation("real_pm", eta=NSGA_settings["mut_eta"]),
+                              sampling=FloatRandomSampling(),
+                              crossover=SBX(prob=NSGA_settings["sbx_prob"],
+                                            eta=NSGA_settings["sbx_eta"]),
+                              mutation=PolynomialMutation(eta=NSGA_settings["mut_eta"]),
                               seed=self.seed,
                               eliminate_duplicate=True,
                               verbose=self.verbose)
 
         elif self.problem_args["n_obj"] > 2:
-            self.print("Running NSGA3..")
+            # for working with many-objective problems, use NSGA3
             algorithm = NSGA3(pop_size=NSGA_settings["pop_size"],
                               n_offsprings=NSGA_settings["n_offsprings"],
-                              sampling=get_sampling("real_random"),
-                              crossover=get_crossover("real_sbx", prob=NSGA_settings["sbx_prob"],
-                                                      eta=NSGA_settings["sbx_eta"]),
-                              mutation=get_mutation("real_pm", eta=NSGA_settings["mut_eta"]),
+                              sampling=FloatRandomSampling(),
+                              crossover=SBX(prob=NSGA_settings["sbx_prob"],
+                                            eta=NSGA_settings["sbx_eta"]),
+                              mutation=PolynomialMutation(eta=NSGA_settings["mut_eta"]),
                               ref_dirs=NSGA_settings["ref_dirs"],
                               seed=self.seed,
                               eliminate_duplicate=True,
+                              ideal_point=NSGA_settings["ideal_point"],
+                              nadir_point=NSGA_settings["nadir_point"],
                               verbose=self.verbose)
 
         else:
             print("[INFO] Not suitable for less than 2 objectives...")
             sys.exit(1)
 
+        # define the termination criterion
         termination = get_termination("n_eval", NSGA_settings["n_eval"])
 
+        # start the minimization process
         res = minimize(problem,
                        algorithm,
                        termination,
                        seed=self.seed,
-                       verbose=True,
+                       verbose=self.verbose,
                        save_history=True)
 
+        hist_f = []
+        for algo in res.history:
+            feas = np.where(algo.opt.get("feasible"))[0]
+            hist_f.append(algo.opt.get("F")[feas])
+
+        if self.save:
+            pickle.dump(hist_f, open(f"{config.BASE_PATH}/{self.result_storage}/regular_convergence_history.pickle",
+                                     "wb"))
         return res
 
     def edge_point_estimation(self,
@@ -380,200 +385,14 @@ class Regularity_Search:
                                F):
         # get the closest reference directions for every point in F
         # associate individuals to niches
-        niche_of_individuals, dist_to_niche, dist_matrix = associate_to_niches(F, ref_dirs, self.ideal_point,
+        niche_of_individuals, dist_to_niche, dist_matrix = associate_to_niches(F,
+                                                                               ref_dirs,
+                                                                               self.ideal_point,
                                                                                self.nadir_point)
         closest_ref_dir_index = np.argmin(dist_matrix, axis=1)
 
         closest_ref_dirs = ref_dirs[closest_ref_dir_index, :]
         return closest_ref_dirs
-
-    def k_means_cluster(self, pf_res, n_clusters=3, clustering_criterion="X"):
-        # function to cluster the pareto front solutions
-        # initialize the clusters
-        clusters = []
-
-        if clustering_criterion == "X":
-            pf = pf_res["X"]
-        else:
-            pf = pf_res["F"]
-
-        # normalize the embedded pf
-        norm_pf = normalize(pf, axis=0, norm="max")
-
-        # get the labels from k-means
-        labels = KMeans(n_clusters=n_clusters, random_state=0, n_init=30).fit_predict(pf)
-        # put all the outliers to a different cluster
-        n_clusters = len(set(labels))
-        n_clusters = n_clusters - 1 if -1 in labels else n_clusters
-
-        # plot the clustering output
-        colors = cm.rainbow(np.linspace(0, 1, n_clusters))
-        fig = plt.figure(figsize=(8, 6))
-
-        # define the plotting axes
-        pf_F = pf_res["F"]
-
-        if pf_F.shape[1] > 3:
-            pca = PCA(n_components=2)
-            embedded_pf_F = pca.fit_transform(pf_F)
-            ax = plt.axes()
-
-        elif pf_F.shape[1] == 3:
-            ax = plt.axes(projection="3d")
-
-        elif pf_F.shape[1] == 2:
-            ax = plt.axes()
-
-        else:
-            ax = None
-
-        if ax:
-            # if self.visualization_angle is not None:
-            #     ax.view_init(*self.visualization_angle)
-
-            # generate a scatter plot for the clusters
-            for c, i in zip(colors, set(labels)):
-                if i != -1:
-                    if pf_F.shape[1] == 3:
-                        ax.scatter3D(pf_res["F"][labels == i, 0], pf_res["F"][labels == i, 1],
-                                     pf_res["F"][labels == i, 2],
-                                     color=c,
-                                     label="Cluster " + str(i + 1))
-
-                    elif pf_F.shape[1] == 2:
-                        ax.scatter(pf_res["F"][labels == i, 0], pf_res["F"][labels == i, 1], color=c,
-                                   label="Cluster " + str(i + 1))
-
-            plt.legend()
-            # plt.title(f"Clustering View on F Space")
-
-        else:
-            print("Does not work for less than 2 objectives")
-            plt.show()
-
-        # append the clusters one after another
-        for i in range(n_clusters):
-            cur_cluster_X = pf_res["X"][labels == i, :]
-            cur_cluster_F = pf_res["F"][labels == i, :]
-
-            clusters.append({"X": cur_cluster_X, "F": cur_cluster_F})
-
-        if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_efficient_front.pdf", format="pdf")
-
-        if self.verbose:
-            plt.show()
-
-        dim = pf_res["X"].shape[1]
-        fig = plt.figure(figsize=(8, 6))
-        for c, i in zip(colors, set(labels)):
-            if i != -1:
-                for j in range(pf_res["X"].shape[0]):
-                    if labels[j] == i:
-                        plt.scatter(np.arange(dim), pf_res["X"][j, :], color=c)
-
-        plt.xticks(np.arange(dim), labels=[f"$X_{i + 1}$" for i in range(dim)])
-        plt.xlabel("Variables")
-        # plt.title(f"Clustering View on X Space")
-
-        plt.tick_params(axis="x", labelsize=10, labelrotation=40)
-        plt.tick_params(axis="y", labelsize=10, labelrotation=20)
-
-        if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_pareto_front.pdf", format="pdf")
-
-        if self.verbose:
-            plt.show()
-
-        return clusters
-
-    def cluster_pf(self, pf_res, user_hdbscan_args, clustering_criterion="X"):
-        # function to cluster the pareto front solutions
-
-        # initialize the clusters
-        clusters = []
-
-        if clustering_criterion == "X":
-            pf = pf_res["X"]
-        else:
-            pf = pf_res["F"]
-
-        # normalize the embedded pf
-        norm_pf = normalize(pf, axis=0, norm="max")
-
-        # get the default parameters of HDBSCAN and populate it with user_defined parameters
-        dict_hdbscan_args = get_default_args(HDBSCAN)
-        for k in user_hdbscan_args.keys():
-            dict_hdbscan_args[k] = user_hdbscan_args[k]
-
-        # get the labels from hdbscan
-        labels = HDBSCAN(min_cluster_size=dict_hdbscan_args["min_cluster_size"], min_samples=dict_hdbscan_args[
-            "min_samples"], cluster_selection_epsilon=dict_hdbscan_args["cluster_selection_epsilon"]).fit_predict(
-            norm_pf)
-
-        # put all the outliers to a different cluster
-        n_clusters = len(set(labels))
-        n_clusters = n_clusters - 1 if -1 in labels else n_clusters
-
-        # plot the clustering output
-        colors = cm.rainbow(np.linspace(0, 1, n_clusters))
-        fig = plt.figure(figsize=(15, 8))
-
-        # define the plotting axes
-        pf_F = pf_res["F"]
-
-        if pf_F.shape[1] > 3:
-            pca = PCA(n_components=2)
-            embedded_pf_F = pca.fit_transform(pf_F)
-            ax = plt.axes()
-
-        elif pf_F.shape[1] == 3:
-            ax = plt.axes(projection="3d")
-
-        elif pf_F.shape[1] == 2:
-            ax = plt.axes()
-
-        else:
-            ax = None
-
-        if ax:
-            # if self.visualization_angle is not None:
-            #     ax.view_init(*self.visualization_angle)
-
-            # generate a scatter plot for the clusters
-            for c, i in zip(colors, set(labels)):
-                if i != -1:
-                    if pf_F.shape[1] == 3:
-                        ax.scatter3D(pf_res["F"][labels == i, 0], pf_res["F"][labels == i, 1],
-                                     pf_res["F"][labels == i, 2],
-                                     color=c,
-                                     label="Cluster " + str(i + 1))
-
-                    elif pf_F.shape[1] == 2:
-                        ax.scatter(pf_res["F"][labels == i, 0], pf_res["F"][labels == i, 1], color=c,
-                                   label="Cluster " + str(i + 1))
-
-            plt.legend()
-            # plt.title(f"Clustering on {clustering_criterion} space")
-
-        else:
-            print("Does not work for less than 2 objectives")
-            plt.show()
-
-        # append the clusters one after another
-        for i in range(n_clusters):
-            cur_cluster_X = pf_res["X"][labels == i, :]
-            cur_cluster_F = pf_res["F"][labels == i, :]
-
-            clusters.append({"X": cur_cluster_X, "F": cur_cluster_F})
-
-        if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/efficient_front_clustering.pdf", format="pdf")
-
-        if self.verbose:
-            plt.show()
-
-        return clusters
 
     @staticmethod
     def _normalize(x, lb, ub):
@@ -650,18 +469,15 @@ def main(problem_name="scalable_truss_19",
         regularity_search = Regularity_Search(problem_args=problem_config,
                                               seed=seed,
                                               NSGA_settings=algorithm_config["NSGA_settings"],
-                                              non_fixed_regularity_coef_factor=algorithm_config[
-                                                  "non_fixed_regularity_coef_factor"],
-                                              precision=algorithm_config["precision"],
-                                              n_rand_bins=algorithm_config["n_rand_bins"],
-                                              delta=algorithm_config["delta"],
-                                              non_fixed_dependency_percent=algorithm_config[
-                                                  "non_fixed_dependency_percent"],
-                                              non_fixed_regularity_degree=algorithm_config[
-                                                  "non_fixed_regularity_degree"],
-                                              save_img=True,
+                                              non_fixed_regularity_coefficient_factor=1e-10,
+                                              precision=10,
+                                              n_rand_bins=5,
+                                              delta=0.001,
+                                              non_fixed_dependency_percent=4,
+                                              non_fixed_regularity_degree=2,
+                                              save=True,
                                               result_storage=f"{res_storage_dir}",
-                                              verbose=False)
+                                              verbose=True)
 
         # run the search object
         regularity_search.run()

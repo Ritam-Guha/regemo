@@ -10,7 +10,7 @@ from pymoo.operators.crossover.sbx import SimulatedBinaryCrossover
 from pymoo.operators.mutation.pm import PolynomialMutation
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.operators.selection.tournament import TournamentSelection, compare
-from pymoo.util.display import MultiObjectiveDisplay
+# from pymoo.util.display import MultiObjectiveDisplay
 from pymoo.util.function_loader import load_function
 from pymoo.util.misc import intersect, has_feasible
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
@@ -48,7 +48,7 @@ class NSGA3(GeneticAlgorithm):
                  mutation=PolynomialMutation(eta=20, prob=None),
                  eliminate_duplicates=True,
                  n_offsprings=None,
-                 display=MultiObjectiveDisplay(),
+                 display=None,
                  ideal_point=None,
                  nadir_point=None,
                  **kwargs):

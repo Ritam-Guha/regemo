@@ -329,6 +329,7 @@ class TrussProblemGeneral(Problem):
         #         out['rep_time'] = rep_time
 
         if self.n_cores > 1:
+            # print(f"num cores: {self.n_cores}")
             pool = mp.Pool(self.n_cores)
             # logging.debug(f"Multiprocessing pool opened. CPU count = {mp.cpu_count()}, Pool Size = {self.n_cores}")
             # print(f"Multiprocessing pool opened. CPU count = {mp.cpu_count()}, Pool Size = {self.n_cores}")

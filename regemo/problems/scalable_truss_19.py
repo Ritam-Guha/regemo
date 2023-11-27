@@ -1,5 +1,5 @@
 from regemo.problems.scalable_truss_impl.truss.truss_problem_general import TrussProblemGeneral
-
+import multiprocessing
 
 def evaluate(X,
              problem_args=None,
@@ -12,7 +12,7 @@ def evaluate(X,
     :return: evaluation metrics
     """
     problem_class = TrussProblemGeneral(n_shape_var=19,
-                                        n_cores=32,
+                                        n_cores=10,
                                         repair_inequality=False,
                                         repair_power=False,
                                         symmetry=())

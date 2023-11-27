@@ -105,11 +105,11 @@ class Regularity_search_driver:
     def parallel_regularity_search(self,
                                    param):
         cur_rs = Regularity_Search(problem_args=self.problem_args,
-                                   non_fixed_regularity_coef_factor=param["non_fixed_regularity_coef_factor"],
-                                   non_fixed_dependency_percent=param["non_fixed_dependency_percent"],
+                                   num_non_fixed_independent_vars=param["num_non_fixed_independent_vars"],
                                    non_fixed_regularity_degree=param["non_fixed_regularity_degree"],
                                    n_rand_bins=param["n_rand_bins"],
                                    delta=param["delta"],
+                                   precision=param["precision"],
                                    seed=self.seed,
                                    NSGA_settings=self.algorithm_args["NSGA_settings"],
                                    result_storage=(
@@ -124,17 +124,23 @@ class Regularity_search_driver:
         print(f"param ID {param['ID']} done...")
 
     def execute_regularity_search(self):
-        table_header = ["Id", "coef_factor", "non_fixed_dependency_percent", "complexity", "hv_dif_%"]
+        table_header = ["Id", "num_non_fixed_independent_vars", "non_fixed_regularity_degree", "delta", "n_rand_bins",
+                        "precision", "complexity", "hv_dif_%"]
         table_data = []
 
         print("=============================================")
         print(f"              {self.problem_name}           ")
         print("=============================================")
         # execute the process for every regularity combination
+        # print(f"CPUs: {multiprocessing.cpu_count()}")
         self.parallel_regularity_search(self.param_comb[0])
-        num_cores = multiprocessing.cpu_count() - 6
-        pool = multiprocessing.Pool(processes=num_cores)
-        pool.map(self.parallel_regularity_search, self.param_comb[1:])
+
+        # num_cores = multiprocessing.cpu_count() - 6
+        # pool = multiprocessing.Pool(processes=num_cores)
+        # pool.map(self.parallel_regularity_search, self.param_comb[1:])
+
+        for i, param in enumerate(self.param_comb[1:]):
+            self.parallel_regularity_search(param)
 
         for i, param in enumerate(self.param_comb):
             param = pickle.load(open(f"{config.BASE_PATH}/{self.root_dir}/{self.problem_args['problem_name']}/param_comb_{i+1}/param_comb.pickle", "rb"))
@@ -147,8 +153,11 @@ class Regularity_search_driver:
             param["complexity"] = final_metrics["complexity"]
             param["hv_dif_%"] = final_metrics["hv_dif_%"]
 
-            table_data.append([param["ID"], param["non_fixed_regularity_coef_factor"],
-                               param["non_fixed_dependency_percent"],
+            table_data.append([param["ID"],
+                               param["num_non_fixed_independent_vars"],
+                               param["non_fixed_regularity_degree"],
+                               param["delta"], param["n_rand_bins"],
+                               param["precision"],
                                param["complexity"], param["hv_dif_%"]])
 
             # save the param config
@@ -390,7 +399,7 @@ def main():
     # collect arguments for the problem
     seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="conceptual_marine_design", help="Name of the problem")
+    parser.add_argument("--problem_name", default="bnh", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     if problem_name != "all":
@@ -421,11 +430,11 @@ def main():
         problem_config["problem_name"] = problem_name
 
         # mention the possible values for the hyperparameters
-        exec_args = {"non_fixed_regularity_coef_factor": [0.1],
-                     "non_fixed_dependency_percent": [0.1],
-                     "delta": [0.05],
-                     "n_rand_bins": [3],
-                     "non_fixed_regularity_degree": [1, 2]}
+        exec_args = {"num_non_fixed_independent_vars": [1],
+                     "non_fixed_regularity_degree": [1, 2, 3, 4, 5, 10],
+                     "delta": [0.5],
+                     "n_rand_bins": [5],
+                     "precision": [2]}
 
         # create the driver object
         driver = Regularity_search_driver(problem_args=problem_config,

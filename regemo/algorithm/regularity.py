@@ -16,7 +16,7 @@ class Regularity():
                  non_fixed_dependent_vars,
                  non_fixed_independent_vars,
                  non_fixed_orphan_vars,
-                 non_fixed_final_reg_coef_list,
+                 non_fixed_reg_coefficient_list,
                  non_fixed_degree_list,
                  problem_configs,
                  precision=2):
@@ -30,7 +30,7 @@ class Regularity():
         self.non_fixed_dependent_vars = non_fixed_dependent_vars
         self.non_fixed_independent_vars = non_fixed_independent_vars
         self.non_fixed_orphan_vars = non_fixed_orphan_vars
-        self.non_fixed_final_reg_coef_list = non_fixed_final_reg_coef_list
+        self.non_fixed_reg_coefficient_list = non_fixed_reg_coefficient_list
         self.non_fixed_degree_list = non_fixed_degree_list
         self.precision = precision
         self.complexity = 0
@@ -49,24 +49,61 @@ class Regularity():
         mask = np.prod(mask, axis=1)
         return mask
 
+    @staticmethod
+    def _normalize(x, lb, ub):
+        # function to normalize x between 0 and 1
+        new_x = copy.deepcopy(x)
+
+        if new_x.ndim == 1:
+            new_x = np.array([new_x])
+
+        for i in range(new_x.shape[1]):
+            new_x[:, i] = (new_x[:, i] - lb[i]) / (ub[i] - lb[i])
+
+        if new_x.shape[0] == 1:
+            # converting a single array back to a 1D array
+            new_x = new_x[0, :]
+
+        return new_x
+
+    @staticmethod
+    def _denormalize(x, lb, ub):
+        # function to denormalize a value between 0 and 1
+        # to a value between lb and ub
+        new_x = copy.deepcopy(x)
+
+        if len(new_x.shape) == 1:
+            new_x = np.array([new_x])
+
+        for i in range(new_x.shape[1]):
+            new_x[:, i] = lb[i] + (new_x[:, i] * (ub[i] - lb[i]))
+
+        if new_x.shape[0] == 1:
+            # converting a single array back to a 1D array
+            new_x = new_x[0, :]
+        return new_x
+
     def apply(self, X):
         # enforce the final regularity to any vector of same size
         new_X = copy.deepcopy(X)
-
-        # for fixed variables fix them to the found values
-        new_X[:, self.fixed_vars] = self.fixed_vals
+        new_X = self._normalize(new_X, self.lb, self.ub)
 
         # for non-fixed variables use the equation found in the process
         if self.non_fixed_dependent_vars and self.non_fixed_independent_vars:
             for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
                 new_X[:, dep_idx] = 0
                 for j, list_degree in enumerate(self.non_fixed_degree_list):
-                    new_X[:, dep_idx] += self.non_fixed_final_reg_coef_list[i][j] * \
+                    new_X[:, dep_idx] += self.non_fixed_reg_coefficient_list[i][j] * \
                                          np.sum(
                                              np.power(new_X[:, self.non_fixed_independent_vars], np.array(list_degree)),
                                              axis=1)
 
-                new_X[:, dep_idx] += self.non_fixed_final_reg_coef_list[i][-1]
+                new_X[:, dep_idx] += self.non_fixed_reg_coefficient_list[i][-1]
+
+        new_X = self._denormalize(new_X, self.lb, self.ub)
+
+        # for fixed variables fix them to the found values
+        new_X[:, self.fixed_vars] = self.fixed_vals
 
         return new_X
 
@@ -93,7 +130,7 @@ class Regularity():
         for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
             # max_degree = 0
             for j, list_degree in enumerate(self.non_fixed_degree_list):
-                if self.non_fixed_final_reg_coef_list[i][j] != 0:
+                if self.non_fixed_reg_coefficient_list[i][j] != 0:
                     cur_degree = 0
                     for idx, degree in enumerate(list_degree):
                         if degree != 0:
@@ -110,7 +147,7 @@ class Regularity():
         orphan_weight = ((self.dim ** 4) + (5 * (self.dim ** 3)) + (6 * (self.dim ** 2)))/2    # here we are considering 3 to be the max_degree
 
         # compute the complexity
-        complexity = (fixed_weight * num_fixed) + sum_degree + (orphan_weight * num_orphan) + self.dim
+        complexity = (fixed_weight * num_fixed) + sum_degree + (orphan_weight * num_orphan) + self.precision
 
         return complexity
 
@@ -149,14 +186,14 @@ class Regularity():
             for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
                 self.print(f"x[{dep_idx + 1}] = ", end="")
                 for j, list_degree in enumerate(self.non_fixed_degree_list):
-                    if self.non_fixed_final_reg_coef_list[i][j] != 0:
-                        self.print(f"({self.non_fixed_final_reg_coef_list[i][j]} * ", end="")
+                    if self.non_fixed_reg_coefficient_list[i][j] != 0:
+                        self.print(f"({self.non_fixed_reg_coefficient_list[i][j]} * ", end="")
                         for idx, degree in enumerate(list_degree):
                             if degree != 0:
                                 self.print(f"x[{self.non_fixed_independent_vars[idx] + 1}]^{degree}", end="")
 
                         self.print(") + ", end="")
-                self.print(f"({self.non_fixed_final_reg_coef_list[i][-1]})")
+                self.print(f"({self.non_fixed_reg_coefficient_list[i][-1]})")
 
             self.print(f"Orphan non-fixed variables: {[(i + 1) for i in self.non_fixed_orphan_vars]}")
 
@@ -245,11 +282,11 @@ class Regularity():
                 for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
                     self.print("\\codeline{\\codetab $x_{" + str(dep_idx + 1) + "} = ", end="")
                     for idx, indep_idx in enumerate(self.non_fixed_independent_vars):
-                        if self.non_fixed_final_reg_coef_list[i][idx] != 0:
+                        if self.non_fixed_reg_coefficient_list[i][idx] != 0:
                             self.print(
-                                "(" + str({self.non_fixed_final_reg_coef_list[i][idx]}) + "x_{" + str(
+                                "(" + str({self.non_fixed_reg_coefficient_list[i][idx]}) + "x_{" + str(
                                     indep_idx + 1) + "}) + ", end="")
-                    self.print(str(self.non_fixed_final_reg_coef_list[i][-1]) + "$}")
+                    self.print(str(self.non_fixed_reg_coefficient_list[i][-1]) + "$}")
                 # for idx in self.non_fixed_dependent_vars[:-1]:
                 #     self.print("x_{" + str(idx + 1) + "}, \ ", end="")
                 # self.print("x_{" + str(self.non_fixed_dependent_vars[-1] + 1) + "}$")
@@ -375,14 +412,14 @@ class Regularity():
                 for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
                     self.print("\\codeline{\\codetab $x_{" + str(dep_idx + 1) + "} = ", end="")
                     for j, list_degree in enumerate(self.non_fixed_degree_list):
-                        if self.non_fixed_final_reg_coef_list[i][j] != 0:
+                        if self.non_fixed_reg_coefficient_list[i][j] != 0:
                             if j > 0:
-                                self.print(" + " if self.non_fixed_final_reg_coef_list[i][j] > 0 else
+                                self.print(" + " if self.non_fixed_reg_coefficient_list[i][j] > 0 else
                                            " - ", end="")
                             else:
-                                self.print("" if self.non_fixed_final_reg_coef_list[i][j] > 0 else
+                                self.print("" if self.non_fixed_reg_coefficient_list[i][j] > 0 else
                                            " - ", end="")
-                            self.print(abs(self.non_fixed_final_reg_coef_list[i][j]), end="")
+                            self.print(abs(self.non_fixed_reg_coefficient_list[i][j]), end="")
                             for idx, degree in enumerate(list_degree):
                                 if degree != 0:
                                     degree_str = str(degree) if degree > 1 else ""
@@ -390,8 +427,8 @@ class Regularity():
                                         "x_{" + str(self.non_fixed_independent_vars[idx] + 1) + "}^{" + degree_str +
                                         "}", end="")
 
-                    self.print(" + " if self.non_fixed_final_reg_coef_list[i][-1] > 0 else " - ", end="")
-                    self.print(str(abs(self.non_fixed_final_reg_coef_list[i][-1])) + "$}")
+                    self.print(" + " if self.non_fixed_reg_coefficient_list[i][-1] > 0 else " - ", end="")
+                    self.print(str(abs(self.non_fixed_reg_coefficient_list[i][-1])) + "$}")
                 # for idx in self.non_fixed_dependent_vars[:-1]:
                 #     self.print("x_{" + str(idx + 1) + "}, \ ", end="")
                 # self.print("x_{" + str(self.non_fixed_dependent_vars[-1] + 1) + "}$")

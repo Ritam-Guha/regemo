@@ -1,5 +1,5 @@
-OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m regemo.algorithm.regularity_driver --problem_name bnh
-OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m regemo.algorithm.regularity_driver --problem_name scalable_truss_19
+#OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m regemo.algorithm.regularity_driver_nsga2 --problem_name bnh
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m regemo.algorithm.regularity_driver_nsga2 --problem_name scalable_truss_19
 #python3 -m regemo.algorithm.regularity_driver --problem_name crashworthiness
 #python3 -m regemo.algorithm.regularity_driver --problem_name c2dtlz2
 #python3 -m regemo.algorithm.regularity_driver --problem_name dtlz2

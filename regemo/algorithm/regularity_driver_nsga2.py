@@ -182,7 +182,7 @@ def run_regularity_driver(problem_name):
             param_comb[i]["complexity"] = F[i, 0]
             param_comb[i]["hv_dif_%"] = F[i, 1]
 
-            cur_dir = f"{root_dir}/{problem_name}/param_comb_{i}"
+            cur_dir = f"{root_dir}/{problem_name}/param_comb_{i+1}"
             create_dir(cur_dir, delete=True)
 
             # create a search object
@@ -209,7 +209,7 @@ def run_regularity_driver(problem_name):
             title_text='Final Pareto Front Configuration for ' + problem_name
         )
         fig.show()
-        fig.write_html(f"{config.BASE_PATH}/{cur_dir}/upper_level_pareto_front.html")
+        fig.write_html(f"{config.BASE_PATH}/{root_dir}/{problem_name}/upper_level_pareto_front.html")
 
 
 if __name__ == "__main__":

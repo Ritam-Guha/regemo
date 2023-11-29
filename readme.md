@@ -1,6 +1,6 @@
-#RegEMO: Regularized Evolutionary Multi-objective Optimization
+# RegEMO: Regularized Evolutionary Multi-objective Optimization
 
-##Introduction
+## Introduction
 Multi-objective optimization problems give rise to a set of Pareto-optimal solutions, each of which makes a trade-off among the objectives. When multiple Pareto-optimal solutions are to be implemented for different applications as platform-based solutions, a solution principle common to them is highly desired for easier understanding, implementation, and management purposes. RegEMO is a systematic search methodology that deviates from finding Pareto-optimal solutions but finds a set of near Pareto-optimal solutions sharing common principles of a desired structure and still having a trade-off of objectives in them. RegEMO has been demonstrated over a number of constrained and unconstrained multi-objective test problems. Thereafter, we demonstrate the practical significance of the proposed approach to a number of engineering design problems. Searching for a set of solutions with common principles of desire, rather than Pareto-optimal solutions without any common structure, is a practically meaningful task and this paper should encourage more such developments in the near future.
 
 The idea of regularity-based solution is shown in the following image. The blue points represent the original Pareto front solutions which do not have any interpretable regularity/common principles in them (represented by completely different shapes of the product). The red points, on the other hand, represent regular solutions which are all having the same shape (cylindrical) but different diameters. Here the regulariy is defined on the shape of the products, but it might vary depending on the application area. But, the regular set of solutions are easier to implement, highly scalable and interpretable.
@@ -38,7 +38,7 @@ The Bi-level procedure used in RegEMO to find the optimal regularity principle i
       organization={Springer}
     }
 
-##Problems
+## Problems
 The problems used for the work are defined in the [problems](https://github.com/Ritam-Guha/regemo/tree/tevc/regemo/problems) directory. Any problem definition can be loaded using the [get_problem](https://github.com/Ritam-Guha/regemo/blob/tevc/regemo/problems/get_problem.py) function. 
 We have used [pymoo](https://github.com/anyoptimization/pymoo) and [reproblems](https://github.com/ryojitanabe/reproblems) implementations to define the problems in Python.
 Till now, we have the following problem definitions in the system:

@@ -3,6 +3,21 @@
 ##Introduction
 Multi-objective optimization problems give rise to a set of Pareto-optimal solutions, each of which makes a trade-off among the objectives. When multiple Pareto-optimal solutions are to be implemented for different applications as platform-based solutions, a solution principle common to them is highly desired for easier understanding, implementation, and management purposes. RegEMO is a systematic search methodology that deviates from finding Pareto-optimal solutions but finds a set of near Pareto-optimal solutions sharing common principles of a desired structure and still having a trade-off of objectives in them. RegEMO has been demonstrated over a number of constrained and unconstrained multi-objective test problems. Thereafter, we demonstrate the practical significance of the proposed approach to a number of engineering design problems. Searching for a set of solutions with common principles of desire, rather than Pareto-optimal solutions without any common structure, is a practically meaningful task and this paper should encourage more such developments in the near future.
 
+The idea of regularity-based solution is shown in the following image. The blue points represent the original Pareto front solutions which do not have any interpretable regularity/common principles in them (represented by completely different shapes of the product). The red points, on the other hand, represent regular solutions which are all having the same shape (cylindrical) but different diameters. Here the regulariy is defined on the shape of the products, but it might vary depending on the application area. But, the regular set of solutions are easier to implement, highly scalable and interpretable.
+<p align="center">
+  <img src="images/regularity_concept.png" width="300" />
+</p>
+
+
+The Bi-level procedure used in RegEMO to find the optimal regularity principle is shown using a diagram below:
+<p align="center">
+  <img src="images/regemo_hierarchical_search_process.png" width="600" />
+</p>
+
+
+
+
+
 ## Please cite the following papers if you are using RegEMO:
     @ARTICLE{10328823,
       author={Guha, Ritam and Deb, Kalyanmoy},
@@ -57,7 +72,7 @@ Till now, we have the following problem definitions in the system:
 * [Modified ZDT 3D](https://github.com/Ritam-Guha/regemo/blob/tevc/regemo/problems/zdt_mod_3d.py)
 
 ## Installation
-clone the repository and install the necessary packages:
+Clone the repository and install the necessary packages:
 
     git clone https://github.com/Ritam-Guha/regemo.git
     cd regemo
@@ -78,5 +93,13 @@ If you want to run regularity on a problem with default hyperparameter configura
 The result for this run will be stored at <code>results/bnh</code> folder.
 
 ## Result Interpretation
-For BNH, we have seen the following regularity deviation:
-![Regular Front for BNH](images/final_efficient_fronts.pdf)
+For BNH, we have seen the following regularity deviation (the Objective fronts in left, the regularity principle in right):
+<p align="center">
+  <img src="images/final_efficient_fronts.png" width="300" />
+  <img src="images/bnh_equation.png" width="250" />
+</p>
+
+## Future Work
+There are some limitations present in this setting which we plan on addressing in future updates:
+* The framework does not allow non-linearity in the rules. (Non-linear RegEMO - Coming Soon)
+* The framework also does not scale properly for more than 30 variables. (Scalable RegEMO - Coming Soon)

@@ -79,4 +79,4 @@ The result for this run will be stored at <code>results/bnh</code> folder.
 
 ## Result Interpretation
 For BNH, we have seen the following regularity deviation:
-()
+![Regular Front for BNH](images/final_efficient_fronts.pdf)

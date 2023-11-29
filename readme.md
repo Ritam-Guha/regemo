@@ -74,7 +74,7 @@ Till now, we have the following problem definitions in the system:
 ## Installation
 Clone the repository and install the necessary packages:
 
-    git clone https://github.com/Ritam-Guha/regemo.git
+    git clone --single_branch --branch tevc https://github.com/Ritam-Guha/regemo.git
     cd regemo
     pip install -r requirements.txt
 

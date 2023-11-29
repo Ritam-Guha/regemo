@@ -1,12 +1,13 @@
-import numpy as np
-
 from regemo.utils.path_utils import create_dir
 import regemo.config as config
 from regemo.problems.get_problem import problems
 
+
 import os
 import sys
 import pickle
+import numpy as np
+
 from pymoo.factory import get_reference_directions
 
 # problems = ["car_side_impact", "conceptual_marine_design", "rocket_injector_design", "dtlz5"]
@@ -49,9 +50,6 @@ def create_config(problem_name,
             algorithm_config["n_rand_bins"] = n_rand_bins
             algorithm_config["non_fixed_regularity_degree"] = non_fixed_regularity_degree
             problem_config["visualization_angle"] = (34, 29)
-            # problem_config["dim"] = 20
-            # problem_config["lb"] = [0] * 20
-            # problem_config["ub"] = [1] * 20
     else:
 
         problem_config = {

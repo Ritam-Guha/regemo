@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
 import pickle
+import subprocess
 
 plt.rcParams.update({'font.size': 10})
 
@@ -198,10 +199,12 @@ class Regularity_Search:
                                                   self.problem_args["ub"],
                                                   save_file=text_storage)
 
-        regularity_enforcement.regularity.display_tex(self.orig_X,
-                                                      self.problem_args["lb"],
-                                                      self.problem_args["ub"],
-                                                      save_file=tex_storage)
+        regularity_enforcement.regularity.display_tex_long(self.orig_X,
+                                                           self.problem_args["lb"],
+                                                           self.problem_args["ub"],
+                                                           save_file=tex_storage)
+
+
         self.print("Final Metrics")
         self.print(f"IGD+: {regularity_enforcement.final_metrics['igd_plus']}")
         self.print(f"HV_dif_%: {regularity_enforcement.final_metrics['hv_dif_%']}")

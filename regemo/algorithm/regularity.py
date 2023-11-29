@@ -262,6 +262,121 @@ class Regularity():
             f.close()
             self.print = self.mod_print()
 
+    def display_tex_long(self,
+                         X_apply=None,
+                         lb=None,
+                         ub=None,
+                         save_file=None,
+                         front_num=-1,
+                         total_fronts=-1):
+
+        self.print = self.mod_print()
+
+        if save_file:
+            f = open(save_file, "w")
+            self.print = self.mod_print(f)
+
+        # if there is some X, apply the regularity
+        X = copy.deepcopy(X_apply)
+
+        if X is not None:
+            X = self.apply(X)
+
+        self.print("\documentclass[lettersize,journal]{IEEEtran}\n\\usepackage{fancyvrb}\n\\usepackage{"
+                   "color}\n\\usepackage{xcolor}\n\\usepackage[most]{tcolorbox}\n\\def\codefont{\\fontfamily{"
+                   "lmtt}\selectfont}\n\\newcommand{\\textcode}[1]{{\\normalfont\\codefont #1}}\n\\newcommand{\eqcode}["
+                   "1]{"
+                   "\textrm{\codefont #1}}\n\\newcommand{\prog}[1]{{\textcode{#1}}\\xspace}\n\\newcounter{"
+                   "codelinecounter}[section]\n\\definecolor{codebackground}{rgb}{1.0,1.0,1.0}\n\\definecolor{"
+                   "codebackgroundprogress}{rgb}{1.0,0.99,0.98}\n\\definecolor{codeframe}{rgb}{0.8,0.8,"
+                   "0.8}\n\\definecolor{codegreen}{rgb}{0,0.4,0}\n\\definecolor{codeblue}{rgb}{0.25,0.25,"
+                   "0.75}\n\\definecolor{codegray}{rgb}{0.5,0.5,0.5}\n\\def\codefontsize{\\fontsize{8.5}{"
+                   "9}\selectfont}  % Ideally should be \footnotesize. Set value {8}{9}\n\\newcommand{\codeline}[1]{{"
+                   "#1\par}}\n\\newcommand{\codelinenum}{\stepcounter{codelinecounter} {\color{codegray} \ifnum\value{"
+                   "codelinecounter}<10 0\fi\arabic{codelinecounter}}\ }\n\\newcommand{\\numberedcodeline}[1]{{"
+                   "\codelinenum \codeline{#1}}}\n\\newcommand{\codecomment}[1]{{\color{codegray} \# "
+                   "#1}}\n\\newcommand{\codefixed}[1]{{\color{codeblue} #1}}\n\\newcommand{\codedef}[1]{{\color{"
+                   "codegreen} #1}}\n\\newcommand{\codereturn}[1]{{\color{codegreen} #1}}\n\\newcommand{\codetab}{"
+                   "~~}\n\\newcommand{\codeskip}{\smallskip}\n\\newenvironment{code}[3]{  % Params: width, height, "
+                   "color\n\\setcounter{codelinecounter}{0}\n\\begin{tcolorbox}[\nwidth=#1,height=#2,\nvalign=center,"
+                   "left=0pt,right=0pt,top=0pt,bottom=0pt,\ncolback=#3,colframe=codeframe,boxrule=0.5pt,"
+                   "arc=0pt]\n\\codefont\n\\codefontsize\n}{\n\\end{tcolorbox}\n}\n\\begin{document}")
+
+        self.print("\\begin{code}{\\textwidth}{1.2in}{codebackground}")
+
+        if total_fronts > 1:
+            self.print(f"Regular Front {front_num + 1}")
+
+        if self.fixed_vars:
+            const_list = self.fixed_vars
+
+            if const_list:
+                self.print("\\codeline{\\codedef{Fixed Variables}:}")
+                for i, idx in enumerate(const_list):
+                    self.print("\\codeline{\\codetab $x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + "$}")
+
+        else:
+            self.print("\\codeline{\\codedef{Fixed Variables}: None}")
+
+        if self.non_fixed_vars:
+            if self.non_fixed_orphan_vars:
+                self.print("\\codeline{\\codedef{Orphan Variables}:}")
+                for idx in self.non_fixed_orphan_vars:
+                    self.print("\\codeline{\\codetab $x_{" + str(idx + 1) + "} \\in [" + str(self.lb[idx]) + ", "
+                                                                                                             "" + str(
+                        self.ub[
+                            idx]) + "]$}")
+                # self.print("x_{" + str(self.non_fixed_orphan_vars[-1] + 1) + "}$")
+            else:
+                self.print("\\codeline{\\codedef{Orphan Variables}: None}")
+
+            if self.non_fixed_independent_vars:
+                self.print("\\codeline{\\codedef{Non-fixed Independent Variables}:}")
+                for idx in self.non_fixed_independent_vars:
+                    self.print("\\codeline{\\codetab $x_{" + str(idx + 1) + "} \\in [" + str(self.lb[idx]) + ", "
+                               + str(self.ub[
+                                         idx])
+                               + "]$}")
+            else:
+                self.print("\\codeline{\\codedef{Non-fixed Independent Variables}: None}")
+
+            if self.non_fixed_dependent_vars:
+                self.print("\\codeline{\\codedef{Non-fixed Dependent Variables}:}")
+                for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
+                    self.print("\\codeline{\\codetab $x_{" + str(dep_idx + 1) + "} = ", end="")
+                    for idx, indep_idx in enumerate(self.non_fixed_independent_vars):
+                        if self.non_fixed_final_reg_coef_list[i][idx] != 0:
+                            self.print(
+                                "(" + str({self.non_fixed_final_reg_coef_list[i][idx]}) + "x_{" + str(
+                                    indep_idx + 1) + "}) + ", end="")
+                    self.print(str(self.non_fixed_final_reg_coef_list[i][-1]) + "$}")
+                # for idx in self.non_fixed_dependent_vars[:-1]:
+                #     self.print("x_{" + str(idx + 1) + "}, \ ", end="")
+                # self.print("x_{" + str(self.non_fixed_dependent_vars[-1] + 1) + "}$")
+            else:
+                self.print("\\codeline{\\codedef{Non-fixed Dependent Variables}: None}")
+
+
+        self.print("\\end{code}\n\\end{document}")
+
+        # if self.non_fixed_independent_vars:
+        #     for var in self.non_fixed_independent_vars + self.non_fixed_orphan_vars:
+        #         self.print("$x_{" + str(var + 1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]$")
+        #
+        #     self.print()
+        #
+        #     # if self.non_fixed_orphan_vars:
+        #     #     for var in self.non_fixed_orphan_vars:
+        #     #         self.print("x_{" + str(var+1) + "} \\in [" + str(self.lb[var]) + ", " + str(self.ub[var]) + "]")
+        # self.print("\\end{lstlisting}\n")
+
+        # if long_version:
+        #     self.print("\\end{document}")
+
+        if save_file:
+            f.close()
+            self.print = self.mod_print()
+
     @staticmethod
     def _normalize(x, lb, ub):
         # function to normalize x between 0 and 1

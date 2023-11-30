@@ -72,6 +72,8 @@ Till now, we have the following problem definitions in the system:
 * [Modified ZDT 3D](https://github.com/Ritam-Guha/regemo/blob/tevc/regemo/problems/zdt_mod_3d.py)
 
 ## Installation
+Language: <code>Python >=3.8</code>
+
 Clone the repository:
 
     git clone --single-branch --branch tevc https://github.com/Ritam-Guha/regemo.git

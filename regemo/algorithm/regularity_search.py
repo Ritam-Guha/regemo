@@ -405,7 +405,7 @@ class Regularity_Search:
                                    label="Cluster " + str(i + 1))
 
             plt.legend()
-            # plt.title(f"Clustering View on F Space")
+            plt.title(f"Clustering View on F Space")
 
         else:
             print("Does not work for less than 2 objectives")
@@ -434,7 +434,7 @@ class Regularity_Search:
 
         plt.xticks(np.arange(dim), labels=[f"$X_{i + 1}$" for i in range(dim)])
         plt.xlabel("Variables")
-        # plt.title(f"Clustering View on X Space")
+        plt.title(f"Clustering View on X Space")
 
         plt.tick_params(axis="x", labelsize=10, labelrotation=40)
         plt.tick_params(axis="y", labelsize=10, labelrotation=20)

@@ -204,7 +204,7 @@ class Regularity_Finder:
         plot = plot.add(self.orig_F, color="blue", marker="o", s=15, label="Original Efficient Front")
         plot = plot.add(self.F, color="red", marker="*", s=40, label="Regular Efficient Front")
 
-        # plot.title = "Regular Efficient Front (Before Re-optimization)"
+        plot.title = "Regular Efficient Front (Before Re-optimization)"
 
         if self.verbose:
             plot.show()
@@ -665,7 +665,7 @@ class Regularity_Finder:
         n, bins, patches = plt.hist(x, range=(lb, ub), bins=n_bins, edgecolor='black', linewidth=1.2)
         ticks = [patch.get_x() + patch.get_width() / 2 for patch in patches]
         plt.xticks(ticks, range(n_bins))
-        # plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
+        plt.title(f"Variable: $X_{i+1}$, n_bins: {n_bins}, filled_bins: {filled_fraction*100}%")
         if self.save_img:
             plt.savefig(
                 f"{config.BASE_PATH}/{self.result_storage}/variable_{i + 1}_histogram.pdf", format="pdf")

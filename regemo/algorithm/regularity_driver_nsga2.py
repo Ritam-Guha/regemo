@@ -15,6 +15,7 @@ from pymoo.optimize import minimize
 from pymoo.visualization.scatter import Scatter
 from pymoo.core.callback import Callback
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
+from pymoo.core.duplicate import DuplicateElimination
 
 import pickle
 import argparse
@@ -23,6 +24,13 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
+import time
+
+
+def get_unique_indices(F):
+    view = F.view(np.dtype((np.void, F.dtype.itemsize * F.shape[1])))
+    unique_rows, index = np.unique(view, return_index=True)
+    return index
 
 
 class RegEMOUpperLevelSearchProblem(ElementwiseProblem):
@@ -32,11 +40,11 @@ class RegEMOUpperLevelSearchProblem(ElementwiseProblem):
         self.algorithm_config["NSGA_settings"]["n_eval"] = 5000
 
         vars = {
-                "num_non_fixed_independent_vars": Integer(bounds=(1, self.problem_config["dim"]-1)),
+                "num_non_fixed_independent_vars": Integer(bounds=(1, min(10, self.problem_config["dim"]-1))),
                 "non_fixed_regularity_degree": Integer(bounds=(1, 10)),
                 "delta": Real(bounds=(1e-2, 0.5)),
                 "n_rand_bins": Integer(bounds=(5, 10)),
-                "precision": Integer(bounds=(2, 10))
+                "precision": Integer(bounds=(2, 5))
         }
 
         super().__init__(vars=vars, n_obj=2, n_ieq_constr=0, **kwargs)
@@ -75,7 +83,8 @@ class MyCallback(Callback):
         ax.set_ylabel("$\Delta$HV (in %)", fontsize=12)
         ax.set_title(f"Gen: {algorithm.n_gen}", fontsize=14)
         ax.grid(alpha=0.3)
-        # fig.show()
+        fig.show()
+        # print(f"Gen {algorithm.n_gen}")
 
 
 def convert_pf_regularity_to_pd(param_comb):
@@ -97,13 +106,13 @@ def convert_pf_regularity_to_pd(param_comb):
 
 def run_regularity_driver(problem_name):
     # collect arguments for the problem
-    seed = config.seed
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="bnh", help="Name of the problem")
+    parser.add_argument("--problem_name", default="c2dtlz2", help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
     root_dir = "results/upper_level_search"
     create_dir(root_dir)
+    start_time = time.time()
 
     if problem_name != "all":
         # if you want to run it on a specific problem
@@ -156,9 +165,15 @@ def run_regularity_driver(problem_name):
 
         # get the pareto front
         F, X = res.F, res.X
-        fronts = NonDominatedSorting().do(F)
-        F = F[fronts[0], :]
-        X = X[fronts[0]]
+        front = NonDominatedSorting().do(F, only_non_dominated_front=True)
+        F = F[front, :]
+        X = X[front]
+
+        # remove the duplicated entries
+        unique_indices = get_unique_indices(F)
+        F = F[unique_indices, :]
+        X = X[unique_indices]
+
         sorted_idx = np.argsort(F[:, 0])
         F = F[sorted_idx, :]
         X = X[sorted_idx]
@@ -186,7 +201,7 @@ def run_regularity_driver(problem_name):
             create_dir(cur_dir, delete=True)
 
             # create a search object
-            algorithm_config["NSGA_settings"]["n_evals"] = 5000
+            algorithm_config["NSGA_settings"]["n_eval"] = 5000
             regularity_search = Regularity_Search(problem_args=problem_config,
                                                   seed=config.seed,
                                                   NSGA_settings=algorithm_config["NSGA_settings"],
@@ -210,6 +225,8 @@ def run_regularity_driver(problem_name):
         )
         fig.show()
         fig.write_html(f"{config.BASE_PATH}/{root_dir}/{problem_name}/upper_level_pareto_front.html")
+        end_time = time.time()
+        print(f"Time required: {end_time - start_time}")
 
 
 if __name__ == "__main__":

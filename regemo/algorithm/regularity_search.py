@@ -22,13 +22,11 @@ import argparse
 import copy
 import os
 import sys
-from hdbscan.hdbscan_ import HDBSCAN
 from pymoo.visualization.pcp import PCP
 import plotly.express as px
 import plotly.io as pio
 
 import matplotlib.pyplot as plt
-from matplotlib import cm
 import numpy as np
 import pickle
 import subprocess
@@ -239,9 +237,9 @@ class Regularity_Search:
                 plot = plot.add(self.regular_F, color="red", marker="*", s=60, alpha=0.6,
                                 label="Regular Efficient Front")
                 plot.save(f"{config.BASE_PATH}/{self.result_storage}/regular_efficient_front.pdf", format="pdf")
-
                 if self.verbose and plot:
                     plot.show()
+                plt.close()
 
         # plot the original and regular front
             plot = Scatter(labels="F", legend=False, angle=self.visualization_angle, tight_layout=True, fontsize=5)
@@ -279,6 +277,8 @@ class Regularity_Search:
                 if self.verbose:
                     plot.show()
 
+            plt.close()
+
             with open(f"{config.BASE_PATH}/{self.result_storage}/initial_population.pickle",
                       "wb") as file_handle:
                 pickle.dump(res, file_handle)
@@ -299,6 +299,8 @@ class Regularity_Search:
 
                 if self.verbose:
                     plot.show()
+
+            plt.close()
 
             with open(f"{config.BASE_PATH}/{self.result_storage}/final_metrics.txt", "w") as f:
                 f.write(f"HV_dif_%: {self.final_metrics['hv_dif_%']}\n")

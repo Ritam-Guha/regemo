@@ -18,7 +18,7 @@ from pymoo.indicators.igd_plus import IGDPlus
 from pymoo.indicators.hv import HV
 from pymoo.termination import get_termination
 
-from sklearn.linear_model import LinearRegression as linreg
+from sklearn.linear_model import Ridge as linreg
 
 import copy
 import sys
@@ -240,6 +240,8 @@ class Regularity_Finder:
             if self.verbose:
                 plot.show()
 
+            plt.close()
+
         # Re-optimization
         if len(self.non_fixed_vars) > 0:
             self.print("\nRe-optimizing the population after regularity enforcement...")
@@ -403,11 +405,27 @@ class Regularity_Finder:
             if self.verbose:
                 fig.show()
 
+            plt.close()
+
         # find out the non-fixed variables
+        list_filled_fraction = []
         for i in range(self.X.shape[1]):
-            if self._is_random(self.X[:, i], i, self.lb[i], self.ub[i], self.delta)[0]:
+            condition, filled_fraction = self._is_random(self.X[:, i], i, self.lb[i], self.ub[i], self.delta)
+            if condition:
                 non_fixed_vars.append(i)
                 fixed_vars.remove(i)
+            else:
+                list_filled_fraction.append(filled_fraction)
+
+        # if number of independent variable requirement is not meant
+        sorted_idx = np.argsort(pop_spread[fixed_vars])
+        if len(non_fixed_vars) < self.num_non_fixed_independent_vars + 1:
+            counter = 0
+            while len(non_fixed_vars) < self.num_non_fixed_independent_vars + 1:
+                non_fixed_vars.append(fixed_vars[sorted_idx[counter]])
+                counter += 1
+
+        fixed_vars = list(set(np.arange(self.problem_args["dim"])) - set(non_fixed_vars))
 
         return non_fixed_vars, fixed_vars
 
@@ -633,7 +651,7 @@ class Regularity_Finder:
             x = x_updated
 
         # parallelize the regression fitting
-        num_cores = 10
+        num_cores = 40
         pool = multiprocessing.Pool(processes=num_cores)
         mod_parallel_regression_fitting = partial(self._parallel_regression_fitting,
                                                   self.X,
@@ -701,13 +719,14 @@ class Regularity_Finder:
         # function to predict if a variable is random
         min_var, max_var = np.min(x), np.max(x)
         spread = (max_var - min_var) / (ub - lb)
-        if spread <= delta:
-            return False, None
 
         n_bins = self.n_rand_bins
         bin_counts = binned_statistic(x, x, bins=n_bins, range=(lb, ub), statistic="count")[0]
         bins_filled = np.sum(bin_counts >= 1)
         filled_fraction = bins_filled / n_bins
+
+        if spread <= delta:
+            return False, filled_fraction
 
         if self.save:
             fig = plt.figure()
@@ -719,6 +738,8 @@ class Regularity_Finder:
                 f"{config.BASE_PATH}/{self.result_storage}/variable_{i + 1}_histogram.pdf", format="pdf")
             if self.verbose:
                 fig.show()
+
+            plt.close()
 
         if filled_fraction >= 0.5:
             return True, filled_fraction
@@ -742,6 +763,7 @@ class Regularity_Finder:
         # use the same problem setting to run NSGA2 another time to handle cv
         new_problem_args = copy.deepcopy(self.problem_args)
         new_NSGA_settings = copy.deepcopy(self.NSGA_settings)
+        new_NSGA_settings["n_eval"] = np.int64(np.ceil((len(self.non_fixed_independent_vars)/self.problem_args["dim"]) * self.NSGA_settings["n_eval"]))
 
         # formulate the new shorter problem
         # dim of the new problem is the number of non-fixed independent and non-fixed orphan variables

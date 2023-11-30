@@ -72,11 +72,25 @@ Till now, we have the following problem definitions in the system:
 * [Modified ZDT 3D](https://github.com/Ritam-Guha/regemo/blob/tevc/regemo/problems/zdt_mod_3d.py)
 
 ## Installation
-Clone the repository and install the necessary packages:
+Clone the repository:
 
     git clone --single-branch --branch tevc https://github.com/Ritam-Guha/regemo.git
-    cd regemo
+
+If you want to create a new conda environment, use the following command:
+    
+    conda create -n regemo python=3.10
+    conda activate regemo
+
+Then install the necessary libraries:
+
     pip install -r requirements.txt
+
+To check the working, run:
+    
+    cd regemo 
+    sh example_run.sh
+
+This script will run the code on <code>BNH</code> problem and store the results in <code>results/bnh</code> folder.
 
 ## Running the code
 In order to run the regularity code on any selected problem, there are two ways to do that. If you want to perform an upper-level search, do the following:

@@ -1,1 +1,1 @@
-python3 -m regemo.algorithm.regularity_driver --problem_name bnh
+python3 -m regemo.algorithm.regularity_search --problem_name bnh

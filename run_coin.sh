@@ -1,5 +1,5 @@
-#python3 -m regemo.algorithm.regularity_driver_nsga2 --problem_name bnh
-#python3 -m regemo.algorithm.regularity_driver_nsga2 --problem_name c2dtlz2
+python3 -m regemo.algorithm.regularity_driver_nsga2 --problem_name bnh
+python3 -m regemo.algorithm.regularity_driver_nsga2 --problem_name c2dtlz2
 python3 -m regemo.algorithm.regularity_driver_nsga2 --problem_name dtlz2
 python3 -m regemo.algorithm.regularity_driver_nsga2 --problem_name osy
 python3 -m regemo.algorithm.regularity_driver_nsga2 --problem_name zdt_mod_2d

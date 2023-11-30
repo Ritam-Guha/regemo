@@ -108,8 +108,12 @@ def run_regularity_driver(problem_name):
     # collect arguments for the problem
     parser = argparse.ArgumentParser()
     parser.add_argument("--problem_name", default="c2dtlz2", help="Name of the problem")
+    parser.add_argument("--pop_size", default=20, type=int, help="Name of the problem")
+    parser.add_argument("--n_eval", default=200, type=int, help="Name of the problem")
     args = parser.parse_args()
     problem_name = args.problem_name
+    n_eval = args.n_eval
+    pop_size = args.pop_size
     root_dir = "results/upper_level_search"
     create_dir(root_dir)
     start_time = time.time()
@@ -146,10 +150,10 @@ def run_regularity_driver(problem_name):
         # define EMO algorithm
         problem = RegEMOUpperLevelSearchProblem(problem_config=problem_config,
                                                 algorithm_config=algorithm_config)
-        algorithm = MixedVariableGA(pop_size=20, survival=RankAndCrowdingSurvival())
+        algorithm = MixedVariableGA(pop_size=pop_size, survival=RankAndCrowdingSurvival())
         res = minimize(problem,
                        algorithm,
-                       ('n_eval', 200),
+                       ('n_eval', n_eval),
                        seed=config.seed,
                        callback=MyCallback(),
                        verbose=True,

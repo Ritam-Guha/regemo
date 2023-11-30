@@ -529,7 +529,7 @@ def main():
                                                   "non_fixed_dependency_percent"],
                                               save_img=True,
                                               result_storage=f"{res_storage_dir}",
-                                              verbose=False)
+                                              verbose=True)
 
         # run the search object
         regularity_search.run()

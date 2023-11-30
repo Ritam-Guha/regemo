@@ -22,7 +22,6 @@ import argparse
 import copy
 import os
 import sys
-from hdbscan.hdbscan_ import HDBSCAN
 from pymoo.visualization.pcp import PCP
 
 import matplotlib.pyplot as plt
@@ -442,94 +441,6 @@ class Regularity_Search:
 
         if self.save_img:
             fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/clustering_pareto_front.pdf", format="pdf")
-
-        if self.verbose:
-            plt.show()
-
-        return clusters
-
-    def cluster_pf(self, pf_res, user_hdbscan_args, clustering_criterion="X"):
-        # function to cluster the pareto front solutions
-
-        # initialize the clusters
-        clusters = []
-
-        if clustering_criterion == "X":
-            pf = pf_res["X"]
-        else:
-            pf = pf_res["F"]
-
-        # normalize the embedded pf
-        norm_pf = normalize(pf, axis=0, norm="max")
-
-        # get the default parameters of HDBSCAN and populate it with user_defined parameters
-        dict_hdbscan_args = get_default_args(HDBSCAN)
-        for k in user_hdbscan_args.keys():
-            dict_hdbscan_args[k] = user_hdbscan_args[k]
-
-        # get the labels from hdbscan
-        labels = HDBSCAN(min_cluster_size=dict_hdbscan_args["min_cluster_size"], min_samples=dict_hdbscan_args[
-            "min_samples"], cluster_selection_epsilon=dict_hdbscan_args["cluster_selection_epsilon"]).fit_predict(
-            norm_pf)
-
-        # put all the outliers to a different cluster
-        n_clusters = len(set(labels))
-        n_clusters = n_clusters - 1 if -1 in labels else n_clusters
-
-        # plot the clustering output
-        colors = cm.rainbow(np.linspace(0, 1, n_clusters))
-        fig = plt.figure(figsize=(15, 8))
-
-        # define the plotting axes
-        pf_F = pf_res["F"]
-
-        if pf_F.shape[1] > 3:
-            pca = PCA(n_components=2)
-            embedded_pf_F = pca.fit_transform(pf_F)
-            ax = plt.axes()
-
-        elif pf_F.shape[1] == 3:
-            ax = plt.axes(projection="3d")
-
-        elif pf_F.shape[1] == 2:
-            ax = plt.axes()
-
-        else:
-            ax = None
-
-        if ax:
-            # if self.visualization_angle is not None:
-            #     ax.view_init(*self.visualization_angle)
-
-            # generate a scatter plot for the clusters
-            for c, i in zip(colors, set(labels)):
-                if i != -1:
-                    if pf_F.shape[1] == 3:
-                        ax.scatter3D(pf_res["F"][labels == i, 0], pf_res["F"][labels == i, 1],
-                                     pf_res["F"][labels == i, 2],
-                                     color=c,
-                                     label="Cluster " + str(i + 1))
-
-                    elif pf_F.shape[1] == 2:
-                        ax.scatter(pf_res["F"][labels == i, 0], pf_res["F"][labels == i, 1], color=c,
-                                   label="Cluster " + str(i + 1))
-
-            plt.legend()
-            # plt.title(f"Clustering on {clustering_criterion} space")
-
-        else:
-            print("Does not work for less than 2 objectives")
-            plt.show()
-
-        # append the clusters one after another
-        for i in range(n_clusters):
-            cur_cluster_X = pf_res["X"][labels == i, :]
-            cur_cluster_F = pf_res["F"][labels == i, :]
-
-            clusters.append({"X": cur_cluster_X, "F": cur_cluster_F})
-
-        if self.save_img:
-            fig.savefig(f"{config.BASE_PATH}/{self.result_storage}/efficient_front_clustering.pdf", format="pdf")
 
         if self.verbose:
             plt.show()

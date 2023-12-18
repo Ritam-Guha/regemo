@@ -32,6 +32,9 @@ import pickle
 import subprocess
 import pandas as pd
 # from pdflatex import PDFLaTeX
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 # plt.rcParams.update({'font.size': 10})
@@ -75,7 +78,8 @@ class Regularity_Search:
                  save=True,
                  result_storage=None,
                  verbose=True,
-                 seed=0):
+                 seed=0,
+                 n_processors=1):
         """
         :param problem_args: parameters for the problem
         :param delta: threshold for identifying fixed variables
@@ -121,6 +125,7 @@ class Regularity_Search:
         self.visualization_angle = self.problem_args["visualization_angle"]
         self.ideal_point = None
         self.nadir_point = None
+        self.n_processors = n_processors
 
         # final objectives
         self.hv = None
@@ -185,7 +190,8 @@ class Regularity_Search:
                                                    result_storage=self.result_storage,
                                                    verbose=self.verbose,
                                                    n_rand_bins=self.n_rand_bins,
-                                                   delta=self.delta)
+                                                   delta=self.delta,
+                                                   n_processors=self.n_processors)
 
         regularity_enforcement.run()    # run the regularity enforcement
         self.final_metrics["complexity"] += regularity_enforcement.regularity.calc_process_complexity()
@@ -339,8 +345,6 @@ class Regularity_Search:
                               ref_dirs=NSGA_settings["ref_dirs"],
                               seed=self.seed,
                               eliminate_duplicate=True,
-                              ideal_point=NSGA_settings["ideal_point"],
-                              nadir_point=NSGA_settings["nadir_point"],
                               verbose=self.verbose)
 
         else:
@@ -471,11 +475,9 @@ def main(problem_name="scalable_truss_19",
         regularity_search = Regularity_Search(problem_args=problem_config,
                                               seed=seed,
                                               NSGA_settings=algorithm_config["NSGA_settings"],
-                                              non_fixed_regularity_coefficient_factor=1e-10,
                                               precision=10,
                                               n_rand_bins=5,
                                               delta=0.001,
-                                              non_fixed_dependency_percent=4,
                                               non_fixed_regularity_degree=2,
                                               save=True,
                                               result_storage=f"{res_storage_dir}",

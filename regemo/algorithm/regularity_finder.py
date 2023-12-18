@@ -33,6 +33,9 @@ from numpy import dot
 from numpy.linalg import norm
 import multiprocessing
 from functools import partial
+import warnings
+
+warnings.filterwarnings("ignore")
 
 plt.rcParams.update({'font.size': 15})
 
@@ -56,7 +59,8 @@ class Regularity_Finder:
                  save=True,
                  result_storage="/.",
                  verbose=True,
-                 seed=0):
+                 seed=0,
+                 n_processors=1):
         """
         :param X: original PO solutions in X-space
         :param F: original PO solution in F-space
@@ -86,6 +90,7 @@ class Regularity_Finder:
         self.delta = delta
         self.non_fixed_regularity_degree = non_fixed_regularity_degree
         self.NSGA_settings = NSGA_settings
+        self.n_processors = n_processors
 
         # get the problem utilities
         self.problem = get_problem(self.problem_name, problem_args)
@@ -494,6 +499,7 @@ class Regularity_Finder:
 
                 # Do a final check to see if there is any non-fixed variable which is unused
                 # in the equations. Those variables are called orphan variables
+
                 if self.non_fixed_dependent_vars:
                     temp_coefficient_list = np.array(self.non_fixed_reg_coefficient_list[:, 0:-1])
                     unused_dep_idx, unused_indep_idx = self._identify_unused_vars(temp_coefficient_list)
@@ -651,8 +657,7 @@ class Regularity_Finder:
             x = x_updated
 
         # parallelize the regression fitting
-        num_cores = 40
-        pool = multiprocessing.Pool(processes=num_cores)
+        pool = multiprocessing.Pool(processes=self.n_processors)
         mod_parallel_regression_fitting = partial(self._parallel_regression_fitting,
                                                   self.X,
                                                   self.non_fixed_regularity_coefficient_factor,
@@ -813,7 +818,7 @@ class Regularity_Finder:
         # rerun NSGA2
         new_res = self.run_NSGA(new_problem, new_NSGA_settings)
 
-        if new_res.X is not None:
+        if new_res.X is not None and new_res.X.shape[0] > 1:
             I = NonDominatedSorting().do(new_res.F)
             new_res.X = new_res.X[I[0], :]
             new_res.F = new_res.F[I[0], :]

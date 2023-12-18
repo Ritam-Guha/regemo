@@ -11,7 +11,7 @@ def evaluate(X,
     :param constr: whether constraints are needed
     :return: evaluation metrics
     """
-    # all the four variables must be inverger values
+    # all the four variables must be integer values
     x1 = np.round(X[:, 0])
     x2 = np.round(X[:, 1])
     x3 = np.round(X[:, 2])

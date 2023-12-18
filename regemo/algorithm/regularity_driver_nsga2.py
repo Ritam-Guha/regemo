@@ -25,6 +25,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
 import time
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 def get_unique_indices(F):
@@ -38,10 +41,11 @@ class RegEMOUpperLevelSearchProblem(ElementwiseProblem):
         self.problem_config = kwargs["problem_config"]
         self.algorithm_config = kwargs["algorithm_config"]
         self.algorithm_config["NSGA_settings"]["n_eval"] = 5000
+        self.n_processors = kwargs["n_processors"]
 
         vars = {
                 "num_non_fixed_independent_vars": Integer(bounds=(1, min(10, self.problem_config["dim"]-1))),
-                "non_fixed_regularity_degree": Integer(bounds=(1, 10)),
+                "non_fixed_regularity_degree": Integer(bounds=(3, 10)),
                 "delta": Real(bounds=(1e-2, 0.5)),
                 "n_rand_bins": Integer(bounds=(5, 10)),
                 "precision": Integer(bounds=(2, 5))
@@ -60,7 +64,8 @@ class RegEMOUpperLevelSearchProblem(ElementwiseProblem):
                                               non_fixed_regularity_degree=X["non_fixed_regularity_degree"],
                                               num_non_fixed_independent_vars=X["num_non_fixed_independent_vars"],
                                               save=False,
-                                              verbose=False)
+                                              verbose=False,
+                                              n_processors=self.n_processors)
 
         # run the search object
         f1, f2 = regularity_search.run()
@@ -107,13 +112,15 @@ def convert_pf_regularity_to_pd(param_comb):
 def run_regularity_driver(problem_name):
     # collect arguments for the problem
     parser = argparse.ArgumentParser()
-    parser.add_argument("--problem_name", default="c2dtlz2", help="Name of the problem")
-    parser.add_argument("--pop_size", default=20, type=int, help="Name of the problem")
-    parser.add_argument("--n_eval", default=200, type=int, help="Name of the problem")
+    parser.add_argument("--problem_name", default=problem_name, help="Name of the problem")
+    parser.add_argument("--pop_size", default=20, type=int, help="Population size")
+    parser.add_argument("--n_eval", default=200, type=int, help="Max number of evaluations")
+    parser.add_argument("--n_processors", default=30, type=int, help="Number of processors")
     args = parser.parse_args()
     problem_name = args.problem_name
     n_eval = args.n_eval
     pop_size = args.pop_size
+    n_processors = args.n_processors
     root_dir = "results/upper_level_search"
     create_dir(root_dir)
     start_time = time.time()
@@ -146,10 +153,14 @@ def run_regularity_driver(problem_name):
                 algorithm_config = pickle.load(open(f"{algorithm_config_storage_dir}/{problem_name}.pickle", "rb"))
 
         problem_config["problem_name"] = problem_name
+        print("=================================================")
+        print(f"              {problem_name}                    ")
+        print("=================================================")
 
         # define EMO algorithm
         problem = RegEMOUpperLevelSearchProblem(problem_config=problem_config,
-                                                algorithm_config=algorithm_config)
+                                                algorithm_config=algorithm_config,
+                                                n_processors=n_processors)
         algorithm = MixedVariableGA(pop_size=pop_size, survival=RankAndCrowdingSurvival())
         res = minimize(problem,
                        algorithm,
@@ -217,6 +228,8 @@ def run_regularity_driver(problem_name):
                                                   save=True,
                                                   result_storage=cur_dir,
                                                   verbose=False)
+
+            pickle.dump(x, open(f"{config.BASE_PATH}/{cur_dir}/parameter_config.pickle", "wb"))
             regularity_search.run()
 
         # save the interactive pf config
@@ -234,4 +247,4 @@ def run_regularity_driver(problem_name):
 
 
 if __name__ == "__main__":
-    run_regularity_driver(problem_name="BNH")
+    run_regularity_driver(problem_name="conceptual_marine_design")

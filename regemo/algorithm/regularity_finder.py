@@ -18,7 +18,7 @@ from pymoo.indicators.igd_plus import IGDPlus
 from pymoo.indicators.hv import HV
 from pymoo.termination import get_termination
 
-from sklearn.linear_model import Ridge as linreg
+from sklearn.linear_model import LinearRegression as linreg
 
 import copy
 import sys
@@ -768,7 +768,7 @@ class Regularity_Finder:
         # use the same problem setting to run NSGA2 another time to handle cv
         new_problem_args = copy.deepcopy(self.problem_args)
         new_NSGA_settings = copy.deepcopy(self.NSGA_settings)
-        new_NSGA_settings["n_eval"] = np.int64(np.ceil((len(self.non_fixed_independent_vars)/self.problem_args["dim"]) * self.NSGA_settings["n_eval"]))
+        # new_NSGA_settings["n_eval"] = np.int64(np.ceil((len(self.non_fixed_independent_vars)/self.problem_args["dim"]) * self.NSGA_settings["n_eval"]))
 
         # formulate the new shorter problem
         # dim of the new problem is the number of non-fixed independent and non-fixed orphan variables

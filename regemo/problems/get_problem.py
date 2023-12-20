@@ -56,7 +56,9 @@ problems = ["four_bar_truss_design",
             "welded_beam_design",
             "zdt_mod_2d",
             "zdt_mod_3d",
-            "tnk"]
+            "tnk",
+            "scalable_truss_19",
+            "scalable_truss_39"]
 
 evaluation_mapper = {
     "bnh": bnh.evaluate,

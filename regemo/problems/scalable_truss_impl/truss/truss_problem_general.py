@@ -5,8 +5,8 @@ import time
 import numpy as np
 from pymoo.core.problem import Problem
 
-from .fea.run_fea import run_fea
-from .generate_truss import gen_truss
+from regemo.problems.scalable_truss_impl.truss.fea.run_fea import run_fea
+from regemo.problems.scalable_truss_impl.truss.generate_truss import gen_truss
 # from innovization.legacy.graph_matrix_innovization import GraphMatrixInnovization
 
 logger = logging.getLogger(__name__)
@@ -411,3 +411,7 @@ class TrussProblemGeneral(Problem):
             out['x0_new'] = np.array([r[6] for r in results])
             out['coordinates'] = np.array([r[7] for r in results])
             out['connectivity'] = np.array([r[8] for r in results])
+
+
+if __name__ == "__main__":
+    problem = TrussProblemGeneral(n_shape_var=39)

@@ -432,7 +432,7 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="scalable_truss_19",
+def main(problem_name="scalable_truss_39",
          **kwargs):
     # collect arguments for the problem
     seed = config.seed
@@ -477,11 +477,13 @@ def main(problem_name="scalable_truss_19",
                                               NSGA_settings=algorithm_config["NSGA_settings"],
                                               precision=10,
                                               n_rand_bins=5,
-                                              delta=0.001,
+                                              delta=0.5,
                                               non_fixed_regularity_degree=2,
+                                              num_non_fixed_independent_vars=2,
                                               save=True,
                                               result_storage=f"{res_storage_dir}",
-                                              verbose=True)
+                                              verbose=True,
+                                              n_processors=4)
 
         # run the search object
         regularity_search.run()

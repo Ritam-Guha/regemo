@@ -18,7 +18,11 @@ def evaluate(X,
                                         symmetry=())
     out = {}
 
-    problem_class._evaluate(X, out)
+    try:
+        problem_class._evaluate(X, out)
+    except:
+        print(X)
+
     F = out["F"]
     if "G" in list(out.keys()):
         G = out["G"]

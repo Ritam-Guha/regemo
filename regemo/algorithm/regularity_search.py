@@ -248,7 +248,7 @@ class Regularity_Search:
                 plt.close()
 
         # plot the original and regular front
-            plot = Scatter(labels="F", legend=False, angle=self.visualization_angle, tight_layout=True, fontsize=5)
+            plot = Scatter(labels="F", legend=True, angle=self.visualization_angle, tight_layout=True, fontsize=5)
             plot = plot.add(self.orig_F, color="blue", marker="o", s=60, alpha=0.2, label="Original PO Front")
             if self.regular_F is not None:
                 plot = plot.add(self.regular_F, color="red", marker="*", s=50, alpha=0.6, label="Regular Front")
@@ -272,8 +272,8 @@ class Regularity_Search:
                     # [NOTE] plot high-dimensional points
                     plot = Radviz(legend=(True, {'loc': "upper left", 'bbox_to_anchor': (-0.1, 1.08, 0, 0)}))
                     plot.set_axis_style(color="black", alpha=1.0)
-                    plot.add(self.orig_F, color="blue", s=40, label="Original PF")
-                    plot.add(self.regular_F, color="red", s=40, marker="*", label="Regular PF")
+                    plot.add(self.orig_F, color="blue", s=40, label="Original PO Front")
+                    plot.add(self.regular_F, color="red", s=40, marker="*", label="Regular Front")
                     plot.show()
 
                 if fig:
@@ -432,7 +432,7 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="scalable_truss_39",
+def main(problem_name="bnh",
          **kwargs):
     # collect arguments for the problem
     seed = config.seed
@@ -479,7 +479,7 @@ def main(problem_name="scalable_truss_39",
                                               n_rand_bins=5,
                                               delta=0.5,
                                               non_fixed_regularity_degree=2,
-                                              num_non_fixed_independent_vars=2,
+                                              num_non_fixed_independent_vars=1,
                                               save=True,
                                               result_storage=f"{res_storage_dir}",
                                               verbose=True,

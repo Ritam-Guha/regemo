@@ -40,7 +40,7 @@ class RegEMOUpperLevelSearchProblem(ElementwiseProblem):
     def __init__(self, **kwargs):
         self.problem_config = kwargs["problem_config"]
         self.algorithm_config = kwargs["algorithm_config"]
-        self.algorithm_config["NSGA_settings"]["n_eval"] = 5000
+        self.algorithm_config["NSGA_settings"]["n_eval"] = 6000
         self.n_processors = kwargs["n_processors"]
 
         vars = {
@@ -216,7 +216,7 @@ def run_regularity_driver(problem_name):
             create_dir(cur_dir, delete=True)
 
             # create a search object
-            algorithm_config["NSGA_settings"]["n_eval"] = 5000
+            algorithm_config["NSGA_settings"]["n_eval"] = 6000
             regularity_search = Regularity_Search(problem_args=problem_config,
                                                   seed=config.seed,
                                                   NSGA_settings=algorithm_config["NSGA_settings"],

@@ -250,8 +250,23 @@ class Regularity():
             if const_list:
                 self.print("\\codeline{\\codedef{Fixed Variables}:}")
                 for i, idx in enumerate(const_list):
-                    self.print("\\codeline{\\codetab $x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + "$}")
+                    if len(const_list) == 1:
+                        self.print("\\codeline{\\codetab $", end="")
+                        self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + "$}")
 
+                    elif i % 4 == 0:
+                        self.print("\\codeline{\\codetab $", end="")
+                        if i == len(const_list) - 1:
+                            self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + "$}")
+                        else:
+                            self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + ", ", end="")
+                    else:
+                        if i == len(const_list) - 1:
+                            self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + "$}")
+                        elif (i + 1) % 4 == 0:
+                            self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + ",$}")
+                        else:
+                            self.print("x_{" + str(idx + 1) + "} = " + str(self.fixed_vals[i]) + ", ", end="")
         else:
             self.print("\\codeline{\\codedef{Fixed Variables}: None}")
 
@@ -279,21 +294,34 @@ class Regularity():
 
             if self.non_fixed_dependent_vars:
                 self.print("\\codeline{\\codedef{Non-fixed Dependent Variables}:}")
+
                 for i, dep_idx in enumerate(self.non_fixed_dependent_vars):
                     self.print("\\codeline{\\codetab $x_{" + str(dep_idx + 1) + "} = ", end="")
-                    for idx, indep_idx in enumerate(self.non_fixed_independent_vars):
-                        if self.non_fixed_reg_coefficient_list[i][idx] != 0:
-                            self.print(
-                                "(" + str({self.non_fixed_reg_coefficient_list[i][idx]}) + "x_{" + str(
-                                    indep_idx + 1) + "}) + ", end="")
-                    self.print(str(self.non_fixed_reg_coefficient_list[i][-1]) + "$}")
+                    for j, list_degree in enumerate(self.non_fixed_degree_list):
+                        if self.non_fixed_reg_coefficient_list[i][j] != 0:
+                            if j > 0:
+                                self.print(" + " if self.non_fixed_reg_coefficient_list[i][j] > 0 else
+                                           " - ", end="")
+                            else:
+                                self.print("" if self.non_fixed_reg_coefficient_list[i][j] > 0 else
+                                           " - ", end="")
+                            self.print(abs(self.non_fixed_reg_coefficient_list[i][j]), end="")
+                            for idx, degree in enumerate(list_degree):
+                                if degree != 0:
+                                    degree_str = str(degree) if degree > 1 else ""
+                                    self.print(
+                                        "x_{" + str(self.non_fixed_independent_vars[idx] + 1) + "}^{" + degree_str +
+                                        "}", end="")
+
+                    self.print(" + " if self.non_fixed_reg_coefficient_list[i][-1] > 0 else " - ", end="")
+                    self.print(str(abs(self.non_fixed_reg_coefficient_list[i][-1])) + "$}")
                 # for idx in self.non_fixed_dependent_vars[:-1]:
                 #     self.print("x_{" + str(idx + 1) + "}, \ ", end="")
                 # self.print("x_{" + str(self.non_fixed_dependent_vars[-1] + 1) + "}$")
             else:
                 self.print("\\codeline{\\codedef{Non-fixed Dependent Variables}: None}")
 
-        self.print("\\end{code}")
+        self.print("\\end{code}\n\\end{document}")
 
         # if self.non_fixed_independent_vars:
         #     for var in self.non_fixed_independent_vars + self.non_fixed_orphan_vars:

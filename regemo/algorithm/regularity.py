@@ -321,7 +321,7 @@ class Regularity():
             else:
                 self.print("\\codeline{\\codedef{Non-fixed Dependent Variables}: None}")
 
-        self.print("\\end{code}\n\\end{document}")
+        self.print("\\end{code}\n")
 
         # if self.non_fixed_independent_vars:
         #     for var in self.non_fixed_independent_vars + self.non_fixed_orphan_vars:

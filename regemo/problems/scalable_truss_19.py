@@ -12,18 +12,15 @@ def evaluate(X,
     :return: evaluation metrics
     """
     problem_class = TrussProblemGeneral(n_shape_var=19,
-                                        n_cores=4,
+                                        n_cores=10,
                                         repair_inequality=False,
                                         repair_power=False,
                                         symmetry=())
     out = {}
 
-    try:
-        problem_class._evaluate(X, out)
-    except:
-        print(X)
-
+    problem_class._evaluate(X, out)
     F = out["F"]
+
     if "G" in list(out.keys()):
         G = out["G"]
 

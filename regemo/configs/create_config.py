@@ -54,7 +54,7 @@ def create_config(problem_name,
 
         problem_config = {
             "name": problem_name,
-            "dim": 579,
+            "dim": kwargs["n_size_var"] + kwargs["n_shape_var"],
             "n_obj": 2,
             "n_constr": 2,
             "visualization_angle": (45, 45),
@@ -78,7 +78,7 @@ def create_config(problem_name,
             problem_config["ub"] = xu
 
         NSGA_settings = {"pop_size": 200, "n_offsprings": 30, "sbx_prob": 1, "sbx_eta": 20, "mut_eta": 20,
-                         "n_eval": 40000,
+                         "n_eval": 20000,
                          "ref_dirs": get_reference_directions("das-dennis", problem_config["n_obj"], n_partitions=12)}
 
         algorithm_config["NSGA_settings"] = NSGA_settings
@@ -104,9 +104,9 @@ def create_config(problem_name,
 
 
 if __name__ == "__main__":
-    create_config(problem_name="scalable_truss_39",
-                  n_size_var=540,
-                  n_shape_var=39,
+    create_config(problem_name="scalable_truss_59",
+                  n_size_var=820,
+                  n_shape_var=59,
                   shape_var_mode="l",
                   lmin=0.5,
                   lmax=29)

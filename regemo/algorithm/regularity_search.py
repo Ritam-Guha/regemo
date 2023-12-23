@@ -432,7 +432,7 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="bnh",
+def main(problem_name="scalable_truss_19",
          **kwargs):
     # collect arguments for the problem
     seed = config.seed

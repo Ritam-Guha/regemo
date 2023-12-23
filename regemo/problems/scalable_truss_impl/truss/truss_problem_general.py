@@ -414,4 +414,7 @@ class TrussProblemGeneral(Problem):
 
 
 if __name__ == "__main__":
-    problem = TrussProblemGeneral(n_shape_var=39)
+    problem = TrussProblemGeneral(n_shape_var=59,
+                                  repair_inequality=False,
+                                  repair_power=False,
+                                  symmetry=())

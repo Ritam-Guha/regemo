@@ -143,7 +143,7 @@ def runner(problem_name="bnh"):
 
 
 def main():
-    runner(problem_name="disk_brake_design")
+    runner(problem_name="two_member_truss")
 
 
 if __name__ == "__main__":

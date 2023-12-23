@@ -1,3 +1,5 @@
+import os.path
+
 import regemo.config as config
 from regemo.utils.path_utils import create_dir
 
@@ -89,7 +91,18 @@ def perform_decision_making(pf,
         pf = pf[valid_points, :]
         idx_list = idx_list[valid_points]
         highest_trade_off_pt = trade_off_point_estimation(pf=pf)
-        return idx_list[highest_trade_off_pt]
+        selected_idx = idx_list[highest_trade_off_pt]
+
+        # plot the Pareto front
+        # fig, ax = plt.subplots(figsize=(8, 5))
+        # ax.scatter(pf[:, 0], pf[:, 1], s=40, edgecolor="black", label="RegEM(a)O NDTP")
+        # ax.scatter(pf[selected_idx, 0], pf[selected_idx, 1], s=40, c="red", edgecolor="black",
+        #            label="DM Selection")
+        # ax.set_xlabel("Complexity", fontsize=14)
+        # ax.set_ylabel("$\Delta$HV (in %)", fontsize=14)
+        # ax.grid(alpha=0.3)
+        # ax.legend(loc="upper right")
+        return selected_idx
 
 
 def runner(problem_name="bnh"):
@@ -108,7 +121,8 @@ def runner(problem_name="bnh"):
     fig.show()
 
     # decision-making
-    shutil.rmtree(f"{upper_level_search_path}/selected_comb")
+    if os.path.isdir(f"{upper_level_search_path}/selected_comb"):
+        shutil.rmtree(f"{upper_level_search_path}/selected_comb")
     selected_idx = perform_decision_making(pf=upper_level_pf)
     # create_dir(f"{upper_level_search_path.replace(config.BASE_PATH, '')}/selected_comb")
     shutil.copytree(f"{upper_level_search_path}/param_comb_{selected_idx+1}",
@@ -129,7 +143,7 @@ def runner(problem_name="bnh"):
 
 
 def main():
-    runner(problem_name="bnh")
+    runner(problem_name="disk_brake_design")
 
 
 if __name__ == "__main__":

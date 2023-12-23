@@ -64,7 +64,7 @@ class RegEMOUpperLevelSearchProblem(ElementwiseProblem):
                                               non_fixed_regularity_degree=X["non_fixed_regularity_degree"],
                                               num_non_fixed_independent_vars=X["num_non_fixed_independent_vars"],
                                               save=False,
-                                              verbose=False,
+                                              verbose=True,
                                               n_processors=self.n_processors)
 
         # run the search object
@@ -115,7 +115,7 @@ def run_regularity_driver(problem_name):
     parser.add_argument("--problem_name", default=problem_name, help="Name of the problem")
     parser.add_argument("--pop_size", default=20, type=int, help="Population size")
     parser.add_argument("--n_eval", default=200, type=int, help="Max number of evaluations")
-    parser.add_argument("--n_processors", default=30, type=int, help="Number of processors")
+    parser.add_argument("--n_processors", default=4, type=int, help="Number of processors")
     args = parser.parse_args()
     problem_name = args.problem_name
     n_eval = args.n_eval
@@ -247,4 +247,4 @@ def run_regularity_driver(problem_name):
 
 
 if __name__ == "__main__":
-    run_regularity_driver(problem_name="conceptual_marine_design")
+    run_regularity_driver(problem_name="two_member_truss")

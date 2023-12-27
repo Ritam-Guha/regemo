@@ -44,7 +44,7 @@ class RegEMOUpperLevelSearchProblem(ElementwiseProblem):
         self.n_processors = kwargs["n_processors"]
 
         vars = {
-                "num_non_fixed_independent_vars": Integer(bounds=(1, min(10, self.problem_config["dim"]-1))),
+                "num_non_fixed_independent_vars": Integer(bounds=(1, min(5, self.problem_config["dim"]-1))),
                 "non_fixed_regularity_degree": Integer(bounds=(1, 10)),
                 "delta": Real(bounds=(1e-2, 0.5)),
                 "n_rand_bins": Integer(bounds=(5, 10)),

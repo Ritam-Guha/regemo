@@ -1,3 +1,4 @@
+# multi-objective
 from regemo.problems import bnh
 from regemo.problems import c2dtlz2
 from regemo.problems import crashworthiness
@@ -9,7 +10,6 @@ from regemo.problems import osy
 from regemo.problems import srn
 from regemo.problems import two_member_truss
 from regemo.problems import welded_beam_design
-from regemo.problems import water
 from regemo.problems import gaa
 from regemo.problems import four_bar_truss_design 
 from regemo.problems import reinforced_concrete_beam_design
@@ -27,6 +27,11 @@ from regemo.problems import zdt_mod_2d
 from regemo.problems import zdt_mod_3d
 from regemo.problems import tnk
 from regemo.problems import scalable_truss_19, scalable_truss_39, scalable_truss_59
+
+# many-objective
+from regemo.problems import water
+from regemo.problems import lpms
+from regemo.problems import machining
 
 
 from pymoo.core.problem import Problem
@@ -58,7 +63,9 @@ problems = ["four_bar_truss_design",
             "zdt_mod_3d",
             "tnk",
             "scalable_truss_19",
-            "scalable_truss_39"]
+            "scalable_truss_39",
+            "lpms",
+            "machining"]
 
 evaluation_mapper = {
     "bnh": bnh.evaluate,
@@ -91,7 +98,9 @@ evaluation_mapper = {
     "tnk": tnk.evaluate,
     "scalable_truss_19": scalable_truss_19.evaluate,
     "scalable_truss_39": scalable_truss_39.evaluate,
-    "scalable_truss_59": scalable_truss_59.evaluate
+    "scalable_truss_59": scalable_truss_59.evaluate,
+    "lpms": lpms.evaluate,
+    "machining": machining.evaluate
 }
 
 

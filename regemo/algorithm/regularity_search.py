@@ -34,6 +34,8 @@ import pandas as pd
 # from pdflatex import PDFLaTeX
 import warnings
 
+from yellowbrick.features import RadViz as RadVizYellow
+
 warnings.filterwarnings("ignore")
 
 
@@ -276,6 +278,21 @@ class Regularity_Search:
                     plot.add(self.regular_F, color="red", s=40, marker="*", label="Regular Front")
                     plot.show()
 
+                    original_df = pd.DataFrame(self.orig_F, columns=[f"$f_{i+1}$" for i in range(self.problem_args[
+                                                                                                     "n_obj"])])
+                    regular_df = pd.DataFrame(self.regular_F, columns=[f"$f_{i + 1}$" for i in range(self.problem_args[
+                                                                                                       "n_obj"])])
+                    X = pd.concat((original_df, regular_df))
+                    y = np.zeros(original_df.shape[0] + regular_df.shape[0])
+                    y[original_df.shape[0]:] = 1
+                    classes = ["Original PO Front", "Regular Front"]
+                    visualizer = RadVizYellow(classes=classes, colors=["blue", "red"], grid=False)
+                    visualizer.fit(X, y)  # Fit the data to the visualizer
+                    visualizer.transform(X)  # Transform the data
+                    plt.savefig(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.png", dpi=200)
+                    visualizer.show()  # Finalize and render the figure
+
+
                 if fig:
                     pio.write_html(fig, file=f'{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.html')
                 plot.save(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.pdf", format="pdf", dpi=200)
@@ -432,7 +449,7 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="scalable_truss_19",
+def main(problem_name="water",
          **kwargs):
     # collect arguments for the problem
     seed = config.seed

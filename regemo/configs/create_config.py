@@ -7,7 +7,7 @@ from regemo.problems.get_problem import problems
 import os
 import sys
 import pickle
-from pymoo.factory import get_reference_directions
+from pymoo.util.ref_dirs import get_reference_directions
 
 # problems = ["car_side_impact", "conceptual_marine_design", "rocket_injector_design", "dtlz5"]
 problems = ["crashworthiness"]
@@ -51,17 +51,10 @@ def create_config(problem_name,
             algorithm_config["non_fixed_regularity_degree"] = non_fixed_regularity_degree
             problem_config["visualization_angle"] = (34, 29)
     else:
-
-        problem_config = {
-            "name": problem_name,
-            "dim": kwargs["n_size_var"] + kwargs["n_shape_var"],
-            "n_obj": 2,
-            "n_constr": 2,
-            "visualization_angle": (45, 45),
-        }
-
         if "scalable_truss" in problem_name:
-            problem_config["dim"] = kwargs["n_size_var"] + kwargs["n_shape_var"]
+            problem_config = {"name": problem_name, "dim": kwargs["n_size_var"] + kwargs["n_shape_var"], "n_obj": 2,
+                              "n_constr": 2, "visualization_angle": (45, 45)}
+
             if kwargs["shape_var_mode"] == 'z':
                 # Represent truss shape by varying the z coordinates
                 xl = np.concatenate((0.005 * np.ones(kwargs["n_size_var"]), kwargs["zmin"] * np.ones(
@@ -76,10 +69,15 @@ def create_config(problem_name,
                                                                                                          "n_shape_var"])))
             problem_config["lb"] = xl
             problem_config["ub"] = xu
+        else:
+            problem_config = {"name": problem_name, "dim": 3, "n_obj": 4,
+                              "n_constr": 3, "lb": [6.4, 0.69, 3.91], "ub": [7.09, 2.89, 4.61], "visualization_angle":
+                                  (45, 45)}
 
-        NSGA_settings = {"pop_size": 200, "n_offsprings": 30, "sbx_prob": 1, "sbx_eta": 20, "mut_eta": 20,
-                         "n_eval": 20000,
-                         "ref_dirs": get_reference_directions("das-dennis", problem_config["n_obj"], n_partitions=12)}
+        NSGA_settings = {"pop_size": 100, "n_offsprings": 30, "sbx_prob": 1, "sbx_eta": 20, "mut_eta": 20,
+                         "n_eval": 40000}
+        if problem_config["n_obj"] > 2:
+            NSGA_settings["ref_dirs"] = get_reference_directions("das-dennis", problem_config["n_obj"], n_partitions=12)
 
         algorithm_config["NSGA_settings"] = NSGA_settings
         algorithm_config["precision"] = 3
@@ -87,7 +85,6 @@ def create_config(problem_name,
         algorithm_config["delta"] = 0.5
         algorithm_config["non_fixed_regularity_degree"] = 2
         algorithm_config["num_non_fixed_independent_vars"] = 1
-        problem_config["visualization_angle"] = (34, 29)
 
     # store the algorithm and problem configurations
     if save_config:
@@ -104,11 +101,12 @@ def create_config(problem_name,
 
 
 if __name__ == "__main__":
-    create_config(problem_name="scalable_truss_59",
-                  n_size_var=820,
-                  n_shape_var=59,
-                  shape_var_mode="l",
-                  lmin=0.5,
-                  lmax=29)
+    # create_config(problem_name="scalable_truss_59",
+    #               n_size_var=820,
+    #               n_shape_var=59,
+    #               shape_var_mode="l",
+    #               lmin=0.5,
+    #               lmax=29)
+    create_config(problem_name="machining")
     # for problem in problems:
     #     create_config(problem)

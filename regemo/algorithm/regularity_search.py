@@ -272,12 +272,6 @@ class Regularity_Search:
                     fig = px.scatter_3d(front_df, x="F_0", y="F_1", z="F_2", color="type")
                 else:
                     # [NOTE] plot high-dimensional points
-                    plot = Radviz(legend=(True, {'loc': "upper left", 'bbox_to_anchor': (-0.1, 1.08, 0, 0)}))
-                    plot.set_axis_style(color="black", alpha=1.0)
-                    plot.add(self.orig_F, color="blue", s=40, label="Original PO Front")
-                    plot.add(self.regular_F, color="red", s=40, marker="*", label="Regular Front")
-                    plot.show()
-
                     original_df = pd.DataFrame(self.orig_F, columns=[f"$f_{i+1}$" for i in range(self.problem_args[
                                                                                                      "n_obj"])])
                     regular_df = pd.DataFrame(self.regular_F, columns=[f"$f_{i + 1}$" for i in range(self.problem_args[
@@ -291,7 +285,13 @@ class Regularity_Search:
                     visualizer.transform(X)  # Transform the data
                     plt.savefig(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.png", dpi=200)
                     visualizer.show()  # Finalize and render the figure
+                    plt.close("all")
 
+                    plot = Radviz(legend=(True, {'loc': "upper left", 'bbox_to_anchor': (-0.1, 1.08, 0, 0)}))
+                    plot.set_axis_style(color="black", alpha=1.0)
+                    plot.add(self.orig_F, color="blue", s=40, label="Original PO Front")
+                    plot.add(self.regular_F, color="red", s=40, marker="*", label="Regular Front")
+                    plot.show()
 
                 if fig:
                     pio.write_html(fig, file=f'{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.html')

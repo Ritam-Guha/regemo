@@ -272,6 +272,7 @@ class Regularity_Search:
                     fig = px.scatter_3d(front_df, x="F_0", y="F_1", z="F_2", color="type")
                 else:
                     # [NOTE] plot high-dimensional points
+                    plt.close("all")
                     original_df = pd.DataFrame(self.orig_F, columns=[f"$f_{i+1}$" for i in range(self.problem_args[
                                                                                                      "n_obj"])])
                     regular_df = pd.DataFrame(self.regular_F, columns=[f"$f_{i + 1}$" for i in range(self.problem_args[

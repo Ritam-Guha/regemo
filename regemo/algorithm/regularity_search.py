@@ -281,12 +281,11 @@ class Regularity_Search:
                     y = np.zeros(original_df.shape[0] + regular_df.shape[0])
                     y[original_df.shape[0]:] = 1
                     classes = ["Original PO Front", "Regular Front"]
-                    visualizer = RadVizYellow(classes=classes, colors=["blue", "red"], grid=False)
+                    visualizer = RadVizYellow(classes=classes, colors=["blue", "red"], title="")
                     visualizer.fit(X, y)  # Fit the data to the visualizer
                     visualizer.transform(X)  # Transform the data
-                    plt.savefig(f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.png", dpi=200)
-                    visualizer.show()  # Finalize and render the figure
-                    plt.close("all")
+                    visualizer.show(outpath=f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.png")
+                    # Finalize and render the figure
 
                     plot = Radviz(legend=(True, {'loc': "upper left", 'bbox_to_anchor': (-0.1, 1.08, 0, 0)}))
                     plot.set_axis_style(color="black", alpha=1.0)

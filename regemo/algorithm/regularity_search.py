@@ -273,18 +273,20 @@ class Regularity_Search:
                 else:
                     # [NOTE] plot high-dimensional points
                     plt.close("all")
-                    original_df = pd.DataFrame(self.orig_F, columns=[f"$f_{i+1}$" for i in range(self.problem_args[
+                    original_df = pd.DataFrame(self.orig_F, columns=[f"$F_{i+1}$" for i in range(self.problem_args[
                                                                                                      "n_obj"])])
-                    regular_df = pd.DataFrame(self.regular_F, columns=[f"$f_{i + 1}$" for i in range(self.problem_args[
+                    regular_df = pd.DataFrame(self.regular_F, columns=[f"$F_{i + 1}$" for i in range(self.problem_args[
                                                                                                        "n_obj"])])
                     X = pd.concat((original_df, regular_df))
                     y = np.zeros(original_df.shape[0] + regular_df.shape[0])
                     y[original_df.shape[0]:] = 1
                     classes = ["Original PO Front", "Regular Front"]
-                    visualizer = RadVizYellow(classes=classes, colors=["blue", "red"], title="")
+                    visualizer = RadVizYellow(classes=classes, colors=["blue", "red"])
                     visualizer.fit(X, y)  # Fit the data to the visualizer
                     visualizer.transform(X)  # Transform the data
-                    visualizer.show(outpath=f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts.png")
+                    for label in visualizer.ax.texts:
+                        label.set_size(12)
+                    visualizer.show(outpath=f"{config.BASE_PATH}/{self.result_storage}/final_efficient_fronts_yb.pdf")
                     # Finalize and render the figure
 
                     plot = Radviz(legend=(True, {'loc': "upper left", 'bbox_to_anchor': (-0.1, 1.08, 0, 0)}))

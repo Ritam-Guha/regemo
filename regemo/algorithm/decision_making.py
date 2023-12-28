@@ -143,7 +143,7 @@ def runner(problem_name="bnh"):
 
 
 def main():
-    runner(problem_name="two_member_truss")
+    runner(problem_name="machining")
 
 
 if __name__ == "__main__":

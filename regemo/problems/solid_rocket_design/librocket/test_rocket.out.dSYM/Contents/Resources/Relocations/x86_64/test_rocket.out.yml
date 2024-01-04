@@ -1,0 +1,265 @@
+---
+triple:          'x86_64-apple-darwin'
+binary-path:     test_rocket.out
+relocations:
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _objectivefunction, symObjAddr: 0x0, symBinAddr: 0x100001350, symSize: 0xB80 }
+  - { offsetInCU: 0x3F, offset: 0x3F, size: 0x8, addend: 0x0, symName: _Fitness, symObjAddr: 0x228A0, symBinAddr: 0x100018100, symSize: 0x0 }
+  - { offsetInCU: 0x5B, offset: 0x5B, size: 0x8, addend: 0x0, symName: _gen, symObjAddr: 0x228A8, symBinAddr: 0x100018108, symSize: 0x0 }
+  - { offsetInCU: 0x77, offset: 0x77, size: 0x8, addend: 0x0, symName: _RocketCylRadius, symObjAddr: 0xF240, symBinAddr: 0x100018000, symSize: 0x0 }
+  - { offsetInCU: 0x8C, offset: 0x8C, size: 0x8, addend: 0x0, symName: _PropellChoices, symObjAddr: 0xF250, symBinAddr: 0x100018010, symSize: 0x0 }
+  - { offsetInCU: 0xB4, offset: 0xB4, size: 0x8, addend: 0x0, symName: _MaxThrust, symObjAddr: 0xF2B0, symBinAddr: 0x100018070, symSize: 0x0 }
+  - { offsetInCU: 0xC9, offset: 0xC9, size: 0x8, addend: 0x0, symName: _MaxPressure, symObjAddr: 0xF2B8, symBinAddr: 0x100018078, symSize: 0x0 }
+  - { offsetInCU: 0xDE, offset: 0xDE, size: 0x8, addend: 0x0, symName: _MaxNumNewtonItr, symObjAddr: 0xF2C0, symBinAddr: 0x100018080, symSize: 0x0 }
+  - { offsetInCU: 0xFA, offset: 0xFA, size: 0x8, addend: 0x0, symName: _RefPressure, symObjAddr: 0xF2C8, symBinAddr: 0x100018088, symSize: 0x0 }
+  - { offsetInCU: 0x10F, offset: 0x10F, size: 0x8, addend: 0x0, symName: _Alpha, symObjAddr: 0xF2D0, symBinAddr: 0x100018090, symSize: 0x0 }
+  - { offsetInCU: 0x124, offset: 0x124, size: 0x8, addend: 0x0, symName: _ThroatDiameter, symObjAddr: 0xF2D8, symBinAddr: 0x100018098, symSize: 0x0 }
+  - { offsetInCU: 0x139, offset: 0x139, size: 0x8, addend: 0x0, symName: _CharacteristicVelocity, symObjAddr: 0xF2E0, symBinAddr: 0x1000180A0, symSize: 0x0 }
+  - { offsetInCU: 0x14E, offset: 0x14E, size: 0x8, addend: 0x0, symName: _PropellantDensity, symObjAddr: 0xF2E8, symBinAddr: 0x1000180A8, symSize: 0x0 }
+  - { offsetInCU: 0x163, offset: 0x163, size: 0x8, addend: 0x0, symName: _AmbientPressure, symObjAddr: 0xF2F0, symBinAddr: 0x1000180B0, symSize: 0x0 }
+  - { offsetInCU: 0x178, offset: 0x178, size: 0x8, addend: 0x0, symName: _TotalBurnTime, symObjAddr: 0xF2F8, symBinAddr: 0x1000180B8, symSize: 0x0 }
+  - { offsetInCU: 0x18D, offset: 0x18D, size: 0x8, addend: 0x0, symName: _NewtonTolerance, symObjAddr: 0xF300, symBinAddr: 0x1000180C0, symSize: 0x0 }
+  - { offsetInCU: 0x1A2, offset: 0x1A2, size: 0x8, addend: 0x0, symName: _ThroatArea, symObjAddr: 0xF308, symBinAddr: 0x1000180C8, symSize: 0x0 }
+  - { offsetInCU: 0x1B7, offset: 0x1B7, size: 0x8, addend: 0x0, symName: _Time, symObjAddr: 0x228B0, symBinAddr: 0x100018110, symSize: 0x0 }
+  - { offsetInCU: 0x1CC, offset: 0x1CC, size: 0x8, addend: 0x0, symName: _Thrust, symObjAddr: 0x228B8, symBinAddr: 0x100018118, symSize: 0x0 }
+  - { offsetInCU: 0x1E1, offset: 0x1E1, size: 0x8, addend: 0x0, symName: _Burning, symObjAddr: 0xF310, symBinAddr: 0x1000180D0, symSize: 0x0 }
+  - { offsetInCU: 0x1FD, offset: 0x1FD, size: 0x8, addend: 0x0, symName: _Eccentricity, symObjAddr: 0xF318, symBinAddr: 0x1000180D8, symSize: 0x0 }
+  - { offsetInCU: 0x212, offset: 0x212, size: 0x8, addend: 0x0, symName: _WantToAnimate, symObjAddr: 0xF320, symBinAddr: 0x1000180E0, symSize: 0x0 }
+  - { offsetInCU: 0x227, offset: 0x227, size: 0x8, addend: 0x0, symName: _ActivePtr, symObjAddr: 0x228C0, symBinAddr: 0x100018120, symSize: 0x0 }
+  - { offsetInCU: 0x23C, offset: 0x23C, size: 0x8, addend: 0x0, symName: _localmax, symObjAddr: 0x228C8, symBinAddr: 0x100018128, symSize: 0x0 }
+  - { offsetInCU: 0x252, offset: 0x252, size: 0x8, addend: 0x0, symName: _innovcounter, symObjAddr: 0x228D0, symBinAddr: 0x100018130, symSize: 0x0 }
+  - { offsetInCU: 0x268, offset: 0x268, size: 0x8, addend: 0x0, symName: _StopCode, symObjAddr: 0x228D4, symBinAddr: 0x100018134, symSize: 0x0 }
+  - { offsetInCU: 0x27E, offset: 0x27E, size: 0x8, addend: 0x0, symName: _AlreadyJammedFlag, symObjAddr: 0xF324, symBinAddr: 0x1000180E4, symSize: 0x0 }
+  - { offsetInCU: 0x294, offset: 0x294, size: 0x8, addend: 0x0, symName: _NozBurningRays, symObjAddr: 0x228D8, symBinAddr: 0x100018138, symSize: 0x0 }
+  - { offsetInCU: 0x2AA, offset: 0x2AA, size: 0x8, addend: 0x0, symName: _InsulDensity, symObjAddr: 0xF328, symBinAddr: 0x1000180E8, symSize: 0x0 }
+  - { offsetInCU: 0x2C0, offset: 0x2C0, size: 0x8, addend: 0x0, symName: _InsulRefBurnRate, symObjAddr: 0xF330, symBinAddr: 0x1000180F0, symSize: 0x0 }
+  - { offsetInCU: 0x2D6, offset: 0x2D6, size: 0x8, addend: 0x0, symName: _RayDebug, symObjAddr: 0x228DC, symBinAddr: 0x10001813C, symSize: 0x0 }
+  - { offsetInCU: 0x2EC, offset: 0x2EC, size: 0x8, addend: 0x0, symName: _rayDepthFlag, symObjAddr: 0x228E0, symBinAddr: 0x100018140, symSize: 0x0 }
+  - { offsetInCU: 0x314, offset: 0x314, size: 0x8, addend: 0x0, symName: _InnovizDatafp, symBinAddr: 0x100033788, symSize: 0x0 }
+  - { offsetInCU: 0x51E, offset: 0x51E, size: 0x8, addend: 0x0, symName: _Evaluationfp, symBinAddr: 0x100033608, symSize: 0x0 }
+  - { offsetInCU: 0x533, offset: 0x533, size: 0x8, addend: 0x0, symName: _PropellantToEvalfp, symBinAddr: 0x100036960, symSize: 0x0 }
+  - { offsetInCU: 0x548, offset: 0x548, size: 0x8, addend: 0x0, symName: _ThicknessesToEvalfp, symBinAddr: 0x1000700C0, symSize: 0x0 }
+  - { offsetInCU: 0x55D, offset: 0x55D, size: 0x8, addend: 0x0, symName: _Graphfp, symBinAddr: 0x100033710, symSize: 0x0 }
+  - { offsetInCU: 0x572, offset: 0x572, size: 0x8, addend: 0x0, symName: _Animatfp, symBinAddr: 0x100018150, symSize: 0x0 }
+  - { offsetInCU: 0x587, offset: 0x587, size: 0x8, addend: 0x0, symName: _Restartfp, symBinAddr: 0x1000386D8, symSize: 0x0 }
+  - { offsetInCU: 0x59C, offset: 0x59C, size: 0x8, addend: 0x0, symName: _WantWriteRestartData, symBinAddr: 0x10007426C, symSize: 0x0 }
+  - { offsetInCU: 0x5B1, offset: 0x5B1, size: 0x8, addend: 0x0, symName: _outfp, symBinAddr: 0x100078FC0, symSize: 0x0 }
+  - { offsetInCU: 0x5C6, offset: 0x5C6, size: 0x8, addend: 0x0, symName: _neval, symBinAddr: 0x100078FB8, symSize: 0x0 }
+  - { offsetInCU: 0x5E2, offset: 0x5E2, size: 0x8, addend: 0x0, symName: _pmutation, symBinAddr: 0x100078FD0, symSize: 0x0 }
+  - { offsetInCU: 0x5FE, offset: 0x5FE, size: 0x8, addend: 0x0, symName: _ncycles, symBinAddr: 0x100078FB0, symSize: 0x0 }
+  - { offsetInCU: 0x613, offset: 0x613, size: 0x8, addend: 0x0, symName: _cycle, symBinAddr: 0x100074490, symSize: 0x0 }
+  - { offsetInCU: 0x628, offset: 0x628, size: 0x8, addend: 0x0, symName: _ReasonStopped, symBinAddr: 0x1000385F0, symSize: 0x0 }
+  - { offsetInCU: 0x63D, offset: 0x63D, size: 0x8, addend: 0x0, symName: _ThrustReward, symBinAddr: 0x100072160, symSize: 0x0 }
+  - { offsetInCU: 0x652, offset: 0x652, size: 0x8, addend: 0x0, symName: _SimultaneityReward, symBinAddr: 0x10006D568, symSize: 0x0 }
+  - { offsetInCU: 0x667, offset: 0x667, size: 0x8, addend: 0x0, symName: _StdDevReward, symBinAddr: 0x10006D900, symSize: 0x0 }
+  - { offsetInCU: 0x67C, offset: 0x67C, size: 0x8, addend: 0x0, symName: _lThrustReward, symBinAddr: 0x100076DD8, symSize: 0x0 }
+  - { offsetInCU: 0x691, offset: 0x691, size: 0x8, addend: 0x0, symName: _lSimultaneityReward, symBinAddr: 0x100076DD0, symSize: 0x0 }
+  - { offsetInCU: 0x6A6, offset: 0x6A6, size: 0x8, addend: 0x0, symName: _ChromValues, symBinAddr: 0x100032CC0, symSize: 0x0 }
+  - { offsetInCU: 0x6C8, offset: 0x6C8, size: 0x8, addend: 0x0, symName: _PhenoValues, symBinAddr: 0x1000355A0, symSize: 0x0 }
+  - { offsetInCU: 0x6EA, offset: 0x6EA, size: 0x8, addend: 0x0, symName: _PropellType, symBinAddr: 0x100036090, symSize: 0x0 }
+  - { offsetInCU: 0x711, offset: 0x711, size: 0x8, addend: 0x0, symName: _LayerThicknessInts, symBinAddr: 0x1000345C0, symSize: 0x0 }
+  - { offsetInCU: 0x738, offset: 0x738, size: 0x8, addend: 0x0, symName: _LayerThicknesses, symBinAddr: 0x1000349D0, symSize: 0x0 }
+  - { offsetInCU: 0x75F, offset: 0x75F, size: 0x8, addend: 0x0, symName: _InitBurnRadius, symBinAddr: 0x100033720, symSize: 0x0 }
+  - { offsetInCU: 0x780, offset: 0x780, size: 0x8, addend: 0x0, symName: _FinalBurnRadius, symBinAddr: 0x100033630, symSize: 0x0 }
+  - { offsetInCU: 0x795, offset: 0x795, size: 0x8, addend: 0x0, symName: _WebThickness, symBinAddr: 0x100074270, symSize: 0x0 }
+  - { offsetInCU: 0x7AA, offset: 0x7AA, size: 0x8, addend: 0x0, symName: _BdaryLen, symBinAddr: 0x100018240, symSize: 0x0 }
+  - { offsetInCU: 0x7CB, offset: 0x7CB, size: 0x8, addend: 0x0, symName: _theta, symBinAddr: 0x100078FE0, symSize: 0x0 }
+  - { offsetInCU: 0x7EC, offset: 0x7EC, size: 0x8, addend: 0x0, symName: _ZoneThickness, symBinAddr: 0x1000742E0, symSize: 0x0 }
+  - { offsetInCU: 0x813, offset: 0x813, size: 0x8, addend: 0x0, symName: _DistanceLeftToBurn, symBinAddr: 0x1000335A0, symSize: 0x0 }
+  - { offsetInCU: 0x828, offset: 0x828, size: 0x8, addend: 0x0, symName: _LayerStartRadius, symBinAddr: 0x100033990, symSize: 0x0 }
+  - { offsetInCU: 0x84F, offset: 0x84F, size: 0x8, addend: 0x0, symName: _RDotRef, symBinAddr: 0x100036B00, symSize: 0x0 }
+  - { offsetInCU: 0x876, offset: 0x876, size: 0x8, addend: 0x0, symName: _TargetThrusts, symBinAddr: 0x10006D950, symSize: 0x0 }
+  - { offsetInCU: 0x898, offset: 0x898, size: 0x8, addend: 0x0, symName: _RDot, symBinAddr: 0x100036A90, symSize: 0x0 }
+  - { offsetInCU: 0x8AD, offset: 0x8AD, size: 0x8, addend: 0x0, symName: _SegmentLength, symBinAddr: 0x10006D460, symSize: 0x0 }
+  - { offsetInCU: 0x8C2, offset: 0x8C2, size: 0x8, addend: 0x0, symName: _RefBurnRate, symBinAddr: 0x100038600, symSize: 0x0 }
+  - { offsetInCU: 0x8D7, offset: 0x8D7, size: 0x8, addend: 0x0, symName: _irecord, symBinAddr: 0x100074528, symSize: 0x0 }
+  - { offsetInCU: 0x8EC, offset: 0x8EC, size: 0x8, addend: 0x0, symName: _irecordFine, symBinAddr: 0x10007452C, symSize: 0x0 }
+  - { offsetInCU: 0x901, offset: 0x901, size: 0x8, addend: 0x0, symName: _SegmentRadius, symBinAddr: 0x10006D4D0, symSize: 0x0 }
+  - { offsetInCU: 0x916, offset: 0x916, size: 0x8, addend: 0x0, symName: _NextSegRadius, symBinAddr: 0x1000352B0, symSize: 0x0 }
+  - { offsetInCU: 0x92B, offset: 0x92B, size: 0x8, addend: 0x0, symName: _NextNozRayRadius, symBinAddr: 0x100035260, symSize: 0x0 }
+  - { offsetInCU: 0x94C, offset: 0x94C, size: 0x8, addend: 0x0, symName: _Alphaminus1, symBinAddr: 0x100018148, symSize: 0x0 }
+  - { offsetInCU: 0x961, offset: 0x961, size: 0x8, addend: 0x0, symName: _SegResidualPerTimeStep, symBinAddr: 0x100052D70, symSize: 0x0 }
+  - { offsetInCU: 0x988, offset: 0x988, size: 0x8, addend: 0x0, symName: _SegResidualPerTimeStepFine, symBinAddr: 0x100053DB0, symSize: 0x0 }
+  - { offsetInCU: 0x9B0, offset: 0x9B0, size: 0x8, addend: 0x0, symName: _SegBurnAreaPerTimeStepCoarse, symBinAddr: 0x1000386F0, symSize: 0x0 }
+  - { offsetInCU: 0x9C5, offset: 0x9C5, size: 0x8, addend: 0x0, symName: _SegBurnAreaPerTimeStepFine, symBinAddr: 0x100039730, symSize: 0x0 }
+  - { offsetInCU: 0x9DA, offset: 0x9DA, size: 0x8, addend: 0x0, symName: _BurnLayerPerTimestepCoarse, symBinAddr: 0x1000182F0, symSize: 0x0 }
+  - { offsetInCU: 0x9EF, offset: 0x9EF, size: 0x8, addend: 0x0, symName: _BurnLayerPerTimestepFine, symBinAddr: 0x100019330, symSize: 0x0 }
+  - { offsetInCU: 0xA04, offset: 0xA04, size: 0x8, addend: 0x0, symName: _TotalPressure, symBinAddr: 0x100074260, symSize: 0x0 }
+  - { offsetInCU: 0xA19, offset: 0xA19, size: 0x8, addend: 0x0, symName: _DeltaPressure, symBinAddr: 0x100033598, symSize: 0x0 }
+  - { offsetInCU: 0xA2E, offset: 0xA2E, size: 0x8, addend: 0x0, symName: _InvPrefAlpha, symBinAddr: 0x100033838, symSize: 0x0 }
+  - { offsetInCU: 0xA43, offset: 0xA43, size: 0x8, addend: 0x0, symName: _Times, symBinAddr: 0x1000721E0, symSize: 0x0 }
+  - { offsetInCU: 0xA64, offset: 0xA64, size: 0x8, addend: 0x0, symName: _ThrustProfile, symBinAddr: 0x100072020, symSize: 0x0 }
+  - { offsetInCU: 0xA79, offset: 0xA79, size: 0x8, addend: 0x0, symName: _mPressureProfile, symBinAddr: 0x100078E70, symSize: 0x0 }
+  - { offsetInCU: 0xA8E, offset: 0xA8E, size: 0x8, addend: 0x0, symName: _TimesFine, symBinAddr: 0x100072320, symSize: 0x0 }
+  - { offsetInCU: 0xAA3, offset: 0xAA3, size: 0x8, addend: 0x0, symName: _ThrustFine, symBinAddr: 0x1000700D0, symSize: 0x0 }
+  - { offsetInCU: 0xAB8, offset: 0xAB8, size: 0x8, addend: 0x0, symName: _mPressureFine, symBinAddr: 0x100076F30, symSize: 0x0 }
+  - { offsetInCU: 0xACD, offset: 0xACD, size: 0x8, addend: 0x0, symName: _SegmentArea, symBinAddr: 0x10006D3F0, symSize: 0x0 }
+  - { offsetInCU: 0xAE2, offset: 0xAE2, size: 0x8, addend: 0x0, symName: _BdaryAngle, symBinAddr: 0x100018200, symSize: 0x0 }
+  - { offsetInCU: 0xAF7, offset: 0xAF7, size: 0x8, addend: 0x0, symName: _ArcLength, symBinAddr: 0x100018160, symSize: 0x0 }
+  - { offsetInCU: 0xB0C, offset: 0xB0C, size: 0x8, addend: 0x0, symName: _Px, symBinAddr: 0x100036A70, symSize: 0x0 }
+  - { offsetInCU: 0xB21, offset: 0xB21, size: 0x8, addend: 0x0, symName: _Py, symBinAddr: 0x100036A78, symSize: 0x0 }
+  - { offsetInCU: 0xB36, offset: 0xB36, size: 0x8, addend: 0x0, symName: _Qx, symBinAddr: 0x100036A80, symSize: 0x0 }
+  - { offsetInCU: 0xB4B, offset: 0xB4B, size: 0x8, addend: 0x0, symName: _Qy, symBinAddr: 0x100036A88, symSize: 0x0 }
+  - { offsetInCU: 0xB60, offset: 0xB60, size: 0x8, addend: 0x0, symName: _MajAx, symBinAddr: 0x1000351F0, symSize: 0x0 }
+  - { offsetInCU: 0xB75, offset: 0xB75, size: 0x8, addend: 0x0, symName: _SemiMajAx, symBinAddr: 0x10006D538, symSize: 0x0 }
+  - { offsetInCU: 0xB8A, offset: 0xB8A, size: 0x8, addend: 0x0, symName: _MinAx, symBinAddr: 0x1000351F8, symSize: 0x0 }
+  - { offsetInCU: 0xB9F, offset: 0xB9F, size: 0x8, addend: 0x0, symName: _SemiMinAx, symBinAddr: 0x10006D540, symSize: 0x0 }
+  - { offsetInCU: 0xBB4, offset: 0xBB4, size: 0x8, addend: 0x0, symName: _rayangle, symBinAddr: 0x100078FD8, symSize: 0x0 }
+  - { offsetInCU: 0xBC9, offset: 0xBC9, size: 0x8, addend: 0x0, symName: _bigtheta, symBinAddr: 0x100074480, symSize: 0x0 }
+  - { offsetInCU: 0xBDE, offset: 0xBDE, size: 0x8, addend: 0x0, symName: _initialchord, symBinAddr: 0x100074520, symSize: 0x0 }
+  - { offsetInCU: 0xBF3, offset: 0xBF3, size: 0x8, addend: 0x0, symName: _finalchord, symBinAddr: 0x100074518, symSize: 0x0 }
+  - { offsetInCU: 0xC08, offset: 0xC08, size: 0x8, addend: 0x0, symName: _depth, symBinAddr: 0x100074498, symSize: 0x0 }
+  - { offsetInCU: 0xC1D, offset: 0xC1D, size: 0x8, addend: 0x0, symName: _chordlength, symBinAddr: 0x100074488, symSize: 0x0 }
+  - { offsetInCU: 0xC32, offset: 0xC32, size: 0x8, addend: 0x0, symName: _IntegralContribs, symBinAddr: 0x100033830, symSize: 0x0 }
+  - { offsetInCU: 0xC47, offset: 0xC47, size: 0x8, addend: 0x0, symName: _PropellVolume, symBinAddr: 0x1000364E0, symSize: 0x0 }
+  - { offsetInCU: 0xC5C, offset: 0xC5C, size: 0x8, addend: 0x0, symName: _PropellMass, symBinAddr: 0x100036020, symSize: 0x0 }
+  - { offsetInCU: 0xC71, offset: 0xC71, size: 0x8, addend: 0x0, symName: _PropellantTotalVolume, symBinAddr: 0x100036970, symSize: 0x0 }
+  - { offsetInCU: 0xC86, offset: 0xC86, size: 0x8, addend: 0x0, symName: _PropellantTotalMass, symBinAddr: 0x100036968, symSize: 0x0 }
+  - { offsetInCU: 0xC9B, offset: 0xC9B, size: 0x8, addend: 0x0, symName: _WantThisGuyOutputFile, symBinAddr: 0x100074268, symSize: 0x0 }
+  - { offsetInCU: 0xCB0, offset: 0xCB0, size: 0x8, addend: 0x0, symName: _FirstAnimationCall, symBinAddr: 0x100033698, symSize: 0x0 }
+  - { offsetInCU: 0xCC5, offset: 0xCC5, size: 0x8, addend: 0x0, symName: _StarFieldsActivated, symBinAddr: 0x10006D6F4, symSize: 0x0 }
+  - { offsetInCU: 0xCDA, offset: 0xCDA, size: 0x8, addend: 0x0, symName: _PtAx, symBinAddr: 0x100036980, symSize: 0x0 }
+  - { offsetInCU: 0xCEF, offset: 0xCEF, size: 0x8, addend: 0x0, symName: _PtAy, symBinAddr: 0x1000369B0, symSize: 0x0 }
+  - { offsetInCU: 0xD04, offset: 0xD04, size: 0x8, addend: 0x0, symName: _PtBx, symBinAddr: 0x100036A10, symSize: 0x0 }
+  - { offsetInCU: 0xD19, offset: 0xD19, size: 0x8, addend: 0x0, symName: _PtBy, symBinAddr: 0x100036A40, symSize: 0x0 }
+  - { offsetInCU: 0xD2E, offset: 0xD2E, size: 0x8, addend: 0x0, symName: _StarTheta, symBinAddr: 0x10006D8B0, symSize: 0x0 }
+  - { offsetInCU: 0xD43, offset: 0xD43, size: 0x8, addend: 0x0, symName: _RayAngle, symBinAddr: 0x100037710, symSize: 0x0 }
+  - { offsetInCU: 0xD6A, offset: 0xD6A, size: 0x8, addend: 0x0, symName: _BurnPtx, symBinAddr: 0x100032970, symSize: 0x0 }
+  - { offsetInCU: 0xD7F, offset: 0xD7F, size: 0x8, addend: 0x0, symName: _BurnPty, symBinAddr: 0x100032AC0, symSize: 0x0 }
+  - { offsetInCU: 0xD94, offset: 0xD94, size: 0x8, addend: 0x0, symName: _RayBurnDir, symBinAddr: 0x100037A10, symSize: 0x0 }
+  - { offsetInCU: 0xDA9, offset: 0xDA9, size: 0x8, addend: 0x0, symName: _RayBurnDepth, symBinAddr: 0x100037860, symSize: 0x0 }
+  - { offsetInCU: 0xDBE, offset: 0xDBE, size: 0x8, addend: 0x0, symName: _PtBRadius, symBinAddr: 0x1000369E0, symSize: 0x0 }
+  - { offsetInCU: 0xDD3, offset: 0xDD3, size: 0x8, addend: 0x0, symName: _RayInitDepthChoices, symBinAddr: 0x100037F00, symSize: 0x0 }
+  - { offsetInCU: 0xDFA, offset: 0xDFA, size: 0x8, addend: 0x0, symName: _RayiToRayiminus1, symBinAddr: 0x1000384A0, symSize: 0x0 }
+  - { offsetInCU: 0xE0F, offset: 0xE0F, size: 0x8, addend: 0x0, symName: _SpecLayerOffset, symBinAddr: 0x10006D570, symSize: 0x0 }
+  - { offsetInCU: 0xE24, offset: 0xE24, size: 0x8, addend: 0x0, symName: _RayRDotRef, symBinAddr: 0x100038350, symSize: 0x0 }
+  - { offsetInCU: 0xE39, offset: 0xE39, size: 0x8, addend: 0x0, symName: _RayRDot, symBinAddr: 0x100038200, symSize: 0x0 }
+  - { offsetInCU: 0xE4E, offset: 0xE4E, size: 0x8, addend: 0x0, symName: _RDotRefCatchup, symBinAddr: 0x1000376D0, symSize: 0x0 }
+  - { offsetInCU: 0xE63, offset: 0xE63, size: 0x8, addend: 0x0, symName: _LatestCatchupDepthBurned, symBinAddr: 0x100033840, symSize: 0x0 }
+  - { offsetInCU: 0xE78, offset: 0xE78, size: 0x8, addend: 0x0, symName: _SumOfProducts, symBinAddr: 0x10006D910, symSize: 0x0 }
+  - { offsetInCU: 0xE8D, offset: 0xE8D, size: 0x8, addend: 0x0, symName: _PreCylStarRDotRef, symBinAddr: 0x100035FB0, symSize: 0x0 }
+  - { offsetInCU: 0xEB4, offset: 0xEB4, size: 0x8, addend: 0x0, symName: _StarRayOuterInnerBdary, symBinAddr: 0x10006D880, symSize: 0x0 }
+  - { offsetInCU: 0xEC9, offset: 0xEC9, size: 0x8, addend: 0x0, symName: _FurthestRayDistTtoQ, symBinAddr: 0x1000336E0, symSize: 0x0 }
+  - { offsetInCU: 0xEDE, offset: 0xEDE, size: 0x8, addend: 0x0, symName: _StarBurningThisSegNow, symBinAddr: 0x10006D6C0, symSize: 0x0 }
+  - { offsetInCU: 0xEFF, offset: 0xEFF, size: 0x8, addend: 0x0, symName: _TimeStarBurnFinish, symBinAddr: 0x100072170, symSize: 0x0 }
+  - { offsetInCU: 0xF14, offset: 0xF14, size: 0x8, addend: 0x0, symName: _lSegResidualPerTimeStep, symBinAddr: 0x100074530, symSize: 0x0 }
+  - { offsetInCU: 0xF3B, offset: 0xF3B, size: 0x8, addend: 0x0, symName: _StarRayInitialPropellantType, symBinAddr: 0x10006D850, symSize: 0x0 }
+  - { offsetInCU: 0xF62, offset: 0xF62, size: 0x8, addend: 0x0, symName: _RayInLayer, symBinAddr: 0x100037E50, symSize: 0x0 }
+  - { offsetInCU: 0xF89, offset: 0xF89, size: 0x8, addend: 0x0, symName: _FirstCompensatingLayerNo, symBinAddr: 0x1000336A0, symSize: 0x0 }
+  - { offsetInCU: 0xFAA, offset: 0xFAA, size: 0x8, addend: 0x0, symName: _FarRayNo, symBinAddr: 0x100033610, symSize: 0x0 }
+  - { offsetInCU: 0xFBF, offset: 0xFBF, size: 0x8, addend: 0x0, symName: _ShortestRayNo, symBinAddr: 0x10006D550, symSize: 0x0 }
+  - { offsetInCU: 0xFD4, offset: 0xFD4, size: 0x8, addend: 0x0, symName: _CompensatingNow, symBinAddr: 0x100033540, symSize: 0x0 }
+  - { offsetInCU: 0xFE9, offset: 0xFE9, size: 0x8, addend: 0x0, symName: _NRAYSinPreCylLayer, symBinAddr: 0x100035220, symSize: 0x0 }
+  - { offsetInCU: 0xFFE, offset: 0xFFE, size: 0x8, addend: 0x0, symName: _localoffsets, symBinAddr: 0x100076DE0, symSize: 0x0 }
+  - { offsetInCU: 0x1013, offset: 0x1013, size: 0x8, addend: 0x0, symName: _NCompensLayers, symBinAddr: 0x100035200, symSize: 0x0 }
+  - { offsetInCU: 0x1028, offset: 0x1028, size: 0x8, addend: 0x0, symName: _NRaysToCatchUp, symBinAddr: 0x100035240, symSize: 0x0 }
+  - { offsetInCU: 0x103D, offset: 0x103D, size: 0x8, addend: 0x0, symName: _StartCatchupLayer, symBinAddr: 0x10006D8E0, symSize: 0x0 }
+  - { offsetInCU: 0x1052, offset: 0x1052, size: 0x8, addend: 0x0, symName: _CatchingUpRay, symBinAddr: 0x100032C10, symSize: 0x0 }
+  - { offsetInCU: 0x1067, offset: 0x1067, size: 0x8, addend: 0x0, symName: _StarRayArea, symBinAddr: 0x10006D700, symSize: 0x0 }
+  - { offsetInCU: 0x107C, offset: 0x107C, size: 0x8, addend: 0x0, symName: _RayCylIntersectx, symBinAddr: 0x100037B60, symSize: 0x0 }
+  - { offsetInCU: 0x1091, offset: 0x1091, size: 0x8, addend: 0x0, symName: _RayCylIntersecty, symBinAddr: 0x100037CB0, symSize: 0x0 }
+  - { offsetInCU: 0x10A6, offset: 0x10A6, size: 0x8, addend: 0x0, symName: _BurnDistRemaining, symBinAddr: 0x100018280, symSize: 0x0 }
+  - { offsetInCU: 0x10BB, offset: 0x10BB, size: 0x8, addend: 0x0, symName: _ThicknessesToEval, symBinAddr: 0x10006F8A0, symSize: 0x0 }
+  - { offsetInCU: 0x10DD, offset: 0x10DD, size: 0x8, addend: 0x0, symName: _PropellantToEval, symBinAddr: 0x100036550, symSize: 0x0 }
+  - { offsetInCU: 0x10FF, offset: 0x10FF, size: 0x8, addend: 0x0, symName: _RayBurnDepthInput, symBinAddr: 0x1000379B0, symSize: 0x0 }
+  - { offsetInCU: 0x1120, offset: 0x1120, size: 0x8, addend: 0x0, symName: _PreCylStarRDotRefInput, symBinAddr: 0x100036010, symSize: 0x0 }
+  - { offsetInCU: 0x1141, offset: 0x1141, size: 0x8, addend: 0x0, symName: _RDotRefCatchupInput, symBinAddr: 0x100037700, symSize: 0x0 }
+  - { offsetInCU: 0x1156, offset: 0x1156, size: 0x8, addend: 0x0, symName: _RayDepthHEEDS, symBinAddr: 0x100037E00, symSize: 0x0 }
+  - { offsetInCU: 0x1177, offset: 0x1177, size: 0x8, addend: 0x0, symName: _Reward, symBinAddr: 0x1000386E0, symSize: 0x0 }
+  - { offsetInCU: 0x118C, offset: 0x118C, size: 0x8, addend: 0x0, symName: _StdDev, symBinAddr: 0x10006D8F8, symSize: 0x0 }
+  - { offsetInCU: 0x11A2, offset: 0x11A2, size: 0x8, addend: 0x0, symName: _FirstRayCallThisGuy, symBinAddr: 0x1000336C0, symSize: 0x0 }
+  - { offsetInCU: 0x11B8, offset: 0x11B8, size: 0x8, addend: 0x0, symName: _ThetaSlice, symBinAddr: 0x10006F890, symSize: 0x0 }
+  - { offsetInCU: 0x11CE, offset: 0x11CE, size: 0x8, addend: 0x0, symName: _ellipsec, symBinAddr: 0x1000744A0, symSize: 0x0 }
+  - { offsetInCU: 0x11E4, offset: 0x11E4, size: 0x8, addend: 0x0, symName: _ellipsed, symBinAddr: 0x1000744E0, symSize: 0x0 }
+  - { offsetInCU: 0x11FA, offset: 0x11FA, size: 0x8, addend: 0x0, symName: _B, symBinAddr: 0x100018190, symSize: 0x0 }
+  - { offsetInCU: 0x1210, offset: 0x1210, size: 0x8, addend: 0x0, symName: _CurrLayerIndex, symBinAddr: 0x100033560, symSize: 0x0 }
+  - { offsetInCU: 0x1226, offset: 0x1226, size: 0x8, addend: 0x0, symName: _ThrustInterval, symBinAddr: 0x100072010, symSize: 0x0 }
+  - { offsetInCU: 0x123C, offset: 0x123C, size: 0x8, addend: 0x0, symName: _RemainingDistToBurnInSeg, symBinAddr: 0x100038670, symSize: 0x0 }
+  - { offsetInCU: 0x1252, offset: 0x1252, size: 0x8, addend: 0x0, symName: _THIS_ANGLE, symBinAddr: 0x10006D940, symSize: 0x0 }
+  - { offsetInCU: 0x1268, offset: 0x1268, size: 0x8, addend: 0x0, symName: _NozRayAngle, symBinAddr: 0x100035370, symSize: 0x0 }
+  - { offsetInCU: 0x127E, offset: 0x127E, size: 0x8, addend: 0x0, symName: _NozEndFastBurnPts, symBinAddr: 0x100035320, symSize: 0x0 }
+  - { offsetInCU: 0x1294, offset: 0x1294, size: 0x8, addend: 0x0, symName: _NozRayFinalBurnRadius, symBinAddr: 0x100035410, symSize: 0x0 }
+  - { offsetInCU: 0x12AA, offset: 0x12AA, size: 0x8, addend: 0x0, symName: _NozShortestRayAngle, symBinAddr: 0x100035598, symSize: 0x0 }
+  - { offsetInCU: 0x12C0, offset: 0x12C0, size: 0x8, addend: 0x0, symName: _NozRayBurnStartRadius, symBinAddr: 0x100035408, symSize: 0x0 }
+  - { offsetInCU: 0x12D6, offset: 0x12D6, size: 0x8, addend: 0x0, symName: _NozRayRadius, symBinAddr: 0x1000354B0, symSize: 0x0 }
+  - { offsetInCU: 0x12EC, offset: 0x12EC, size: 0x8, addend: 0x0, symName: _NozRayBurnPty, symBinAddr: 0x1000353C0, symSize: 0x0 }
+  - { offsetInCU: 0x1302, offset: 0x1302, size: 0x8, addend: 0x0, symName: _NozRayRefBurnRate, symBinAddr: 0x100035500, symSize: 0x0 }
+  - { offsetInCU: 0x1318, offset: 0x1318, size: 0x8, addend: 0x0, symName: _NozRaySegBurnArea, symBinAddr: 0x100035550, symSize: 0x0 }
+  - { offsetInCU: 0x132E, offset: 0x132E, size: 0x8, addend: 0x0, symName: _NozRayRDot, symBinAddr: 0x100035460, symSize: 0x0 }
+  - { offsetInCU: 0x1344, offset: 0x1344, size: 0x8, addend: 0x0, symName: _InsulBurnArea, symBinAddr: 0x1000337A0, symSize: 0x0 }
+  - { offsetInCU: 0x135A, offset: 0x135A, size: 0x8, addend: 0x0, symName: _InsulBottomBurnDepth, symBinAddr: 0x100033798, symSize: 0x0 }
+  - { offsetInCU: 0x1370, offset: 0x1370, size: 0x8, addend: 0x0, symName: _InsulPtx, symBinAddr: 0x1000337E0, symSize: 0x0 }
+  - { offsetInCU: 0x1386, offset: 0x1386, size: 0x8, addend: 0x0, symName: _InsulPty, symBinAddr: 0x1000337E8, symSize: 0x0 }
+  - { offsetInCU: 0x139C, offset: 0x139C, size: 0x8, addend: 0x0, symName: _InsulPropBdaryPtx, symBinAddr: 0x1000337D0, symSize: 0x0 }
+  - { offsetInCU: 0x13B2, offset: 0x13B2, size: 0x8, addend: 0x0, symName: _InsulPropBdaryPty, symBinAddr: 0x1000337D8, symSize: 0x0 }
+  - { offsetInCU: 0x13C8, offset: 0x13C8, size: 0x8, addend: 0x0, symName: _InsulShellPtx, symBinAddr: 0x1000337F0, symSize: 0x0 }
+  - { offsetInCU: 0x13DE, offset: 0x13DE, size: 0x8, addend: 0x0, symName: _InsulShellPty, symBinAddr: 0x1000337F8, symSize: 0x0 }
+  - { offsetInCU: 0x13F4, offset: 0x13F4, size: 0x8, addend: 0x0, symName: _InsulTopPtAtShellx, symBinAddr: 0x100033818, symSize: 0x0 }
+  - { offsetInCU: 0x140A, offset: 0x140A, size: 0x8, addend: 0x0, symName: _InsulTopPtAtShelly, symBinAddr: 0x100033820, symSize: 0x0 }
+  - { offsetInCU: 0x1420, offset: 0x1420, size: 0x8, addend: 0x0, symName: _InsulTopBurningLength, symBinAddr: 0x100033810, symSize: 0x0 }
+  - { offsetInCU: 0x1436, offset: 0x1436, size: 0x8, addend: 0x0, symName: _InsulTopSlope, symBinAddr: 0x100033828, symSize: 0x0 }
+  - { offsetInCU: 0x144C, offset: 0x144C, size: 0x8, addend: 0x0, symName: _InsulTopBurnLineAngle, symBinAddr: 0x100033800, symSize: 0x0 }
+  - { offsetInCU: 0x1462, offset: 0x1462, size: 0x8, addend: 0x0, symName: _InsulTopBurnNormal, symBinAddr: 0x100033808, symSize: 0x0 }
+  - { offsetInCU: 0x1478, offset: 0x1478, size: 0x8, addend: 0x0, symName: _InsulHalfAngle, symBinAddr: 0x1000337B0, symSize: 0x0 }
+  - { offsetInCU: 0x148E, offset: 0x148E, size: 0x8, addend: 0x0, symName: _InsulPointBurnRadius, symBinAddr: 0x1000337B8, symSize: 0x0 }
+  - { offsetInCU: 0x14A4, offset: 0x14A4, size: 0x8, addend: 0x0, symName: _InsulPropBdaryBurnArea, symBinAddr: 0x1000337C0, symSize: 0x0 }
+  - { offsetInCU: 0x14BA, offset: 0x14BA, size: 0x8, addend: 0x0, symName: _InsulBottomBurnArea, symBinAddr: 0x100033790, symSize: 0x0 }
+  - { offsetInCU: 0x14D0, offset: 0x14D0, size: 0x8, addend: 0x0, symName: _InsulPropBdaryPerimeter, symBinAddr: 0x1000337C8, symSize: 0x0 }
+  - { offsetInCU: 0x14E6, offset: 0x14E6, size: 0x8, addend: 0x0, symName: _InsulDeltaBottomDepth, symBinAddr: 0x1000337A8, symSize: 0x0 }
+  - { offsetInCU: 0x14FB, offset: 0x14FB, size: 0x8, addend: 0x0, symName: _outputfp, symBinAddr: 0x100078FC8, symSize: 0x0 }
+  - { offsetInCU: 0x1511, offset: 0x1511, size: 0x8, addend: 0x0, symName: _FirstInitGlobalsCall, symObjAddr: 0xF338, symBinAddr: 0x1000180F8, symSize: 0x0 }
+  - { offsetInCU: 0x151A, offset: 0x151A, size: 0x8, addend: 0x0, symName: _objectivefunction, symObjAddr: 0x0, symBinAddr: 0x100001350, symSize: 0xB80 }
+  - { offsetInCU: 0x1881, offset: 0x1881, size: 0x8, addend: 0x0, symName: _DistributeHEEDSInputs, symObjAddr: 0xB80, symBinAddr: 0x100001ED0, symSize: 0x640 }
+  - { offsetInCU: 0x1923, offset: 0x1923, size: 0x8, addend: 0x0, symName: _decodechromosome, symObjAddr: 0x11C0, symBinAddr: 0x100002510, symSize: 0x3C0 }
+  - { offsetInCU: 0x1A6C, offset: 0x1A6C, size: 0x8, addend: 0x0, symName: _InitializeRemainingGlobals, symObjAddr: 0x1580, symBinAddr: 0x1000028D0, symSize: 0x4B0 }
+  - { offsetInCU: 0x1B1A, offset: 0x1B1A, size: 0x8, addend: 0x0, symName: _SetupStarBurn, symObjAddr: 0x1A30, symBinAddr: 0x100002D80, symSize: 0x3F0 }
+  - { offsetInCU: 0x1B6D, offset: 0x1B6D, size: 0x8, addend: 0x0, symName: _StarAreaCalc, symObjAddr: 0x1E20, symBinAddr: 0x100003170, symSize: 0x4D0 }
+  - { offsetInCU: 0x1C0B, offset: 0x1C0B, size: 0x8, addend: 0x0, symName: _CalcPropellantMass, symObjAddr: 0x22F0, symBinAddr: 0x100003640, symSize: 0x890 }
+  - { offsetInCU: 0x1D59, offset: 0x1D59, size: 0x8, addend: 0x0, symName: _CalcStarRayBurnDirnsAndLengths, symObjAddr: 0x2B80, symBinAddr: 0x100003ED0, symSize: 0x50 }
+  - { offsetInCU: 0x1D7F, offset: 0x1D7F, size: 0x8, addend: 0x0, symName: _CalcSegRefBurnRates, symObjAddr: 0x2BD0, symBinAddr: 0x100003F20, symSize: 0x360 }
+  - { offsetInCU: 0x1DC7, offset: 0x1DC7, size: 0x8, addend: 0x0, symName: _BurnedToShellFinish, symObjAddr: 0x2F30, symBinAddr: 0x100004280, symSize: 0x90 }
+  - { offsetInCU: 0x1DED, offset: 0x1DED, size: 0x8, addend: 0x0, symName: _CalcSegBurnAreas, symObjAddr: 0x2FC0, symBinAddr: 0x100004310, symSize: 0xA00 }
+  - { offsetInCU: 0x1E8B, offset: 0x1E8B, size: 0x8, addend: 0x0, symName: _CalcBurnIntegralContributions, symObjAddr: 0x39C0, symBinAddr: 0x100004D10, symSize: 0x230 }
+  - { offsetInCU: 0x1ECF, offset: 0x1ECF, size: 0x8, addend: 0x0, symName: _newton, symObjAddr: 0x3BF0, symBinAddr: 0x100004F40, symSize: 0x1F0 }
+  - { offsetInCU: 0x1F53, offset: 0x1F53, size: 0x8, addend: 0x0, symName: _BadPressure, symObjAddr: 0x3DE0, symBinAddr: 0x100005130, symSize: 0x130 }
+  - { offsetInCU: 0x1F7D, offset: 0x1F7D, size: 0x8, addend: 0x0, symName: _calc_fitness, symObjAddr: 0x3F10, symBinAddr: 0x100005260, symSize: 0x11A0 }
+  - { offsetInCU: 0x20A8, offset: 0x20A8, size: 0x8, addend: 0x0, symName: _PrintAllSegs, symObjAddr: 0x50B0, symBinAddr: 0x100006400, symSize: 0x280 }
+  - { offsetInCU: 0x20DD, offset: 0x20DD, size: 0x8, addend: 0x0, symName: _CalcNozRayRDots, symObjAddr: 0x5330, symBinAddr: 0x100006680, symSize: 0x90 }
+  - { offsetInCU: 0x2103, offset: 0x2103, size: 0x8, addend: 0x0, symName: _CalcPerRayRDot, symObjAddr: 0x53C0, symBinAddr: 0x100006710, symSize: 0x130 }
+  - { offsetInCU: 0x2147, offset: 0x2147, size: 0x8, addend: 0x0, symName: _RecordThrustAndResidualData, symObjAddr: 0x54F0, symBinAddr: 0x100006840, symSize: 0x210 }
+  - { offsetInCU: 0x21A7, offset: 0x21A7, size: 0x8, addend: 0x0, symName: _UpdateBurnRadiiAndReachedShell, symObjAddr: 0x5700, symBinAddr: 0x100006A50, symSize: 0x280 }
+  - { offsetInCU: 0x21EF, offset: 0x21EF, size: 0x8, addend: 0x0, symName: _WriteAnimationFile, symObjAddr: 0x5980, symBinAddr: 0x100006CD0, symSize: 0xEE0 }
+  - { offsetInCU: 0x2264, offset: 0x2264, size: 0x8, addend: 0x0, symName: _RecordThrustProfileFine, symObjAddr: 0x6860, symBinAddr: 0x100007BB0, symSize: 0xC0 }
+  - { offsetInCU: 0x2299, offset: 0x2299, size: 0x8, addend: 0x0, symName: _RecordThrustProfile, symObjAddr: 0x6920, symBinAddr: 0x100007C70, symSize: 0xC0 }
+  - { offsetInCU: 0x22CE, offset: 0x22CE, size: 0x8, addend: 0x0, symName: _PressureViolation, symObjAddr: 0x69E0, symBinAddr: 0x100007D30, symSize: 0x330 }
+  - { offsetInCU: 0x2307, offset: 0x2307, size: 0x8, addend: 0x0, symName: _DistBetwPts, symObjAddr: 0x6D10, symBinAddr: 0x100008060, symSize: 0x60 }
+  - { offsetInCU: 0x235E, offset: 0x235E, size: 0x8, addend: 0x0, symName: _InitializationsNeededForDecoding, symObjAddr: 0x6D70, symBinAddr: 0x1000080C0, symSize: 0x560 }
+  - { offsetInCU: 0x2393, offset: 0x2393, size: 0x8, addend: 0x0, symName: _bisection, symObjAddr: 0x72D0, symBinAddr: 0x100008620, symSize: 0x170 }
+  - { offsetInCU: 0x2466, offset: 0x2466, size: 0x8, addend: 0x0, symName: _fnQy, symObjAddr: 0x7440, symBinAddr: 0x100008790, symSize: 0x2B0 }
+  - { offsetInCU: 0x24DB, offset: 0x24DB, size: 0x8, addend: 0x0, symName: _MakeCornerSegBdaries, symObjAddr: 0x76F0, symBinAddr: 0x100008A40, symSize: 0x340 }
+  - { offsetInCU: 0x255B, offset: 0x255B, size: 0x8, addend: 0x0, symName: _WriteGraphicsOutputFile, symObjAddr: 0x7A30, symBinAddr: 0x100008D80, symSize: 0xA20 }
+  - { offsetInCU: 0x25A3, offset: 0x25A3, size: 0x8, addend: 0x0, symName: _CalcCornerSpecialPropellantMix, symObjAddr: 0x8450, symBinAddr: 0x1000097A0, symSize: 0x280 }
+  - { offsetInCU: 0x2618, offset: 0x2618, size: 0x8, addend: 0x0, symName: _FindNozzleRayPropellants, symObjAddr: 0x86D0, symBinAddr: 0x100009A20, symSize: 0x2D0 }
+  - { offsetInCU: 0x265C, offset: 0x265C, size: 0x8, addend: 0x0, symName: _SetupNozzleGeometry, symObjAddr: 0x89A0, symBinAddr: 0x100009CF0, symSize: 0xE0 }
+  - { offsetInCU: 0x2682, offset: 0x2682, size: 0x8, addend: 0x0, symName: _SprayNozzleRays, symObjAddr: 0x8A80, symBinAddr: 0x100009DD0, symSize: 0x3F0 }
+  - { offsetInCU: 0x26B7, offset: 0x26B7, size: 0x8, addend: 0x0, symName: _MakeNozzleProfileRedefinitionLayer, symObjAddr: 0x8E70, symBinAddr: 0x10000A1C0, symSize: 0x310 }
+  - { offsetInCU: 0x277E, offset: 0x277E, size: 0x8, addend: 0x0, symName: _CalcRayBurnDirnsAndLengths, symObjAddr: 0x9180, symBinAddr: 0x10000A4D0, symSize: 0x7A0 }
+  - { offsetInCU: 0x27E5, offset: 0x27E5, size: 0x8, addend: 0x0, symName: _CalcStarBurnIntegrContribs, symObjAddr: 0x9920, symBinAddr: 0x10000AC70, symSize: 0x7E0 }
+  - { offsetInCU: 0x2838, offset: 0x2838, size: 0x8, addend: 0x0, symName: _UpdateInsulationBurn, symObjAddr: 0xA100, symBinAddr: 0x10000B450, symSize: 0x540 }
+  - { offsetInCU: 0x285E, offset: 0x285E, size: 0x8, addend: 0x0, symName: _UpdateStarRayBurns, symObjAddr: 0xA640, symBinAddr: 0x10000B990, symSize: 0x840 }
+  - { offsetInCU: 0x290D, offset: 0x290D, size: 0x8, addend: 0x0, symName: _RayDebugPrint, symObjAddr: 0xAE80, symBinAddr: 0x10000C1D0, symSize: 0x5B0 }
+  - { offsetInCU: 0x2942, offset: 0x2942, size: 0x8, addend: 0x0, symName: _WhenBurnHitsShell, symObjAddr: 0xB430, symBinAddr: 0x10000C780, symSize: 0x110 }
+  - { offsetInCU: 0x2977, offset: 0x2977, size: 0x8, addend: 0x0, symName: _fnEllipse, symObjAddr: 0xB540, symBinAddr: 0x10000C890, symSize: 0x160 }
+  - { offsetInCU: 0x29FB, offset: 0x29FB, size: 0x8, addend: 0x0, symName: _SetUpGeometry, symObjAddr: 0xB6A0, symBinAddr: 0x10000C9F0, symSize: 0x2A0 }
+  - { offsetInCU: 0x2A3F, offset: 0x2A3F, size: 0x8, addend: 0x0, symName: _SetupInsulationGeometry, symObjAddr: 0xB940, symBinAddr: 0x10000CC90, symSize: 0x180 }
+  - { offsetInCU: 0x2A55, offset: 0x2A55, size: 0x8, addend: 0x0, symName: _DefineInitStarProfile, symObjAddr: 0xBAC0, symBinAddr: 0x10000CE10, symSize: 0x180 }
+  - { offsetInCU: 0x2AB7, offset: 0x2AB7, size: 0x8, addend: 0x0, symName: _CalcNozzleRaysTotalIntegralContribs, symObjAddr: 0xBC40, symBinAddr: 0x10000CF90, symSize: 0xF0 }
+  - { offsetInCU: 0x2AFF, offset: 0x2AFF, size: 0x8, addend: 0x0, symName: _FindPropellantType, symObjAddr: 0xBD30, symBinAddr: 0x10000D080, symSize: 0xF10 }
+  - { offsetInCU: 0x2B66, offset: 0x2B66, size: 0x8, addend: 0x0, symName: _ReadGenome, symObjAddr: 0xCC40, symBinAddr: 0x10000DF90, symSize: 0x2A0 }
+  - { offsetInCU: 0x2BCC, offset: 0x2BCC, size: 0x8, addend: 0x0, symName: _WriteThisGuyOutputFile, symObjAddr: 0xCEE0, symBinAddr: 0x10000E230, symSize: 0x1A0 }
+  - { offsetInCU: 0x2C01, offset: 0x2C01, size: 0x8, addend: 0x0, symName: _FindFarRay, symObjAddr: 0xD080, symBinAddr: 0x10000E3D0, symSize: 0xE0 }
+  - { offsetInCU: 0x2C67, offset: 0x2C67, size: 0x8, addend: 0x0, symName: _FindShortestRayNo, symObjAddr: 0xD160, symBinAddr: 0x10000E4B0, symSize: 0xE0 }
+  - { offsetInCU: 0x2CCD, offset: 0x2CCD, size: 0x8, addend: 0x0, symName: _EndCatchUp, symObjAddr: 0xD240, symBinAddr: 0x10000E590, symSize: 0x280 }
+  - { offsetInCU: 0x2D2F, offset: 0x2D2F, size: 0x8, addend: 0x0, symName: _residual, symObjAddr: 0xD4C0, symBinAddr: 0x10000E810, symSize: 0xF0 }
+  - { offsetInCU: 0x2D77, offset: 0x2D77, size: 0x8, addend: 0x0, symName: _jacobian, symObjAddr: 0xD5B0, symBinAddr: 0x10000E900, symSize: 0xF0 }
+  - { offsetInCU: 0x2DCE, offset: 0x2DCE, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0xD6A0, symBinAddr: 0x10000E9F0, symSize: 0x15F9 }
+...

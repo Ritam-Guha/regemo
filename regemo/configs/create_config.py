@@ -107,6 +107,6 @@ if __name__ == "__main__":
     #               shape_var_mode="l",
     #               lmin=0.5,
     #               lmax=29)
-    create_config(problem_name="machining")
+    create_config(problem_name="solid_rocket_design")
     # for problem in problems:
     #     create_config(problem)

@@ -451,7 +451,7 @@ class Regularity_Search:
         return mod_print
 
 
-def main(problem_name="water",
+def main(problem_name="scalable_truss_19",
          **kwargs):
     # collect arguments for the problem
     seed = config.seed
@@ -490,15 +490,17 @@ def main(problem_name="water",
         print(problem_config)
         print(algorithm_config)
 
+        algorithm_config["NSGA_settings"]["n_eval"] = 6000
+
         # create a search object
         regularity_search = Regularity_Search(problem_args=problem_config,
                                               seed=seed,
                                               NSGA_settings=algorithm_config["NSGA_settings"],
-                                              precision=10,
+                                              precision=5,
                                               n_rand_bins=5,
                                               delta=0.5,
-                                              non_fixed_regularity_degree=2,
-                                              num_non_fixed_independent_vars=1,
+                                              non_fixed_regularity_degree=1,
+                                              num_non_fixed_independent_vars=3,
                                               save=True,
                                               result_storage=f"{res_storage_dir}",
                                               verbose=True,

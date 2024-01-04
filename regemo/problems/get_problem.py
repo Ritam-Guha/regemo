@@ -27,6 +27,7 @@ from regemo.problems import zdt_mod_2d
 from regemo.problems import zdt_mod_3d
 from regemo.problems import tnk
 from regemo.problems import scalable_truss_19, scalable_truss_39, scalable_truss_59
+from regemo.problems import solid_rocket_design
 
 # many-objective
 from regemo.problems import water
@@ -64,6 +65,7 @@ problems = ["four_bar_truss_design",
             "tnk",
             "scalable_truss_19",
             "scalable_truss_39",
+            "solid_rocket_design",
             "lpms",
             "machining"]
 
@@ -99,6 +101,7 @@ evaluation_mapper = {
     "scalable_truss_19": scalable_truss_19.evaluate,
     "scalable_truss_39": scalable_truss_39.evaluate,
     "scalable_truss_59": scalable_truss_59.evaluate,
+    "solid_rocket_design": solid_rocket_design.evaluate,
     "lpms": lpms.evaluate,
     "machining": machining.evaluate
 }

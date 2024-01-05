@@ -2,9 +2,9 @@ import warnings
 
 import numpy as np
 
-import approcket as apr
-import problems.rocket_propellant_design.rocket_single_eval as rocket_eval
-from problems.rocket_propellant_design.rocket_util import RocketData
+import regemo.problems.solid_rocket_design.approcket as apr
+import regemo.problems.solid_rocket_design.problems.rocket_propellant_design.rocket_single_eval as rocket_eval
+from regemo.problems.solid_rocket_design.problems.rocket_propellant_design.rocket_util import RocketData
 
 
 def calc_obj(x_row_indx, x, rocket_problem):

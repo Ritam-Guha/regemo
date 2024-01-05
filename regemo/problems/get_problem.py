@@ -27,7 +27,7 @@ from regemo.problems import zdt_mod_2d
 from regemo.problems import zdt_mod_3d
 from regemo.problems import tnk
 from regemo.problems import scalable_truss_19, scalable_truss_39, scalable_truss_59
-from regemo.problems import solid_rocket_design
+from regemo.problems import solid_rocket_design_prob as solid_rocket_design
 
 # many-objective
 from regemo.problems import water

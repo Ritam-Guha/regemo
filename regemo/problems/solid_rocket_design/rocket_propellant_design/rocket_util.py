@@ -1,7 +1,7 @@
 import numpy as np
 
-import approcket as apr
-from problems.rocket_propellant_design import rocket_single_eval
+import regemo.problems.solid_rocket_design.approcket as apr
+from regemo.problems.solid_rocket_design.problems.rocket_propellant_design import rocket_single_eval
 
 
 class RocketData:

@@ -8,7 +8,7 @@ from pymoo.core.problem import Problem
 from pymoo.core.repair import NoRepair
 # from memory_profiler import profile
 
-import approcket as apr
+import regemo.problems.solid_rocket_design.approcket as apr
 import regemo.problems.solid_rocket_design.rocket_propellant_design.rocket_single_eval as rocket_eval
 # import star_curve
 from regemo.problems.solid_rocket_design.rocket_propellant_design.calc_obj import calc_obj as calc_obj

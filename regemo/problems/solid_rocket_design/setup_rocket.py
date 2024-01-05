@@ -10,8 +10,8 @@ approcket_extension = Extension(
     libraries=["approcket"],
     library_dirs=["librocket"],
     include_dirs=["librocket", np.get_include()],
-    extra_compile_args=['-openmp'],
-    extra_link_args=['-openmp']
+    extra_compile_args=['-fopenmp'],
+    extra_link_args=['-fopenmp']
 )
 setup(
     name="approcket",

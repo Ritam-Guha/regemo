@@ -1,6 +1,7 @@
 from regemo.problems.solid_rocket_design.rocket_propellant_design.rocket import RocketProblem
 import numpy as np
 
+
 def evaluate(X,
              problem_args=None,
              constr=False):

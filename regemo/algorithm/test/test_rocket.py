@@ -1,5 +1,8 @@
 from regemo.problems.get_problem import get_problem
+from regemo.problems.solid_rocket_design_prob import evaluate
 
-problem = get_problem("solid_rocket_design")
+import numpy as np
+
+print(evaluate(np.zeros(40)))
 
 print("done")

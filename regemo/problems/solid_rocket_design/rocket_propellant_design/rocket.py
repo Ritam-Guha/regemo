@@ -16,6 +16,9 @@ from regemo.problems.solid_rocket_design.rocket_propellant_design.calc_obj impor
 from regemo.problems.solid_rocket_design.rocket_propellant_design.rocket_util import RocketData
 # from problems.rocket_propellant_design.rocket_repair_interactive import InteractiveRepair
 
+import regemo.config as config
+import pickle
+
 
 class RocketProblem(Problem):
 
@@ -30,7 +33,7 @@ class RocketProblem(Problem):
 
         # Rocket problem-specific variables mostly consisting of path to different data files
         if env_vars is None:
-            problem_path = os.path.join('problems', 'rocket_propellant_design')
+            problem_path = f"{config.BASE_PATH}/problems/solid_rocket_design/rocket_propellant_design"
             self.env_vars = {'rocket_module_path': os.path.join('problems', 'rocket_propellant_design'),
                              'target_thrust_profile_path': os.path.join(problem_path, 'thrust_profiles'),
                              'propellant_path': problem_path}
@@ -231,6 +234,9 @@ class RocketProblem(Problem):
         super().__init__(n_var=n_var, n_obj=n_obj, n_constr=n_constr, type_var=type_var, xl=self.xl, xu=self.xu,
                          **kwargs)
 
+        pickle.dump(self.xl, open(f"{config.BASE_PATH}/problems/solid_rocket_design/xl.pickle", "wb"))
+        pickle.dump(self.xl, open(f"{config.BASE_PATH}/problems/solid_rocket_design/xu.pickle", "wb"))
+
     # @profile
     def _evaluate(self, x_in, out, *args, **kwargs):
         """Evaluates the objective functions for the rocket design
@@ -258,9 +264,9 @@ class RocketProblem(Problem):
             x, repair_indx = self.interactive_interface.do(self, np.copy(x), **kwargs)
             if len(repair_indx) > 0:
                 out['repaired_by'][repair_indx] = 1
-        if hasattr(kwargs['algorithm'], 'repair') and kwargs['algorithm'].repair is not None and type(kwargs['algorithm'].repair) != NoRepair:
-            print("Repair")
-            x = kwargs['algorithm'].repair.do(self, np.copy(x), **kwargs)
+        # if hasattr(kwargs['algorithm'], 'repair') and kwargs['algorithm'].repair is not None and type(kwargs['algorithm'].repair) != NoRepair:
+        #     print("Repair")
+        #     x = kwargs['algorithm'].repair.do(self, np.copy(x), **kwargs)
 
         # KLUGE: Repair offspring acc to heuristic
         # prop_mean = 8

@@ -69,6 +69,17 @@ def create_config(problem_name,
                                                                                                          "n_shape_var"])))
             problem_config["lb"] = xl
             problem_config["ub"] = xu
+
+        elif "solid_rocket" in problem_name:
+            problem_config = {"name": problem_name, "dim": 227, "n_obj": 2,
+                              "n_constr": 0, "visualization_angle": (45, 45)}
+
+            xl = pickle.load(open(f"{config.BASE_PATH}/problems/solid_rocket_design/xl.pickle", "rb"))
+            xu = pickle.load(open(f"{config.BASE_PATH}/problems/solid_rocket_design/xu.pickle", "rb"))
+
+            problem_config["lb"] = xl
+            problem_config["ub"] = xu
+
         else:
             problem_config = {"name": problem_name, "dim": 3, "n_obj": 4,
                               "n_constr": 3, "lb": [6.4, 0.69, 3.91], "ub": [7.09, 2.89, 4.61], "visualization_angle":
